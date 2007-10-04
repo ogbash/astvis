@@ -2,15 +2,12 @@
 
 import logging
 
-from gaphasx import EllipseItem, RectangleItem
 import gaphas
 from common import OPTIONS
+from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 
-ADDED_TO_CANVAS = "added" # object, canvas
-REMOVED_FROM_CANVAS = "removed" # object, canvas
 ACTIVE_CHANGED = "active"
 SHOW = "show" # object,
-
 
 # help classes and interfaces
 
@@ -33,29 +30,7 @@ class _TreeRow:
         "Thumbnail to be shown in GtkTreeView for this element"
         return hasattr(self,"_thumbnail") and self._thumbnail or None
 
-class _DiagramItemSource:
-    "Functions required for diagram drawing"
 
-    def getDiagramItem(self):
-        "item to be added"
-        return None
-        
-    def addToCanvas(self, canvas):
-        item = self.getDiagramItem()
-        canvas.add(item)
-        canvas.update_matrix(item)
-        
-        if isinstance(self,Observable):
-            self.notifyObservers(ADDED_TO_CANVAS, (self, canvas,))
-    
-    def removeFromCanvas(self, canvas):
-        item = self.getDiagramItem()
-        canvas.remove(item)
-        
-        if isinstance(self,Observable):
-            self.notifyObservers(REMOVED_FROM_CANVAS, (self, canvas,))
-        
-        
 # observer
 
 class Observable:
@@ -73,7 +48,7 @@ class Observable:
                 else:
                     observer(event,args)
             except(Exception), e:
-                Observable.LOG.warn("Exception during notify, %s", e)
+                Observable.LOG.warn("Exception during notify, %s", e, exc_info=True)
                 
     def addObserver(self, observer):
         self.__observers.add(observer)
@@ -104,7 +79,7 @@ class _BaseObject:
         return self.__active
 
 
-class File(_BaseObject, _TreeRow, _DiagramItemSource):
+class File(_BaseObject, _TreeRow):
     def __init__(self, xmlNode=None):
         _BaseObject.__init__(self)
         _TreeRow.__init__(self, "data/thumbnails/file.png")
@@ -116,7 +91,7 @@ class File(_BaseObject, _TreeRow, _DiagramItemSource):
     def __str__(self):
         return "<File %s>" % self.name
 
-class ProgramUnit(_BaseObject, _TreeRow, _DiagramItemSource, Observable):
+class ProgramUnit(_BaseObject, _TreeRow, Observable):
     def __init__(self, parent = None):
         _BaseObject.__init__(self)
         Observable.__init__(self)
@@ -128,16 +103,10 @@ class ProgramUnit(_BaseObject, _TreeRow, _DiagramItemSource, Observable):
     def getChildren(self):
         return self.subprograms
 
-    def getDiagramItem(self):
-        if not hasattr(self, "_item"):
-            self._item = RectangleItem(self.name)
-            self._item.object = self
-        return self._item
-
     def __str__(self):
         return "<ProgramUnit %s>" % self.name
 
-class Subprogram(_BaseObject, _TreeRow, _DiagramItemSource, Observable):
+class Subprogram(_BaseObject, _TreeRow, Observable):
     def __init__(self, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
         _BaseObject.__init__(self)
@@ -150,42 +119,58 @@ class Subprogram(_BaseObject, _TreeRow, _DiagramItemSource, Observable):
     def getChildren(self):
         return self.subprograms
 
-    def getDiagramItem(self):
-        if not hasattr(self, "_item"):
-            self._item= SubprogramItem(self)
-            self._item.object = self
-        return self._item
-
     def __str__(self):
         return "<Subprogram %s>" % self.name
+
+# relations
+
+class Relation(Observer):
+    def getObjects(self):
+        raise NotImplementedError("Must implement in subclass")
+
+class ContainerRelation(Relation):
+    "Parent-child relation for modules, subprograms"
+    
+    def __init__(self, parent, child):
+        self._parent = parent
+        self._child = child
+        self.line = gaphas.item.Line()
+        self.line.handles()[0].connectable=False
+        self.line.handles()[-1].connectable=False
         
-        
-### diagram items
+        parent.addObserver(self)
+        child.addObserver(self)
 
-class SubprogramItem(EllipseItem):
-    def __init__(self, obj):
-        EllipseItem.__init__(self, obj.name)
-        self.object = obj
-        self.color = obj.getActive() and (0,0,0,1) or (.5,.5,.5,0)
-        obj.addObserver(self._objectChanged)
+    def notify(self, event, args):
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
+            diagram.addRelation(self)
 
-    def draw(self, context):
-        if OPTIONS["view MPI tags"] and \
-                ("MPI caller" in self.object.tags or "indirect MPI caller" in self.object.tags):
-            cr = context.cairo
-            cr.save()
-            if "MPI caller" in self.object.tags:
-                cr.set_source_rgba(1,0.5,0,0.5)
-            else:
-                cr.set_source_rgba(1,1,0,0.5)
-            gaphas.util.path_ellipse(cr, 0, 0, self.w, self.h)
-            cr.fill()
-            cr.restore()
-        super(SubprogramItem, self).draw(context)
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
+            diagram.removeRelation(self)
+            
+    def getObjects(self):
+        return self._parent, self._child
 
-    def _objectChanged(self, event, args):
-        if event==ACTIVE_CHANGED:
-            self.color = self.object.getActive() and (0,0,0,1) or (.6,.6,.6,1)
-            self.canvas.request_update(self)
+class CallRelation(Relation):
+    "Calls relation for modules, subprograms"
+    
+    def __init__(self, caller, callee):
+        self._caller = caller
+        self._callee = callee        
+        caller.addObserver(self)
+        callee.addObserver(self)
 
+    def notify(self, event, args):
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
+            diagram.addRelation(self)
+
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
+            diagram.removeRelation(self)
+
+    def getObjects(self):
+        return self._caller, self._callee
 

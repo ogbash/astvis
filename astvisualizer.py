@@ -25,6 +25,7 @@ from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
 from astvis.model import ProgramUnit, Subprogram
+from astvis.diagram import CallDiagram
 
 class MainWindow:
     
@@ -35,8 +36,8 @@ class MainWindow:
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
 
-        self.canvas = gaphas.canvas.Canvas()
-        self.view = gaphas.view.GtkView(self.canvas)
+        self.diagram = CallDiagram()
+        self.view = gaphas.view.GtkView(self.diagram.getCanvas())
         outer = self.wTree.get_widget("canvas_view_outer")
         self.view.show()
         outer.add(self.view)
@@ -74,14 +75,13 @@ class MainWindow:
         if info==INFO_OBJECT_NAME[1]:
             clazz, name = pickle.loads(data.data)
             if clazz==ProgramUnit or clazz==Subprogram:
+                # get canvas coordinates
+                m = cairo.Matrix(*self.view.matrix)
+                m.invert()
+                cx, cy = m.transform_point(x,y)
+                # add item
                 obj = self.project.objects[name.lower()]
-                item = obj.getDiagramItem()
-                if item and item.canvas is not self.canvas:
-                    obj.addToCanvas(self.canvas)
-                    m = cairo.Matrix(*self.view.matrix)
-                    m.invert()
-                    vx, vy = m.transform_point(x,y)
-                    item.matrix.translate(vx,vy)
+                item = self.diagram.add(obj, cx,cy)
                 context.drop_finish(True, timestamp)
             else:
                 context.drop_finish(False, timestamp)                
@@ -142,8 +142,8 @@ class MainWindow:
                         self.astTree.view.scroll_to_cell(path)
             elif event.keyval==ord("d"):
                 item = self.view.focused_item
-                if item and item.object:
-                    item.object.removeFromCanvas(self.canvas)
+                if item and hasattr(item, "object"):
+                    self.diagram.remove(item.object)
             elif event.keyval==ord("x"):
                 item = self.view.focused_item
                 if item and item.object:

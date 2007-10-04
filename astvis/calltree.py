@@ -6,9 +6,9 @@ LOG = logging.getLogger("calltree")
 import gtk
 import pickle
 
-from common import *
-from astvis.model import ADDED_TO_CANVAS, REMOVED_FROM_CANVAS
-from astvis.model import Observable
+from common import INFO_TEXT, INFO_OBJECT_NAME
+from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from model import Observable
 
 class CallTree:
     def __init__(self, root, view):
@@ -76,7 +76,7 @@ class CallTree:
         green = gtk.gdk.color_parse("darkgreen")
         
         iObj = self.model.append(None, (obj.name, obj, obj.getThumbnail(), 
-                obj.getDiagramItem() and obj.getDiagramItem().canvas and green or black )) # color
+                self.root.diagram.hasObject(obj) and green or black )) # color
         if isinstance(obj, Observable):
             obj.addObserver(self._objectChanged)
         
@@ -87,7 +87,7 @@ class CallTree:
             if self.root.project.objects.has_key(name.lower()):
                 callObj = self.root.project.objects[name.lower()]
                 thumb = callObj.getThumbnail()
-                color = callObj.getDiagramItem().canvas and green or black
+                color = self.root.diagram.hasObject(callObj) and green or black
             else:
                 callObj = None
                 thumb = None
@@ -121,13 +121,13 @@ class CallTree:
     def _objectChanged(self, event, args):
         if not self.model:
             return
-        if event==ADDED_TO_CANVAS:
-            obj, canvas = args
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
             iObjects = self._findInTree(obj)
             for iObject in iObjects:
                 self.model[iObject][3] = gtk.gdk.color_parse("darkgreen")
-        if event==REMOVED_FROM_CANVAS:
-            obj, canvas = args
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
             iObjects = self._findInTree(obj)
             for iObject in iObjects:
                 self.model[iObject][3] = gtk.gdk.color_parse("black")

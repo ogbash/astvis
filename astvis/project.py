@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import gtk
-from astvis import xmltool
-from astvis.model import ADDED_TO_CANVAS, REMOVED_FROM_CANVAS
-from astvis.model import Observable
-from astvis.model import Subprogram, File, ProgramUnit
-from astvis.relations import ContainerRelation, CallRelation
+import xmltool
+from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from model import Observable
+from model import Subprogram, File, ProgramUnit
+from model import ContainerRelation, CallRelation
 
 class Project:
 
@@ -71,12 +71,12 @@ class Project:
         return iChild
         
     def _objectChanged(self, event, args):
-        if event==ADDED_TO_CANVAS:
-            obj, canvas = args
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
             iObject = self._findInTree(obj)
             self.astModel[iObject][3] = gtk.gdk.color_parse("darkgreen")
-        if event==REMOVED_FROM_CANVAS:
-            obj, canvas = args
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
             iObject = self._findInTree(obj)
             self.astModel[iObject][3] = gtk.gdk.color_parse("black")
 
