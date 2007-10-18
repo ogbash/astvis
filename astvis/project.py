@@ -2,10 +2,9 @@
 
 import gtk
 import xmltool
-from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
-from model import Observable
-from model import Subprogram, File, ProgramUnit
-from model import ContainerRelation, CallRelation
+from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+import event
+from model import BaseObject, Subprogram, File, ProgramUnit
 
 class Project:
 
@@ -17,6 +16,8 @@ class Project:
         
         if astFileName:
             self._loadAstFile(astFileName)
+            
+        event.manager.subscribeClass(self._objectChanged, BaseObject)
             
 
     def _loadAstFile(self, fileName):
@@ -30,19 +31,17 @@ class Project:
         self._generateSidebarTree(None, self.files)
 
         # generate relations
-        self._createRelations(self.files)
+        #self._createRelations(self.files)
 
     def _generateObjectMap(self, objects):
         for obj in objects:
-            self.objects[obj.name.lower()] = obj
+            self.objects[obj.getName().lower()] = obj
             self._generateObjectMap(obj.getChildren())
 
     def _generateSidebarTree(self, parent, objects):
         for obj in objects:
             data=[obj.getName(), obj, obj.getThumbnail(), gtk.gdk.color_parse("black")]
             row = self.astModel.append(parent,data)
-            if isinstance(obj,Observable):
-                obj.addObserver(self._objectChanged)
             self._generateSidebarTree(row, obj.getChildren())
             
     def _createRelations(self, objects):
@@ -70,14 +69,67 @@ class Project:
             iChild = self.astModel.iter_next(iChild)
         return iChild
         
-    def _objectChanged(self, event, args):
+    def _objectChanged(self, obj, event, args):
         if event==ADDED_TO_DIAGRAM:
-            obj, diagram = args
+            diagram, = args
             iObject = self._findInTree(obj)
             self.astModel[iObject][3] = gtk.gdk.color_parse("darkgreen")
         if event==REMOVED_FROM_DIAGRAM:
-            obj, diagram = args
+            diagram, = args
             iObject = self._findInTree(obj)
             self.astModel[iObject][3] = gtk.gdk.color_parse("black")
+
+# relations
+# TODO remove or refactor all relations
+class Relation:
+    def getObjects(self):
+        raise NotImplementedError("Must implement in subclass")
+
+class ContainerRelation(Relation):
+    "Parent-child relation for modules, subprograms"
+    
+    def __init__(self, parent, child):
+        self._parent = parent
+        self._child = child
+        self.line = gaphas.item.Line()
+        self.line.handles()[0].connectable=False
+        self.line.handles()[-1].connectable=False
+        
+        parent.addObserver(self)
+        child.addObserver(self)
+
+    def notify(self, event, args):
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
+            diagram.addRelation(self)
+
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
+            diagram.removeRelation(self)
+            
+    def getObjects(self):
+        return self._parent, self._child
+
+class CallRelation(Relation):
+    "Calls relation for modules, subprograms"
+    
+    def __init__(self, caller, callee):
+        self._caller = caller
+        self._callee = callee        
+        caller.addObserver(self)
+        callee.addObserver(self)
+
+    def notify(self, event, args):
+        if event==ADDED_TO_DIAGRAM:
+            obj, diagram = args
+            diagram.addRelation(self)
+
+        if event==REMOVED_FROM_DIAGRAM:
+            obj, diagram = args
+            diagram.removeRelation(self)
+
+    def getObjects(self):
+        return self._caller, self._callee
+
 
 

@@ -37,7 +37,7 @@ class AstTree:
             return
         
         model, iRow = selection.get_selected()
-        if not iRow:
+        if not iRow or not hasattr(model[iRow][1], "callNames"):
             self.root.callTree.hide()
         else:
             obj = model[iRow][1]

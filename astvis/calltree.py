@@ -7,8 +7,7 @@ import gtk
 import pickle
 
 from common import INFO_TEXT, INFO_OBJECT_NAME
-from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
-from model import Observable
+from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 
 class CallTree:
     def __init__(self, root, view):
@@ -62,8 +61,6 @@ class CallTree:
     def _clearModel(self):
         def free(model, path, iRow):
             obj = model[iRow][1]
-            if isinstance(obj,Observable):
-                obj.removeObserver(self)
     
         self.model.foreach(free)
     
@@ -77,8 +74,6 @@ class CallTree:
         
         iObj = self.model.append(None, (obj.name, obj, obj.getThumbnail(), 
                 self.root.diagram.hasObject(obj) and green or black )) # color
-        if isinstance(obj, Observable):
-            obj.addObserver(self._objectChanged)
         
         if not hasattr(obj,"callNames"):
             return
@@ -93,8 +88,6 @@ class CallTree:
                 thumb = None
                 color = black
             self.model.append(iObj, (name, callObj, thumb, color))        
-            if isinstance(callObj, Observable):
-                callObj.addObserver(self._objectChanged)
 
         self.view.expand_row(self.model.get_path(iObj), False)        
         self.show()

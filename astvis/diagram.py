@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 import gaphas
-from model import Observable
-from common import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+import event
 
 class ItemFactory:
     def getDiagramItem(self, obj):
@@ -11,7 +11,7 @@ class ItemFactory:
     def getDiagramConnector(self, relation):
         raise NotImplementedError("Must implement in subclass")
 
-class Diagram:
+class Diagram(object):
     "Functions required for diagrams"
     
     def __init__(self, factory):
@@ -31,8 +31,7 @@ class Diagram:
             item.matrix.translate(x,y)            
             self._canvas.update_matrix(item)
         
-            if isinstance(obj,Observable):
-                obj.notifyObservers(ADDED_TO_DIAGRAM, (obj, self,))
+            event.manager.notifyObservers(obj, ADDED_TO_DIAGRAM, (self,))
             return True
         return False
     
@@ -40,8 +39,7 @@ class Diagram:
         if self._items.has_key(obj):
             self._canvas.remove(self._items[obj])
             del self._items[obj]
-            if isinstance(obj,Observable):
-                obj.notifyObservers(REMOVED_FROM_DIAGRAM, (obj, self,))
+            event.manager.notifyObservers(obj, REMOVED_FROM_DIAGRAM, (self,))
             return True
         return False
         

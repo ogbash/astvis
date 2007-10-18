@@ -107,7 +107,7 @@ class MainWindow:
         try:
             self.project._loadAstFile(obj.get_filename())
         except(Exception), e:
-            LOG.error("Error loading file, %s", e)
+            LOG.error("Error loading file, %s", e, exc_info=e)
             obj.unselect_all()
         else:
             LOG.info("Loaded %s" % obj.get_filename())

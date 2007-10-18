@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import xml.dom
-from model import File, ProgramUnit, Subprogram
+from model import File, ProgramUnit, Subprogram, Block, Statement
 
 def loadFile(filename):
     import xml.dom.minidom
@@ -58,6 +58,8 @@ def subprogramFromXML(thisNode, parent = None):
             if node.nodeName in ("subroutine","function"):
                 obj = subprogramFromXML(node, sub)
                 sub.subprograms.append(obj)
+            elif node.nodeName == "block":
+                sub.statementBlock = blockFromXML(node, sub)
     # generate calls
     nodes = thisNode.getElementsByTagName("calls")
     if nodes and len(nodes)>0:
@@ -66,4 +68,16 @@ def subprogramFromXML(thisNode, parent = None):
             if node.nodeType==xml.dom.Node.ELEMENT_NODE:
                 sub.callNames.append(node.getAttribute("name"))
     return sub
+    
+def blockFromXML(thisNode, parent):
+    statements = []
+    block = Block(parent)
+    for node in thisNode.childNodes:
+        if node.nodeType==xml.dom.Node.ELEMENT_NODE \
+                and node.nodeName == "statement":
+            st = Statement(block)
+            st.type = node.getAttribute("type")
+            statements.append(st)
+    block.statements = statements
+    return block
 

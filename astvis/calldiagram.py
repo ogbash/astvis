@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 from model import ProgramUnit, Subprogram
-from model import CallRelation, ContainerRelation
 from model import ACTIVE_CHANGED
 from gaphasx import EllipseItem, RectangleItem, MorphConstraint
 import diagram
@@ -25,18 +24,18 @@ class CallDiagram(diagram.Diagram):
                 item.object = obj
                 return item
                 
-        def getDiagramConnector(self, relation):
-            if isinstance(relation, CallRelation):
-                connector = gaphas.item.Line()
-                connector.handles()[0].connectable=False
-                connector.handles()[-1].connectable=False        
-                connector.draw_head = _draw_head                
-                return connector
-            elif isinstance(relation, ContainerRelation):
-                connector = gaphas.item.Line()
-                connector.handles()[0].connectable=False
-                connector.handles()[-1].connectable=False        
-                return connector
+#        def getDiagramConnector(self, relation):
+#            if isinstance(relation, CallRelation):
+#                connector = gaphas.item.Line()
+#                connector.handles()[0].connectable=False
+#                connector.handles()[-1].connectable=False        
+#                connector.draw_head = _draw_head                
+#                return connector
+#            elif isinstance(relation, ContainerRelation):
+#                connector = gaphas.item.Line()
+#                connector.handles()[0].connectable=False
+#                connector.handles()[-1].connectable=False        
+#                return connector
                 
 
     def _connectItems(self, items, connector):
@@ -67,6 +66,16 @@ class CallDiagram(diagram.Diagram):
         handles[1].connected_to = items[1]
         handles[1].disconnect = disconnect1
         self._canvas.solver.add_constraint(constraints[1])
+        
+    def add(self, obj, x, y):
+        super(CallDiagram, self).add(obj, x, y)
+        # TODO get all calls for obj and add connectors
+        # TODO get all callers for obj and add connectors
+        
+    def remove(self, obj):
+        # TODO get all calls for obj and remove connectors
+        # TODO get all callers for obj and remove connectors
+        super(CallDiagram, self).remove(obj)
 
 def _draw_head(context):
     cr = context.cairo
@@ -84,7 +93,6 @@ class SubprogramItem(EllipseItem):
         EllipseItem.__init__(self, obj.name)
         self.object = obj
         self.color = obj.getActive() and (0,0,0,1) or (.5,.5,.5,0)
-        obj.addObserver(self._objectChanged)
 
     def draw(self, context):
         if OPTIONS["view MPI tags"] and \
