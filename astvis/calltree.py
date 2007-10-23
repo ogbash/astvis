@@ -8,6 +8,8 @@ import pickle
 
 from common import INFO_TEXT, INFO_OBJECT_NAME
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+import event
+import model
 
 class CallTree:
     def __init__(self, root, view):
@@ -39,6 +41,8 @@ class CallTree:
         self.view.set_model(self.model)
         #self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         
+        event.manager.subscribeClass(self._objectChanged, model.BaseObject)
+        
     def _keyPress(self, widget, event, data):
         print event
         
@@ -68,6 +72,7 @@ class CallTree:
 
     def showObject(self, obj):
         self._clearModel()
+        project = obj.project
     
         black = gtk.gdk.color_parse("black")
         green = gtk.gdk.color_parse("darkgreen")
@@ -75,12 +80,12 @@ class CallTree:
         iObj = self.model.append(None, (obj.name, obj, obj.getThumbnail(), 
                 self.root.diagram.hasObject(obj) and green or black )) # color
         
-        if not hasattr(obj,"callNames"):
+        if not hasattr(obj,"getName"):
             return
         
-        for name in obj.callNames:
-            if self.root.project.objects.has_key(name.lower()):
-                callObj = self.root.project.objects[name.lower()]
+        for name in project.calleeNames.get(obj.getName().lower(), ()):
+            if project.objects.has_key(name.lower()):
+                callObj = project.objects[name.lower()]
                 thumb = callObj.getThumbnail()
                 color = self.root.diagram.hasObject(callObj) and green or black
             else:
@@ -111,16 +116,16 @@ class CallTree:
         self.model.foreach(each, data)
         return data
         
-    def _objectChanged(self, event, args):
+    def _objectChanged(self, obj, event, args):
         if not self.model:
             return
         if event==ADDED_TO_DIAGRAM:
-            obj, diagram = args
+            diagram, = args
             iObjects = self._findInTree(obj)
             for iObject in iObjects:
                 self.model[iObject][3] = gtk.gdk.color_parse("darkgreen")
         if event==REMOVED_FROM_DIAGRAM:
-            obj, diagram = args
+            diagram, = args
             iObjects = self._findInTree(obj)
             for iObject in iObjects:
                 self.model[iObject][3] = gtk.gdk.color_parse("black")

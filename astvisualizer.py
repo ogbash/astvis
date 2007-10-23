@@ -36,8 +36,7 @@ class MainWindow:
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
 
-        self.diagram = CallDiagram()
-        self.view = gaphas.view.GtkView(self.diagram.getCanvas())
+        self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
         self.view.show()
         outer.add(self.view)
@@ -70,6 +69,8 @@ class MainWindow:
                 
         #self._setProject(Project(astFileName="tree.xml"))
         self._setProject(Project())
+        self.diagram = CallDiagram(self.project)
+        self.view.canvas = self.diagram.getCanvas()
 
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:

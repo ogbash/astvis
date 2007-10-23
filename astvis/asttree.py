@@ -33,15 +33,12 @@ class AstTree:
                 gtk.gdk.ACTION_COPY)
         
     def _selectionChanged(self, selection, param):
-        if not hasattr(self, "model"):
-            return
-        
         model, iRow = selection.get_selected()
-        if not iRow or not hasattr(model[iRow][1], "callNames"):
-            self.root.callTree.hide()
-        else:
-            obj = model[iRow][1]
-            self.root.callTree.showObject(obj)
+        if not model or not iRow:
+            return
+
+        obj = model[iRow][1]
+        self.root.callTree.showObject(obj)
 
     def setProject(self, project):
         self.project = project

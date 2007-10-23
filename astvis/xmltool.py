@@ -1,83 +1,112 @@
 #! /usr/bin/env python
 
-import xml.dom
+import xml.sax
 from model import File, ProgramUnit, Subprogram, Block, Statement
 
-def loadFile(filename):
-    import xml.dom.minidom
-    f = open(filename, "r")
-    try:
-        xmlTree = xml.dom.minidom.parse(f)
-    finally:
-        f.close()
-    return filesFromXML(xmlTree.documentElement)
+class XMLLoader(xml.sax.handler.ContentHandler):
+    def __init__(self, project):
+        self.project = project
+        self.files = []
+        self.contexts = []
+        self.blocks = []
+        self.statements = []
+        
+    def startElement(self, name, attrs):
+        if name=="file":
+            self.startFile(attrs)
+        elif name in ("program", "module"):
+            self.startProgramUnit(attrs)
+        elif name in ("subroutine", "function"):
+            self.startSubprogram(attrs)
+        elif name in ("block"):
+            self.startBlock(attrs)
+        elif name in ("statement"):
+            self.startStatement(attrs)
+        elif name in ("call"):
+            self.startCall(attrs)
+        
+    def endElement(self, name):
+        if name=="file":
+            self.endFile()
+        elif name in ("program", "module"):
+            self.endProgramUnit()
+        elif name in ("subroutine", "function"):
+            self.endSubprogram()
+        elif name in ("block"):
+            self.endBlock()
+        elif name in ("statement"):
+            self.endStatement()
+        elif name in ("call"):
+            self.endCall()
+            
+    def loadFile(self, filename):
+        f = open(filename, "r")
+        try:
+            xmlTree = xml.sax.parse(f, self)
+        finally:
+            f.close()
+        return self.files
+        
+    def startFile(self, attrs):
+        self.file = File(self.project)
+        self.file.name = attrs["name"]
+        self.contexts.append(self.file)
 
-def filesFromXML(rootNode):
-    files = []
-    for node in rootNode.childNodes:
-        if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-            if node.nodeName=="file":
-                obj=fileFromXML(node)
-                files.append(obj)
-    return files
-    
-def fileFromXML(thisNode):
-    fl = File()
-    fl.name = thisNode.getAttribute("name")
-    for node in thisNode.childNodes:
-        if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-            if node.nodeName in ("program","module"):
-                obj = programUnitFromXML(node, fl)
-                fl.units.append(obj)
-    return fl
+    def endFile(self):
+        del self.contexts[-1]
+        self.files.append(self.file)
 
-def programUnitFromXML(thisNode, parent = None):
-    pr = ProgramUnit(parent)
-    pr.name = thisNode.getAttribute("id")
-    # generate children
-    for node in thisNode.childNodes:
-        if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-            if node.nodeName in ("subroutine","function"):
-                obj = subprogramFromXML(node, pr)
-                pr.subprograms.append(obj)
-    # generate calls
-    nodes = thisNode.getElementsByTagName("calls")
-    if nodes and len(nodes)>0:
-        callsNode = nodes[0]
-        for node in callsNode.childNodes:
-            if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-                pr.callNames.append(node.getAttribute("name"))
-    return pr
+    def startProgramUnit(self, attrs):
+        parent = len(self.contexts)>0 and self.contexts[-1] or None
+        pr = ProgramUnit(self.project, parent)
+        pr.name = attrs["id"]
+        self.file.units.append(pr)
+        self.contexts.append(pr)
+        self.project.objects[pr.getName().lower()] = pr
+        
+    def endProgramUnit(self):
+        del self.contexts[-1]
 
-def subprogramFromXML(thisNode, parent = None):
-    sub = Subprogram(parent)
-    sub.name = thisNode.getAttribute("id")
-    # generate children
-    for node in thisNode.childNodes:
-        if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-            if node.nodeName in ("subroutine","function"):
-                obj = subprogramFromXML(node, sub)
-                sub.subprograms.append(obj)
-            elif node.nodeName == "block":
-                sub.statementBlock = blockFromXML(node, sub)
-    # generate calls
-    nodes = thisNode.getElementsByTagName("calls")
-    if nodes and len(nodes)>0:
-        callsNode = nodes[0]
-        for node in callsNode.childNodes:
-            if node.nodeType==xml.dom.Node.ELEMENT_NODE:
-                sub.callNames.append(node.getAttribute("name"))
-    return sub
-    
-def blockFromXML(thisNode, parent):
-    statements = []
-    block = Block(parent)
-    for node in thisNode.childNodes:
-        if node.nodeType==xml.dom.Node.ELEMENT_NODE \
-                and node.nodeName == "statement":
-            st = Statement(block)
-            st.type = node.getAttribute("type")
-            statements.append(st)
-    block.statements = statements
-    return block
+    def startSubprogram(self, attrs):
+        parent = len(self.contexts)>0 and self.contexts[-1] or None
+        sub = Subprogram(self.project, parent)
+        sub.name = attrs["id"]
+        parent.subprograms.append(sub)
+        self.contexts.append(sub)
+        self.project.objects[sub.getName().lower()] = sub
+        
+    def endSubprogram(self):
+        del self.contexts[-1]
+        
+    def startBlock(self, attrs):
+        if len(self.statements)>0:
+            block = Block(self.project, self.statements[-1])
+            self.statements[-1].addBlock(block)
+        else:
+            block = Block(self.project, self.contexts[-1])
+            self.contexts[-1].addBlock(block)
+        self.blocks.append(block)
+        
+    def endBlock(self):
+        del self.blocks[-1]
+        
+    def startStatement(self, attrs):
+        block = len(self.blocks)>0 and self.blocks[-1] or self.contexts[-1]
+        st = Statement(self.project, block)
+        st.type = attrs["type"]
+        
+        if st.type=="call":
+            self.project.addCall(self.contexts[-1].getName(), attrs['name'])        
+        
+        block.addStatement(st)
+        self.statements.append(st)
+
+    def endStatement(self):
+        del self.statements[-1]
+        
+    def startCall(self, attrs):
+        self.project.addCall(self.contexts[-1].getName(), attrs['name'])
+        
+    def endCall(self):
+        pass
 

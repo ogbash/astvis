@@ -28,7 +28,7 @@ class EventManager:
         
     def unsubscribe(self, observer, obj):
         if self._subs.has_key(obj):
-            return self._subs.remove(observer)
+            return self._subs[obj].remove(observer)
         return False
         
     def subscribeClass(self, observer, clazz):
@@ -38,7 +38,7 @@ class EventManager:
 
     def unsubscribeClass(self, observer, clazz):
         if self._classSubs.has_key(clazz):
-            return self._classSubs.remove(observer)
+            return self._classSubs[clazz].remove(observer)
         return False
 
     def _getMatchingBaseClasses(self, clazz):

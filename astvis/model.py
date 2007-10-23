@@ -16,7 +16,7 @@ class _TreeRow:
             self._thumbnail = gtk.gdk.pixbuf_new_from_file_at_size(imageFile, 16, 16)            
 
     def getName(self):
-        return hasattr(self,"name") and self.name or "{noname}"
+        return hasattr(self,"name") and self.name or str(self)
 
     def getChildren(self):
         "List of element children"
@@ -29,7 +29,8 @@ class _TreeRow:
 # basic model classes
 
 class BaseObject(object):
-    def __init__(self):
+    def __init__(self, project):
+        self.project = project
         self.__active = True
         self.tags = set()
         
@@ -41,11 +42,16 @@ class BaseObject(object):
         
     def getActive(self):
         return self.__active
+        
+    def addBlock(self, block):
+        pass
 
+    def addStatement(self, statement):
+        pass
 
 class File(BaseObject, _TreeRow):
-    def __init__(self, xmlNode=None):
-        BaseObject.__init__(self)
+    def __init__(self, project):
+        BaseObject.__init__(self, project)
         _TreeRow.__init__(self, "data/thumbnails/file.png")
         self.units = []
 
@@ -56,29 +62,12 @@ class File(BaseObject, _TreeRow):
         return "<File %s>" % self.name
 
 class ProgramUnit(BaseObject, _TreeRow):
-    def __init__(self, parent = None):
-        BaseObject.__init__(self)
+    def __init__(self, project, parent = None):
+        BaseObject.__init__(self, project)
         _TreeRow.__init__(self, "data/thumbnails/module.png")
         self.parent = parent
         self.statementBlock = None
         self.subprograms = []
-        self.callNames = []
-
-    def getChildren(self):
-        return self.subprograms
-
-    def __str__(self):
-        return "<ProgramUnit %s>" % self.name
-
-class Subprogram(BaseObject, _TreeRow):
-    def __init__(self, parent = None):
-        " - parent: program unit or subroutine where this sub belongs"
-        BaseObject.__init__(self)
-        _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
-        self.parent = parent
-        self.statementBlock = None
-        self.subprograms = []
-        self.callNames = []
 
     def getChildren(self):
         children = []
@@ -86,22 +75,66 @@ class Subprogram(BaseObject, _TreeRow):
             children.append(self.statementBlock)
         children.extend(self.subprograms)
         return children
+        
+    def addBlock(self, block):
+        self.statementBlock = block        
+
+    def __str__(self):
+        return "<ProgramUnit %s>" % self.name
+
+class Subprogram(BaseObject, _TreeRow):
+    def __init__(self, project, parent = None):
+        " - parent: program unit or subroutine where this sub belongs"
+        BaseObject.__init__(self, project)
+        _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
+        self.parent = parent
+        self.statementBlock = None
+        self.subprograms = []
+
+    def getChildren(self):
+        children = []
+        if self.statementBlock:
+            children.append(self.statementBlock)
+        children.extend(self.subprograms)
+        return children
+        
+    def addBlock(self, block):
+        self.statementBlock = block        
 
     def __str__(self):
         return "<Subprogram %s>" % self.name
 
 class Block(BaseObject, _TreeRow):
-    def __init__(self, parent = None):
-        BaseObject.__init__(self)
+    def __init__(self, project, parent = None):
+        BaseObject.__init__(self, project)
         self.parent = parent
         self.statements = []
         
     def getChildren(self):
-        return self.statements        
+        return self.statements  
+
+    def addStatement(self, statement):
+        self.statements.append(statement)
+
+    def __str__(self):
+        return "<block>"
         
 class Statement(BaseObject, _TreeRow):
-    def __init__(self, parent = None):
-        BaseObject.__init__(self)
+    def __init__(self, project, parent = None):
+        BaseObject.__init__(self, project)
         self.parent = parent
-        self.type = "unknown"
+        self.type = "{unknown}"
+        self.blocks = []
+        
+    def __str__(self):
+        return "<%s>"%self.type
+
+    def addBlock(self, block):
+        self.blocks.append(block)
+        
+    def getChildren(self):
+        if len(self.blocks)==1:
+            return self.blocks[0].getChildren()
+        else:
+            return self.blocks
 
