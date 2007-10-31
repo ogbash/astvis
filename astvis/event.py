@@ -6,6 +6,7 @@ LOG = logging.getLogger("event")
 # observer
 ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
+FILES_CHANGED = "files changed"
 
 class Observer:
     "Interface for observers"

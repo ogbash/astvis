@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 import xml.sax
-from model import File, ProgramUnit, Subprogram, Block, Statement
+from model import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
+    Operator, Reference, Constant
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, project):
@@ -10,6 +11,13 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.contexts = []
         self.blocks = []
         self.statements = []
+        self.expressions = []
+        self.setters = [] # setters
+        
+        
+    def characters(self, content):
+        if len(self.expressions)>0 and isinstance(self.expressions[-1], Constant):
+            self.expressions[-1].value = content.strip()
         
     def startElement(self, name, attrs):
         if name=="file":
@@ -24,6 +32,21 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startStatement(attrs)
         elif name in ("call"):
             self.startCall(attrs)
+        elif name in ("location"):
+            self.startLocation(attrs)
+        elif name in ("begin"):
+            self.startBegin(attrs)
+        elif name in ("end"):
+            self.startEnd(attrs)
+        elif name in ("target", "value", "base"):
+            if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
+                expr = self.expressions[-1]
+                self.startSetter(lambda v: setattr(expr, name, v))
+            elif hasattr(self.statements[-1], name):
+                stmt = self.statements[-1]
+                self.startSetter(lambda v: setattr(stmt, name, v))
+        elif name in ("operator", "reference", "constant"):
+            self.startExpression(name, attrs)
         
     def endElement(self, name):
         if name=="file":
@@ -38,6 +61,15 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endStatement()
         elif name in ("call"):
             self.endCall()
+        elif name in ("location"):
+            self.endLocation()
+        elif name in ("target", "value", "base"):
+            if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
+                self.endSetter()
+            elif hasattr(self.statements[-1], name):
+                self.endSetter()
+        elif name in ("operator", "reference", "constant"):
+            self.endExpression(name)
             
     def loadFile(self, filename):
         f = open(filename, "r")
@@ -92,8 +124,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
     def startStatement(self, attrs):
         block = len(self.blocks)>0 and self.blocks[-1] or self.contexts[-1]
-        st = Statement(self.project, block)
-        st.type = attrs["type"]
+        _type = attrs["type"]
+        if _type=="assignment":
+            st = Assignment(self.project, block)
+        else:
+            st = Statement(self.project, block)
+        st.type = _type
         
         if st.type=="call":
             self.project.addCall(self.contexts[-1].getName(), attrs['name'])        
@@ -109,4 +145,47 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
     def endCall(self):
         pass
+
+    def startLocation(self, attrs):
+        self.location = {}
+        if len(self.statements)>0:
+            self.statements[-1].location = self.location
+        elif len(self.contexts)>0:
+            self.contexts[-1].location = self.location
+        
+    def endLocation(self):
+        self.location = None
+
+    def startBegin(self, attrs):
+        self.location['begin'] = int(attrs['line'])
+
+    def startEnd(self, attrs):
+        self.location['end'] = int(attrs['line'])
+
+    def startExpression(self, name, attrs):
+        parent = len(self.expressions)>0 and self.expressions[-1] \
+            or len(self.statements)>0 and self.statements[-1]
+        if name=="operator":
+            expr = Operator(self.project, parent)
+            expr.type = attrs.get('type', 'op')
+        elif name=="reference":
+            expr = Reference(self.project, parent)
+            expr.name = attrs['name']
+        elif name=="constant":
+            expr = Constant(self.project, parent)
+            expr.type = attrs['type']
+        else:
+            expr = None
+        self.expressions.append(expr)
+        
+    def endExpression(self, name):
+        if len(self.setters)>0:
+            self.setters[-1](self.expressions[-1])
+        del self.expressions[-1]
+
+    def startSetter(self, setter):
+        self.setters.append(setter)
+        
+    def endSetter(self):
+        del self.setters[-1]
 

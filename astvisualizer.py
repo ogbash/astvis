@@ -24,13 +24,14 @@ from astvis import gaphasx
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
-from astvis.model import ProgramUnit, Subprogram
+from astvis.model import File, ProgramUnit, Subprogram
 from astvis.diagram import CallDiagram
 
 class MainWindow:
     
     def __init__(self):
         self.project = None
+        self.files = {} # model.File -> gtk.TextView
 
         self.wTree = gtk.glade.XML("astvisualizer.glade", "main_window")
         self.mainWindow = self.wTree.get_widget("main_window")
@@ -65,13 +66,15 @@ class MainWindow:
         callTreeView = self.wTree.get_widget("call_tree")
         self.callTree = CallTree(self, callTreeView)
 
+        self.notebook = self.wTree.get_widget("notebook")
+
         self.wTree.signal_autoconnect(self)
-                
+
         #self._setProject(Project(astFileName="tree.xml"))
         self._setProject(Project())
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
-
+        
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:
             clazz, name = pickle.loads(data.data)
@@ -135,12 +138,7 @@ class MainWindow:
             elif event.keyval==ord("."):
                 item = self.view.focused_item
                 if item and item.object:
-                    iObject = self.project._findInTree(item.object)
-                    if iObject:
-                        path = self.project.astModel.get_path(iObject)
-                        self.astTree.view.expand_to_path(path)
-                        self.astTree.view.get_selection().select_path(path)
-                        self.astTree.view.scroll_to_cell(path)
+                    self.astTree.selectObject(item.object)
             elif event.keyval==ord("d"):
                 item = self.view.focused_item
                 if item and hasattr(item, "object"):
@@ -150,6 +148,38 @@ class MainWindow:
                 if item and item.object:
                     item.object.setActive(not item.object.getActive())
 
+    def showFile(self, _file, lineNumber = 0):
+        if not self.files.has_key(_file):
+            import os.path
+            fl = file(os.path.join(self.project.sourceDir or '', _file.name))
+            view = self._openFile(fl)
+            self.files[_file] = view
+        else:
+            view = self.files[_file]
+        
+        # find view index in notebook and open it
+        children = self.notebook.get_children()
+        for i, child in enumerate(children):
+            if child==view or child.child==view:
+                self.notebook.set_current_page(i)
+                iLine = view.get_buffer().get_iter_at_line(lineNumber)
+                view.scroll_to_iter(iLine, 0, True, 0., 0.)
+        
+                    
+    def _openFile(self, fl):
+        import os.path
+        view = gtk.TextView()
+        view.set_editable(False)
+        view.get_buffer().set_text(fl.read())
+        window = gtk.ScrolledWindow()
+        window.add(view)
+        window.show_all()
+        self.notebook.append_page(window, gtk.Label(os.path.basename(fl.name)))
+        return view
+        
+    def _sourceDirChanged(self, button):
+        self.project.sourceDir = button.get_filename()
+        LOG.debug("Source directory set to %s" % self.project.sourceDir)
             
     def generate_mpi_tags(self, widget):
         if not self.project:

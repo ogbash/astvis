@@ -39,7 +39,15 @@ class BaseObject(object):
         self.__active = active
         if not prevActive==active and isinstance(self, Observable):
             self.notifyObservers(ACTIVE_CHANGED, (active,))
-        
+    
+    def getFile(self):
+        if isinstance(self, File):
+            return self
+        if hasattr(self, 'parent'):
+            return self.parent.getFile()
+            
+        return None
+    
     def getActive(self):
         return self.__active
         
@@ -117,13 +125,13 @@ class Block(BaseObject, _TreeRow):
         self.statements.append(statement)
 
     def __str__(self):
-        return "<block>"
+        return "{}"
         
 class Statement(BaseObject, _TreeRow):
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
         self.parent = parent
-        self.type = "{unknown}"
+        self.type = "<unknown>"
         self.blocks = []
         
     def __str__(self):
@@ -133,8 +141,69 @@ class Statement(BaseObject, _TreeRow):
         self.blocks.append(block)
         
     def getChildren(self):
-        if len(self.blocks)==1:
-            return self.blocks[0].getChildren()
-        else:
-            return self.blocks
+        return self.blocks
+        
+class Assignment(Statement):
+
+    def __init__(self, project, parent = None):
+        Statement.__init__(self, project, parent)
+        self.target = None
+        self.value = None
+        
+    def getChildren(self):
+        children = []
+        if self.target: children.append(self.target)
+        if self.value: children.append(self.value)
+        return children
+
+    def __str__(self):
+        return " = "%(self.target or '')
+
+class Expression(BaseObject):
+    def __init__(self, project, parent = None):
+        BaseObject.__init__(self, project)
+
+class Operator(Expression, _TreeRow):
+    def __init__(self, project, parent = None):
+        Expression.__init__(self, project)
+        self.parent = parent
+        self.type = "(op)"
+        self.left = None
+        self.right = None
+        
+    def getChildren(self):
+        children = []
+        if self.left: children.append(self.left)
+        if self.right: children.append(self.right)
+        return children
+
+    def __str__(self):
+        return "(%s)"%self.type
+
+class Constant(Expression, _TreeRow):
+    def __init__(self, project, parent = None):
+        Expression.__init__(self, project)
+        self.parent = parent
+        self.type = None
+        self.value = None
+
+    def __str__(self):
+        return self.value or ''
+
+class Reference(Expression, _TreeRow):
+    def __init__(self, project, parent = None):
+        Expression.__init__(self, project)
+        self.parent = parent
+        self.name = None
+        self.base = None
+        self.sections = None
+        
+    def getChildren(self):
+        children = []
+        if self.base: children.append(self.base)
+        if self.sections: children.append(self.sections)
+        return children
+
+    def __str__(self):
+        return "%s.%s" % ((self.base or ''), self.name)
 
