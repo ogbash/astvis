@@ -2,9 +2,12 @@
 
 import gtk
 import xmltool
+import xmlmap
 import event
+import model
 
 class Project:
+    classes = [model.File, model.ProgramUnit, model.Subprogram]
 
     def __init__(self, projectFileName=None, astFileName=None):
         self.name = "{unnamed}"
@@ -15,11 +18,18 @@ class Project:
         self.files = {}
         
         if astFileName:
-            self._loadAstFile(astFileName)       
+            self._loadAstFile(astFileName)
+            
+    def _newObjectCallback(self, obj):
+        isinst = map(lambda x: isinstance(obj, x), self.classes)
+        if True in isinst:
+            self.objects[obj.name.lower()] = obj
 
     def _loadAstFile(self, fileName):
         # load xml file
-        loader = xmltool.XMLLoader(self)
+        #loader = xmltool.XMLLoader(self)
+        loader = xmlmap.XMLLoader(self, Project.classes, "/ASTCollection")
+        loader.callback = self._newObjectCallback
         self.files = loader.loadFile(fileName)
         event.manager.notifyObservers(self, event.FILES_CHANGED, None)
             

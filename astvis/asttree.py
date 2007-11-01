@@ -2,6 +2,7 @@
 
 import logging
 LOG = logging.getLogger("asttree")
+from common import FINE, FINER, FINEST
 
 from common import *
 import gtk
@@ -77,15 +78,20 @@ class AstTree:
         # generate sidebar tree
         self._generateSidebarTree(None, self.project.files)
         
-    def _generateSidebarTree(self, parent, objects):
+    def _generateSidebarTree(self, iParent, objects):
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Generating for %s %d children" % \
+                    (iParent and self.model[iParent][1] or '', len(objects)))
         for obj in objects:
             action = self.filter.apply(obj)
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "Filter result for %s is %s" % (obj, action))
             if action is Filter.ALLOW or action is None:
                 data=[obj.getName(), obj, obj.getThumbnail(), gtk.gdk.color_parse("black")]
-                row = self.model.append(parent,data)
-                self._generateSidebarTree(row, obj.getChildren())
+                iRow = self.model.append(iParent,data)
+                self._generateSidebarTree(iRow, obj.getChildren())
             else:
-                self._generateSidebarTree(parent, obj.getChildren())
+                self._generateSidebarTree(iParent, obj.getChildren())
         
     def _findInTree(self, obj):
         if hasattr(obj, "parent"):

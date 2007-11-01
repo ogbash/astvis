@@ -29,6 +29,7 @@ class _TreeRow:
 # basic model classes
 
 class BaseObject(object):
+
     def __init__(self, project):
         self.project = project
         self.__active = True
@@ -58,8 +59,12 @@ class BaseObject(object):
         pass
 
 class File(BaseObject, _TreeRow):
-    def __init__(self, project):
-        BaseObject.__init__(self, project)
+    _xmlTags = ("file",)
+    _xmlAttributes = {"name": "name"}
+    _xmlChildren = {"units": ("module", "program") }
+
+    def __init__(self, project = None):
+        BaseObject.__init__(self, project = None)
         _TreeRow.__init__(self, "data/thumbnails/file.png")
         self.units = []
 
@@ -70,7 +75,11 @@ class File(BaseObject, _TreeRow):
         return "<File %s>" % self.name
 
 class ProgramUnit(BaseObject, _TreeRow):
-    def __init__(self, project, parent = None):
+    _xmlTags = ("module", "program")
+    _xmlAttributes = {"name": "id"}
+    _xmlChildren = {"subprograms": ("subroutine", "function") }
+
+    def __init__(self, project = None, parent = None):
         BaseObject.__init__(self, project)
         _TreeRow.__init__(self, "data/thumbnails/module.png")
         self.parent = parent
@@ -91,6 +100,10 @@ class ProgramUnit(BaseObject, _TreeRow):
         return "<ProgramUnit %s>" % self.name
 
 class Subprogram(BaseObject, _TreeRow):
+    _xmlTags = ("subroutine", "function")
+    _xmlAttributes = {"name": "id"}
+    _xmlChildren = {"subprograms": ("subprogram") }
+    
     def __init__(self, project, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
         BaseObject.__init__(self, project)
