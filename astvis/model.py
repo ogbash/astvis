@@ -29,9 +29,11 @@ class _TreeRow:
 # basic model classes
 
 class BaseObject(object):
+    _xmlChildren = {'location': 'location'}
 
     def __init__(self, project):
         self.project = project
+        self.location = None
         self.__active = True
         self.tags = set()
         
@@ -59,13 +61,15 @@ class BaseObject(object):
         pass
 
 class File(BaseObject, _TreeRow):
-    _xmlTags = ("file",)
+    _xmlTags = [("file",None)]
     _xmlAttributes = {"name": "name"}
     _xmlChildren = {"units": ("module", "program") }
+    _xmlChildren.update(BaseObject._xmlChildren)
 
     def __init__(self, project = None):
         BaseObject.__init__(self, project = None)
         _TreeRow.__init__(self, "data/thumbnails/file.png")
+        self.name = '<unknown>'
         self.units = []
 
     def getChildren(self):
@@ -75,14 +79,17 @@ class File(BaseObject, _TreeRow):
         return "<File %s>" % self.name
 
 class ProgramUnit(BaseObject, _TreeRow):
-    _xmlTags = ("module", "program")
+    _xmlTags = [("module", None), ("program", None)]
     _xmlAttributes = {"name": "id"}
-    _xmlChildren = {"subprograms": ("subroutine", "function") }
+    _xmlChildren = {"subprograms": ("subroutine", "function"),
+            "statementBlock": ("block") }
+    _xmlChildren.update(BaseObject._xmlChildren)
 
     def __init__(self, project = None, parent = None):
         BaseObject.__init__(self, project)
         _TreeRow.__init__(self, "data/thumbnails/module.png")
         self.parent = parent
+        self.name = '<unknown>'
         self.statementBlock = None
         self.subprograms = []
 
@@ -100,15 +107,18 @@ class ProgramUnit(BaseObject, _TreeRow):
         return "<ProgramUnit %s>" % self.name
 
 class Subprogram(BaseObject, _TreeRow):
-    _xmlTags = ("subroutine", "function")
+    _xmlTags = [("subroutine", None), ("function", None)]
     _xmlAttributes = {"name": "id"}
-    _xmlChildren = {"subprograms": ("subprogram") }
+    _xmlChildren = {"subprograms": ("subprogram",),
+            "statementBlock": ("block",) }
+    _xmlChildren.update(BaseObject._xmlChildren)
     
     def __init__(self, project, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
         BaseObject.__init__(self, project)
         _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
         self.parent = parent
+        self.name = '<unknown>'
         self.statementBlock = None
         self.subprograms = []
 
@@ -126,6 +136,11 @@ class Subprogram(BaseObject, _TreeRow):
         return "<Subprogram %s>" % self.name
 
 class Block(BaseObject, _TreeRow):
+    _xmlTags = [("block", None)]
+    _xmlAttributes = {}
+    _xmlChildren = {"statements": ("statement",) }
+    _xmlChildren.update(BaseObject._xmlChildren)
+
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
         self.parent = parent
@@ -141,11 +156,17 @@ class Block(BaseObject, _TreeRow):
         return "{}"
         
 class Statement(BaseObject, _TreeRow):
+    _xmlTags = [("statement", None)]
+    _xmlAttributes = {"type": "type", 'name': 'name'}
+    _xmlChildren = {"blocks": ("block",)}
+    _xmlChildren.update(BaseObject._xmlChildren)
+    
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
         self.parent = parent
         self.type = "<unknown>"
         self.blocks = []
+        self.name = '<unknown>'
         
     def __str__(self):
         return "<%s>"%self.type
@@ -155,8 +176,13 @@ class Statement(BaseObject, _TreeRow):
         
     def getChildren(self):
         return self.blocks
-        
+
 class Assignment(Statement):
+    _xmlTags = [("statement", lambda args: args['type']=='assignment')]
+    _xmlAttributes = {"type": "type"}
+    _xmlChildren = {"target": ("target",),
+            "value": ("value",) }
+    #_xmlChildren.update(Statement._xmlChildren)
 
     def __init__(self, project, parent = None):
         Statement.__init__(self, project, parent)
@@ -170,13 +196,31 @@ class Assignment(Statement):
         return children
 
     def __str__(self):
-        return " = "%(self.target or '')
+        return " = "
 
 class Expression(BaseObject):
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
 
+class Call(Expression, _TreeRow):
+    _xmlTags = [("call", None)]
+    _xmlAttributes = {"type": 'type', "name": "name"}
+    _xmlChildren = {}
+        
+    def __init__(self, project, parent = None):
+        Expression.__init__(self, project, parent)
+        _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
+        self.name = '<unknown>'
+        
+    def getName(self):
+        return self.name
+
 class Operator(Expression, _TreeRow):
+    _xmlTags = [("operator", None)]
+    _xmlAttributes = {"type": "type"}
+    _xmlChildren = {'right': ('left',),
+            'right': ('right',)}
+    
     def __init__(self, project, parent = None):
         Expression.__init__(self, project)
         self.parent = parent
@@ -194,6 +238,14 @@ class Operator(Expression, _TreeRow):
         return "(%s)"%self.type
 
 class Constant(Expression, _TreeRow):
+    def _setContent(self, value):
+        self.value = value.strip()
+
+    _xmlTags = [("constant", None)]
+    _xmlAttributes = {"type": "type"}
+    _xmlChildren = {}
+    _xmlContent = _setContent
+
     def __init__(self, project, parent = None):
         Expression.__init__(self, project)
         self.parent = parent
@@ -204,6 +256,10 @@ class Constant(Expression, _TreeRow):
         return self.value or ''
 
 class Reference(Expression, _TreeRow):
+    _xmlTags = [("reference", None)]
+    _xmlAttributes = {"name": "name"}
+    _xmlChildren = {"base": ("base",)}
+
     def __init__(self, project, parent = None):
         Expression.__init__(self, project)
         self.parent = parent
@@ -219,4 +275,29 @@ class Reference(Expression, _TreeRow):
 
     def __str__(self):
         return "%s.%s" % ((self.base or ''), self.name)
+        
+class Location(dict):
+    _xmlTags = [("location", None)]
+    _xmlAttributes = {}
+    _xmlChildren = {'begin': ("begin",),
+            'end': ("end",)}
+            
+    def __init__(self, project):
+        super(Location, self).__init__()
+        self.begin = None
+        self.end = None
+        
+class Point(object):
+    def _setLine(self, line):
+        self.line = int(line)
+    def _setColumn(self, column):
+        self.column = int(column)
+    
+    _xmlTags = [('begin',None), ('end',None)]
+    _xmlAttributes = {_setLine: 'line',
+            _setColumn: 'column'}
+    _xmlChildren = {}
+
+    def __init__(self, project):
+        pass
 

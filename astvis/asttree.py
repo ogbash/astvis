@@ -122,7 +122,7 @@ class AstTree:
         
 
     def selectObject(self, obj):
-        iObject = self._findInTree(item.object)
+        iObject = self._findInTree(obj)
         if iObject:
             path = self.model.get_path(iObject)
             self.view.expand_to_path(path)
@@ -140,7 +140,7 @@ class AstTree:
                 self.root.showFile(obj)
                 return True
             if isinstance(obj, model.Subprogram):
-                self.root.showFile(obj.getFile(), obj.location['begin']-1)
+                self.root.showFile(obj.getFile(), obj.location.begin.line-1)
                 return True
                                 
         return False

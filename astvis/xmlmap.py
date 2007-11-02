@@ -19,56 +19,117 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
     def startElement(self, name, attrs):
         for clazz in self.classes:
-            if name in clazz._xmlTags:
+            if self._tagMatches(name, attrs, clazz._xmlTags):
+                LOG.log(FINER, "Found tag '%s'" % name)
                 obj = clazz(self.project)
-                for propName in clazz._xmlAttributes.iterkeys():
-                    attrName = clazz._xmlAttributes[propName]
-                    if LOG.isEnabledFor(FINER):
-                        LOG.log(FINER, "Setting property %s to attr value %s" % (propName, attrs[attrName]))
-                    setattr(obj, propName, attrs[attrName])
+                for propEval, attrName in clazz._xmlAttributes.iteritems():
+                    if attrs.has_key(attrName):
+                        if LOG.isEnabledFor(FINER):
+                            LOG.log(FINER, "Setting property '%s' to attr value '%s'" % (propEval, attrs[attrName]))
+                        self._setProperty(obj, propEval, attrs[attrName])                            
+                    else:
+                        if LOG.isEnabledFor(FINEST):
+                            LOG.log(FINEST, "No tag attribute '%s' set" % attrName)
+                            
+                self._findAndSetParent(name, obj)
                 break
         else:
             obj = None
-            
-        if obj and self.callback:
-            self.callback(obj)
         
         self.elements.append((name, attrs, obj))
 
+    def _tagMatches(self, name, attrs, _xmlTags):
+        for tagName, attrPredicate in _xmlTags:
+            if name==tagName:
+                if not attrPredicate or attrPredicate(attrs):
+                    return True
+        else:
+            return False
+
     def endElement(self, name):
-        name, attrs, obj = self.elements[-1]
         del self.elements[-1]
-        if obj and self._match(self.pathList):
+
+    def characters(self, content):
+        if not content.strip():
+            return
+        
+        (parentName, parentAttrs, parentObj), childName = self._findParent('__content__(%d chars)' % len(content))
+        if parentObj!=None:
+            if parentObj!=None and hasattr(parentObj.__class__, '_xmlContent'):
+                parentObj.__class__._xmlContent(parentObj, content)
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Set content of %s" % parentObj)
+    
+    def _findAndSetParent(self, name, obj):
+        # find where to add element
+        if obj!=None and self._match(self.pathList):
+            # top level
             if LOG.isEnabledFor(FINE):
                 LOG.log(FINE, 'Added top level %s' % obj)
             self.objects.append(obj)
-        elif obj:
-            parentName, parentAttrs, parentObj = self.elements[-1]
-            if parentObj:
-                for propName, childNames in parentObj.__class__._xmlChildren.iteritems():
+        elif obj!=None:
+            # find "any" parent element that requires this element
+            
+            # first, find any non empty parent, set childName
+            (parentName, parentAttrs, parentObj), childName = self._findParent(name)
+                    
+            if parentObj!=None:
+                # iterate all "desired" properties of the parent, TODO can be made more effective
+                for propEval, childNames in parentObj.__class__._xmlChildren.iteritems():
                     if LOG.isEnabledFor(FINEST):
-                        LOG.log(FINEST, "Testing tagName '%s' in required childNames %s" %(name, childNames))
-                    if name in childNames:
-                        prop = getattr(parentObj, propName)
-                        if isinstance(prop, list):
-                            prop.append(obj)
-                            if LOG.isEnabledFor(FINE):
-                                LOG.log(FINE, "Added child %s to %s" %(obj, parentObj))
-                        else:
-                            setattr(parentObj, propName, obj)
-                            if LOG.isEnabledFor(FINE):
-                                LOG.log(FINE, "Set child %s to %s" %(obj, parentObj))
-                            
+                        LOG.log(FINEST, "Testing tagName '%s' in required childNames %s" %(childName, repr(childNames)))
+                    # is it (child) tag name that parentObj requires?
+                    if childName in childNames:
+                        self._setProperty(parentObj, propEval, obj)
                         obj.parent = parentObj
-
-                        break
+                        break # parent found
                 else:
                     if LOG.isEnabledFor(FINE):
                         LOG.log(FINE, "Ignore %s, because parent %s does no require it" %(obj, parentObj))
             else:
                 if LOG.isEnabledFor(FINE):
                     LOG.log(FINE, "Ignore %s, because no parent %s" % (obj, parentName))
+
+        if obj!=None and self.callback:
+            self.callback(obj)
+    
+
+    def _findParent(self, childName):
+        origChildName = childName
         
+        parentIndex = len(self.elements)-1
+        while parentIndex >= 0:
+            parentName, parentAttrs, parentObj = self.elements[parentIndex]
+            if parentObj!=None:
+                if LOG.isEnabledFor(FINER):
+                    LOG.log(FINER, "Found parent %s for '%s'" % (parentObj, origChildName))
+                break
+            childName = parentName
+            parentIndex = parentIndex-1
+        else:
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "Not found parent for '%s'" % (origChildName))
+        return (parentName, parentAttrs, parentObj), childName    
+
+    def _setProperty(self, parentObj, propEval, obj):
+        if isinstance(propEval, str):
+            prop = getattr(parentObj, propEval)
+            if isinstance(prop, list):
+                # property is list, append to the end
+                prop.append(obj)
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Added child %s to %s" %(obj, parentObj))
+            else:
+                # set property
+                setattr(parentObj, propEval, obj)
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Set child %s to %s" %(obj, parentObj))
+        else:
+            # set property with parent specified function
+            propEval(parentObj, obj)
+            if LOG.isEnabledFor(FINE):
+                LOG.log(FINE, "Set (with eval) child %s to %s" %(obj, parentObj))    
+
     def loadFile(self, filename):
         f = open(filename, "r")
         try:

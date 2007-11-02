@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import logging
+LOG=logging.getLogger('project')
+from common import FINE, FINER, FINEST
+
 import gtk
 import xmltool
 import xmlmap
@@ -7,7 +11,12 @@ import event
 import model
 
 class Project:
-    classes = [model.File, model.ProgramUnit, model.Subprogram]
+    objClasses = [model.File, model.ProgramUnit, model.Subprogram]
+    classes = list(objClasses)
+    classes.extend([model.Block, 
+            model.Assignment, model.Call, model.Statement,
+            model.Constant, model.Reference, model.Operator,
+            model.Location, model.Point])
 
     def __init__(self, projectFileName=None, astFileName=None):
         self.name = "{unnamed}"
@@ -21,9 +30,25 @@ class Project:
             self._loadAstFile(astFileName)
             
     def _newObjectCallback(self, obj):
-        isinst = map(lambda x: isinstance(obj, x), self.classes)
+        # add to ad-hoc "index"
+        isinst = map(lambda x: isinstance(obj, x), self.objClasses)
         if True in isinst:
             self.objects[obj.name.lower()] = obj
+
+        if isinstance(obj, model.Statement) and obj.type=='call':
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "Found call %s" % obj)
+            caller = obj
+            while caller!=None and not caller.__class__ in (model.ProgramUnit, model.Subprogram):
+                if LOG.isEnabledFor(FINEST):
+                    LOG.log(FINEST, "potential caller is %s" % caller)
+                caller = caller.parent
+
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "Caller is %s" % caller)
+        
+            if caller!=None:
+                self.addCall(caller.name, obj.name)
 
     def _loadAstFile(self, fileName):
         # load xml file
@@ -36,6 +61,7 @@ class Project:
     def addCall(self, callerName, calleeName):
         callerName = callerName.lower()
         calleeName = calleeName.lower()
+        LOG.log(FINER, 'Adding call %s -> %s' % (callerName, calleeName))
         
         if not calleeName in self.callerNames:
             self.callerNames[calleeName] = list()
