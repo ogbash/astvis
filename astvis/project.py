@@ -15,6 +15,7 @@ class Project:
     classes = list(objClasses)
     classes.extend([model.Block, 
             model.Assignment, model.Call, model.Statement,
+            model.TypeDeclaration, model.Type, model.Entity,
             model.Constant, model.Reference, model.Operator,
             model.Location, model.Point])
 

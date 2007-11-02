@@ -79,10 +79,16 @@ class File(BaseObject, _TreeRow):
         return "<File %s>" % self.name
 
 class ProgramUnit(BaseObject, _TreeRow):
+    def _setBlock(self, value):
+        if value.type=='declarations':
+            self.declarationBlock = value
+        else:
+            self.statementBlock = value            
+
     _xmlTags = [("module", None), ("program", None)]
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subroutine", "function"),
-            "statementBlock": ("block") }
+            _setBlock: ("block",)}
     _xmlChildren.update(BaseObject._xmlChildren)
 
     def __init__(self, project = None, parent = None):
@@ -90,11 +96,14 @@ class ProgramUnit(BaseObject, _TreeRow):
         _TreeRow.__init__(self, "data/thumbnails/module.png")
         self.parent = parent
         self.name = '<unknown>'
+        self.declarationBlock = None
         self.statementBlock = None
         self.subprograms = []
 
     def getChildren(self):
         children = []
+        if self.declarationBlock:
+            children.append(self.declarationBlock)
         if self.statementBlock:
             children.append(self.statementBlock)
         children.extend(self.subprograms)
@@ -107,6 +116,12 @@ class ProgramUnit(BaseObject, _TreeRow):
         return "<ProgramUnit %s>" % self.name
 
 class Subprogram(BaseObject, _TreeRow):
+    def _setBlock(self, value):
+        if value.type=='declarations':
+            self.declarationBlock = value
+        else:
+            self.statementBlock = value            
+
     _xmlTags = [("subroutine", None), ("function", None)]
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subprogram",),
@@ -119,11 +134,14 @@ class Subprogram(BaseObject, _TreeRow):
         _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
         self.parent = parent
         self.name = '<unknown>'
+        self.declarationBlock = None
         self.statementBlock = None
         self.subprograms = []
 
     def getChildren(self):
         children = []
+        if self.declarationBlock:
+            children.append(self.declarationBlock)
         if self.statementBlock:
             children.append(self.statementBlock)
         children.extend(self.subprograms)
@@ -137,14 +155,15 @@ class Subprogram(BaseObject, _TreeRow):
 
 class Block(BaseObject, _TreeRow):
     _xmlTags = [("block", None)]
-    _xmlAttributes = {}
-    _xmlChildren = {"statements": ("statement",) }
+    _xmlAttributes = {'type': 'type'}
+    _xmlChildren = {'statements': ('statement','declaration') }
     _xmlChildren.update(BaseObject._xmlChildren)
 
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
         self.parent = parent
         self.statements = []
+        self.type = None
         
     def getChildren(self):
         return self.statements  
@@ -153,7 +172,7 @@ class Block(BaseObject, _TreeRow):
         self.statements.append(statement)
 
     def __str__(self):
-        return "{}"
+        return "{%s}" % self.type
         
 class Statement(BaseObject, _TreeRow):
     _xmlTags = [("statement", None)]
@@ -198,6 +217,59 @@ class Assignment(Statement):
     def __str__(self):
         return " = "
 
+
+class Declaration(BaseObject, _TreeRow):
+    pass
+
+class Type(object):
+    _xmlTags = [('type',None)]
+    _xmlAttributes = {}
+    _xmlChildren = {'name': ('name',)}
+    def _xmlContent(self, childName, value):
+        if childName=='name':
+            self.name = value.strip()
+        elif childName=='kind':
+            self.kind = value.strip()
+        
+    def __init__(self, project):
+        self.name = '<unknown type>'
+        self.kind = None
+
+    def __str__(self):
+        return self.name
+
+class Entity(object, _TreeRow):
+    _xmlTags = [('entity',None)]
+    _xmlAttributes = {}
+    _xmlChildren = {'name': ('name',)}
+    def _xmlContent(self, childName, value):
+        if childName=='name':
+            self.name = value.strip()
+        
+    def __init__(self, project):
+        self.name = '<entity>'
+
+    def __str__(self):
+        return self.name
+
+class TypeDeclaration(Declaration):
+    _xmlTags = [("declaration", lambda args: args['type']=='type')]
+    _xmlAttributes = {'decltype': 'type'}
+    _xmlChildren = {'type': ('type',),
+            'entities': ('entities',)}
+    
+    def __init__(self, project):
+        Declaration.__init__(self, project)
+        self.decltype = '<unknown>'
+        self.type = None
+        self.entities = []
+
+    def __str__(self):
+        return "<typedecl '%s'>" % self.type
+        
+    def getChildren(self):
+        return self.entities
+
 class Expression(BaseObject):
     def __init__(self, project, parent = None):
         BaseObject.__init__(self, project)
@@ -238,7 +310,7 @@ class Operator(Expression, _TreeRow):
         return "(%s)"%self.type
 
 class Constant(Expression, _TreeRow):
-    def _setContent(self, value):
+    def _setContent(self, childName, value):
         self.value = value.strip()
 
     _xmlTags = [("constant", None)]

@@ -56,7 +56,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         (parentName, parentAttrs, parentObj), childName = self._findParent('__content__(%d chars)' % len(content))
         if parentObj!=None:
             if parentObj!=None and hasattr(parentObj.__class__, '_xmlContent'):
-                parentObj.__class__._xmlContent(parentObj, content)
+                parentObj.__class__._xmlContent(parentObj, childName, content)
                 if LOG.isEnabledFor(FINE):
                     LOG.log(FINE, "Set content of %s" % parentObj)
     
