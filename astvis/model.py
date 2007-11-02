@@ -166,7 +166,7 @@ class Statement(BaseObject, _TreeRow):
         self.parent = parent
         self.type = "<unknown>"
         self.blocks = []
-        self.name = '<unknown>'
+        self.name = None
         
     def __str__(self):
         return "<%s>"%self.type
@@ -210,7 +210,7 @@ class Call(Expression, _TreeRow):
     def __init__(self, project, parent = None):
         Expression.__init__(self, project, parent)
         _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
-        self.name = '<unknown>'
+        self.name = '<unknown call>'
         
     def getName(self):
         return self.name
@@ -253,7 +253,7 @@ class Constant(Expression, _TreeRow):
         self.value = None
 
     def __str__(self):
-        return self.value or ''
+        return self.value or '<constant>'
 
 class Reference(Expression, _TreeRow):
     _xmlTags = [("reference", None)]
