@@ -56,6 +56,7 @@ class Project:
         loader = xmlmap.XMLLoader(self, Project.classes, "/ASTCollection")
         loader.callback = self._newObjectCallback
         self.files = loader.loadFile(fileName)
+        LOG.debug("len(calleNames)=%d, len(callerNames)=%d" % (len(self.calleeNames), len(self.callerNames)))
         event.manager.notifyObservers(self, event.FILES_CHANGED, None)
             
     def addCall(self, callerName, calleeName):

@@ -36,12 +36,6 @@ class ASTObject(object):
     
     def getActive(self):
         return self.__active
-        
-    def addBlock(self, block):
-        pass
-
-    def addStatement(self, statement):
-        pass
 
     def getChildren(self):
         "List of element children"
