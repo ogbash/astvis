@@ -41,7 +41,7 @@ class CallTree:
         self.view.set_model(self.model)
         #self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         
-        event.manager.subscribeClass(self._objectChanged, model.BaseObject)
+        event.manager.subscribeClass(self._objectChanged, model.ASTObject)
         
     def _keyPress(self, widget, event, data):
         print event

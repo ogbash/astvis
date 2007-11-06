@@ -32,6 +32,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                             LOG.log(FINEST, "No tag attribute '%s' set" % attrName)
                             
                 self._findAndSetParent(name, obj)
+                if hasattr(obj, '_xmlPreProcess'):
+                    obj._xmlPreProcess(name, attrs)
                 break
         else:
             obj = None

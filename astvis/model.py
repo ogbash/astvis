@@ -1,34 +1,17 @@
 #! /usr/bin/env python
 
+"""Basic model  classes for the application."""
+
 import gaphas
 from common import OPTIONS
 
 ACTIVE_CHANGED = "active"
 
-# help classes and interfaces
-
-class _TreeRow:
-    "Helper functions for GtkTreeModel"
-
-    def __init__(self, imageFile=None):
-        if imageFile:
-            import gtk.gdk
-            self._thumbnail = gtk.gdk.pixbuf_new_from_file_at_size(imageFile, 16, 16)            
-
-    def getName(self):
-        return hasattr(self,"name") and self.name or str(self)
-
-    def getChildren(self):
-        "List of element children"
-        return []
-
-    def getThumbnail(self):
-        "Thumbnail to be shown in GtkTreeView for this element"
-        return hasattr(self,"_thumbnail") and self._thumbnail or None
-
 # basic model classes
 
-class BaseObject(object):
+class ASTObject(object):
+    """Base class for all AST objects."""
+
     _xmlChildren = {'location': 'location'}
 
     def __init__(self, project):
@@ -60,15 +43,19 @@ class BaseObject(object):
     def addStatement(self, statement):
         pass
 
-class File(BaseObject, _TreeRow):
+    def getChildren(self):
+        "List of element children"
+        return []
+
+
+class File(ASTObject):
     _xmlTags = [("file",None)]
     _xmlAttributes = {"name": "name"}
     _xmlChildren = {"units": ("module", "program") }
-    _xmlChildren.update(BaseObject._xmlChildren)
+    _xmlChildren.update(ASTObject._xmlChildren)
 
     def __init__(self, project = None):
-        BaseObject.__init__(self, project = None)
-        _TreeRow.__init__(self, "data/thumbnails/file.png")
+        ASTObject.__init__(self, project = None)
         self.name = '<unknown>'
         self.units = []
 
@@ -78,7 +65,7 @@ class File(BaseObject, _TreeRow):
     def __str__(self):
         return "<File %s>" % self.name
 
-class ProgramUnit(BaseObject, _TreeRow):
+class ProgramUnit(ASTObject):
     def _setBlock(self, value):
         if value.type=='declarations':
             self.declarationBlock = value
@@ -89,12 +76,15 @@ class ProgramUnit(BaseObject, _TreeRow):
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subroutine", "function"),
             _setBlock: ("block",)}
-    _xmlChildren.update(BaseObject._xmlChildren)
+    _xmlChildren.update(ASTObject._xmlChildren)
+    
+    def _xmlPreProcess(self, name, attrs):
+        self.type = name
 
     def __init__(self, project = None, parent = None):
-        BaseObject.__init__(self, project)
-        _TreeRow.__init__(self, "data/thumbnails/module.png")
+        ASTObject.__init__(self, project)
         self.parent = parent
+        self.type = None
         self.name = '<unknown>'
         self.declarationBlock = None
         self.statementBlock = None
@@ -109,13 +99,10 @@ class ProgramUnit(BaseObject, _TreeRow):
         children.extend(self.subprograms)
         return children
         
-    def addBlock(self, block):
-        self.statementBlock = block        
-
     def __str__(self):
         return "<ProgramUnit %s>" % self.name
 
-class Subprogram(BaseObject, _TreeRow):
+class Subprogram(ASTObject):
     def _setBlock(self, value):
         if value.type=='declarations':
             self.declarationBlock = value
@@ -126,12 +113,11 @@ class Subprogram(BaseObject, _TreeRow):
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subprogram",),
             "statementBlock": ("block",) }
-    _xmlChildren.update(BaseObject._xmlChildren)
+    _xmlChildren.update(ASTObject._xmlChildren)
     
     def __init__(self, project, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
-        BaseObject.__init__(self, project)
-        _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
+        ASTObject.__init__(self, project)
         self.parent = parent
         self.name = '<unknown>'
         self.declarationBlock = None
@@ -147,20 +133,17 @@ class Subprogram(BaseObject, _TreeRow):
         children.extend(self.subprograms)
         return children
         
-    def addBlock(self, block):
-        self.statementBlock = block        
-
     def __str__(self):
         return "<Subprogram %s>" % self.name
 
-class Block(BaseObject, _TreeRow):
+class Block(ASTObject):
     _xmlTags = [("block", None)]
     _xmlAttributes = {'type': 'type'}
     _xmlChildren = {'statements': ('statement','declaration') }
-    _xmlChildren.update(BaseObject._xmlChildren)
+    _xmlChildren.update(ASTObject._xmlChildren)
 
     def __init__(self, project, parent = None):
-        BaseObject.__init__(self, project)
+        ASTObject.__init__(self, project)
         self.parent = parent
         self.statements = []
         self.type = None
@@ -174,14 +157,14 @@ class Block(BaseObject, _TreeRow):
     def __str__(self):
         return "{%s}" % self.type
         
-class Statement(BaseObject, _TreeRow):
+class Statement(ASTObject):
     _xmlTags = [("statement", None)]
     _xmlAttributes = {"type": "type", 'name': 'name'}
     _xmlChildren = {"blocks": ("block",)}
-    _xmlChildren.update(BaseObject._xmlChildren)
+    _xmlChildren.update(ASTObject._xmlChildren)
     
     def __init__(self, project, parent = None):
-        BaseObject.__init__(self, project)
+        ASTObject.__init__(self, project)
         self.parent = parent
         self.type = "<unknown>"
         self.blocks = []
@@ -190,9 +173,6 @@ class Statement(BaseObject, _TreeRow):
     def __str__(self):
         return "<%s>"%self.type
 
-    def addBlock(self, block):
-        self.blocks.append(block)
-        
     def getChildren(self):
         return self.blocks
 
@@ -218,10 +198,10 @@ class Assignment(Statement):
         return " = "
 
 
-class Declaration(BaseObject, _TreeRow):
+class Declaration(ASTObject):
     pass
 
-class Type(object):
+class Type(ASTObject):
     _xmlTags = [('type',None)]
     _xmlAttributes = {}
     _xmlChildren = {'name': ('name',)}
@@ -238,7 +218,7 @@ class Type(object):
     def __str__(self):
         return self.name
 
-class Entity(object, _TreeRow):
+class Entity(ASTObject):
     _xmlTags = [('entity',None)]
     _xmlAttributes = {}
     _xmlChildren = {'name': ('name',)}
@@ -270,24 +250,20 @@ class TypeDeclaration(Declaration):
     def getChildren(self):
         return self.entities
 
-class Expression(BaseObject):
+class Expression(ASTObject):
     def __init__(self, project, parent = None):
-        BaseObject.__init__(self, project)
+        ASTObject.__init__(self, project)
 
-class Call(Expression, _TreeRow):
+class Call(Expression):
     _xmlTags = [("call", None)]
     _xmlAttributes = {"type": 'type', "name": "name"}
     _xmlChildren = {}
         
     def __init__(self, project, parent = None):
         Expression.__init__(self, project, parent)
-        _TreeRow.__init__(self, "data/thumbnails/subroutine.png")
         self.name = '<unknown call>'
         
-    def getName(self):
-        return self.name
-
-class Operator(Expression, _TreeRow):
+class Operator(Expression):
     _xmlTags = [("operator", None)]
     _xmlAttributes = {"type": "type"}
     _xmlChildren = {'right': ('left',),
@@ -309,7 +285,7 @@ class Operator(Expression, _TreeRow):
     def __str__(self):
         return "(%s)"%self.type
 
-class Constant(Expression, _TreeRow):
+class Constant(Expression):
     def _setContent(self, childName, value):
         self.value = value.strip()
 
@@ -327,7 +303,7 @@ class Constant(Expression, _TreeRow):
     def __str__(self):
         return self.value or '<constant>'
 
-class Reference(Expression, _TreeRow):
+class Reference(Expression):
     _xmlTags = [("reference", None)]
     _xmlAttributes = {"name": "name"}
     _xmlChildren = {"base": ("base",)}

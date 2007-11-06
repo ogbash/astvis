@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Abstract syntax tree module."""
+
 import logging
 LOG = logging.getLogger("asttree")
 from common import FINE, FINER, FINEST
@@ -10,6 +12,38 @@ import pickle
 import model
 import event
 import project
+
+class RowFactory:
+    thumbnailFilenames = {model.File: "data/thumbnails/file.png",
+            model.ProgramUnit: lambda obj: obj.type=='module' and "data/thumbnails/module.png"
+                    or "data/thumbnails/program.png",
+            model.Subprogram: "data/thumbnails/subroutine.png",
+            model.Statement: lambda obj: obj.type=='call' and 'data/thumbnails/call.png' or None,
+            model.Call: "data/thumbnails/call.png"}
+            
+    def __init__(self):
+        self.thumbnails = {}    
+
+    def getRow(self, obj):
+        name = hasattr(obj,"name") and obj.name or str(obj)
+        
+        return [name, obj, self._getThumbnail(obj), gtk.gdk.color_parse("black")]
+
+    def _getThumbnail(self, obj):
+        "Thumbnail to be shown in GtkTreeView for the C{obj} element"
+        filename = RowFactory.thumbnailFilenames.get(obj.__class__, None)
+        if callable(filename):
+            filename = filename(obj)
+
+        if not filename:
+            return None
+        if not self.thumbnails.has_key(filename):
+            import gtk.gdk
+            thumbnail = gtk.gdk.pixbuf_new_from_file_at_size(filename, 16, 16)
+            self.thumbnails[filename] = thumbnail
+        return self.thumbnails.get(filename, None)
+
+factory = RowFactory()
 
 class Filter:
     ALLOW = 'allow'
@@ -60,7 +94,7 @@ class AstTree:
                 gtk.gdk.ACTION_COPY)
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
                 
-        event.manager.subscribeClass(self._objectChanged, model.BaseObject)                
+        event.manager.subscribeClass(self._objectChanged, model.ASTObject)                
         event.manager.subscribeClass(self._objectChanged, project.Project)
         
     def _selectionChanged(self, selection, param):
@@ -87,7 +121,8 @@ class AstTree:
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Filter result for %s is %s" % (obj, action))
             if action is Filter.ALLOW or action is None:
-                data=[obj.getName(), obj, obj.getThumbnail(), gtk.gdk.color_parse("black")]
+                #data=[obj.getName(), obj, obj.getThumbnail(), gtk.gdk.color_parse("black")]
+                data = factory.getRow(obj)
                 iRow = self.model.append(iParent,data)
                 self._generateSidebarTree(iRow, obj.getChildren())
             else:
