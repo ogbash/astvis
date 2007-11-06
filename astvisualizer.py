@@ -30,7 +30,7 @@ from astvis import gaphasx
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
-from astvis.model import File, ProgramUnit, Subprogram
+from astvis.model import ast
 from astvis.diagram import CallDiagram
 
 class MainWindow:
@@ -84,7 +84,7 @@ class MainWindow:
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:
             clazz, name = pickle.loads(data.data)
-            if clazz==ProgramUnit or clazz==Subprogram:
+            if clazz==ast.ProgramUnit or clazz==ast.Subprogram:
                 # get canvas coordinates
                 m = cairo.Matrix(*self.view.matrix)
                 m.invert()

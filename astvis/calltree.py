@@ -9,7 +9,7 @@ import pickle
 from common import INFO_TEXT, INFO_OBJECT_NAME
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
-import model
+from model import ast
 
 class CallTree:
     def __init__(self, root, view):
@@ -41,7 +41,7 @@ class CallTree:
         self.view.set_model(self.model)
         #self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         
-        event.manager.subscribeClass(self._objectChanged, model.ASTObject)
+        event.manager.subscribeClass(self._objectChanged, ast.ASTObject)
         
     def _keyPress(self, widget, event, data):
         print event

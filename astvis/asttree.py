@@ -9,17 +9,17 @@ from common import FINE, FINER, FINEST
 from common import *
 import gtk
 import pickle
-import model
+from model import ast
 import event
 import project
 
 class RowFactory:
-    thumbnailFilenames = {model.File: "data/thumbnails/file.png",
-            model.ProgramUnit: lambda obj: obj.type=='module' and "data/thumbnails/module.png"
+    thumbnailFilenames = {ast.File: "data/thumbnails/file.png",
+            ast.ProgramUnit: lambda obj: obj.type=='module' and "data/thumbnails/module.png"
                     or "data/thumbnails/program.png",
-            model.Subprogram: "data/thumbnails/subroutine.png",
-            model.Statement: lambda obj: obj.type=='call' and 'data/thumbnails/call.png' or None,
-            model.Call: "data/thumbnails/call.png"}
+            ast.Subprogram: "data/thumbnails/subroutine.png",
+            ast.Statement: lambda obj: obj.type=='call' and 'data/thumbnails/call.png' or None,
+            ast.Call: "data/thumbnails/call.png"}
             
     def __init__(self):
         self.thumbnails = {}    
@@ -49,9 +49,9 @@ class Filter:
     ALLOW = 'allow'
     DENY = 'deny'
 
-    TYPES_FILTER = {'file': lambda obj: isinstance(obj, model.File),
-        'module':  lambda obj: isinstance(obj, model.ProgramUnit),
-        'subprogram':  lambda obj: isinstance(obj, model.Subprogram)
+    TYPES_FILTER = {'file': lambda obj: isinstance(obj, ast.File),
+        'module':  lambda obj: isinstance(obj, ast.ProgramUnit),
+        'subprogram':  lambda obj: isinstance(obj, ast.Subprogram)
         }
     FILTERS = {'type':TYPES_FILTER}
     
@@ -94,7 +94,7 @@ class AstTree:
                 gtk.gdk.ACTION_COPY)
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
                 
-        event.manager.subscribeClass(self._objectChanged, model.ASTObject)                
+        event.manager.subscribeClass(self._objectChanged, ast.ASTObject)                
         event.manager.subscribeClass(self._objectChanged, project.Project)
         
     def _selectionChanged(self, selection, param):
@@ -171,10 +171,10 @@ class AstTree:
         if event.type==gtk.gdk._2BUTTON_PRESS:
             _model, iRow = self.view.get_selection().get_selected()
             obj = _model[iRow][1]
-            if isinstance(obj, model.File):
+            if isinstance(obj, ast.File):
                 self.root.showFile(obj)
                 return True
-            if isinstance(obj, model.Subprogram):
+            if isinstance(obj, ast.Subprogram):
                 self.root.showFile(obj.getFile(), obj.location.begin.line-1)
                 return True
                                 

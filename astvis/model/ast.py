@@ -3,7 +3,7 @@
 """Basic model  classes for the application."""
 
 import gaphas
-from common import OPTIONS
+from astvis.common import OPTIONS
 
 ACTIVE_CHANGED = "active"
 

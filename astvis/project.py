@@ -5,19 +5,18 @@ LOG=logging.getLogger('project')
 from common import FINE, FINER, FINEST
 
 import gtk
-import xmltool
 import xmlmap
 import event
-import model
+from model import ast
 
 class Project:
-    objClasses = [model.File, model.ProgramUnit, model.Subprogram]
+    objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
-    classes.extend([model.Block, 
-            model.Assignment, model.Call, model.Statement,
-            model.TypeDeclaration, model.Type, model.Entity,
-            model.Constant, model.Reference, model.Operator,
-            model.Location, model.Point])
+    classes.extend([ast.Block, 
+            ast.Assignment, ast.Call, ast.Statement,
+            ast.TypeDeclaration, ast.Type, ast.Entity,
+            ast.Constant, ast.Reference, ast.Operator,
+            ast.Location, ast.Point])
 
     def __init__(self, projectFileName=None, astFileName=None):
         self.name = "{unnamed}"
@@ -36,11 +35,11 @@ class Project:
         if True in isinst:
             self.objects[obj.name.lower()] = obj
 
-        if isinstance(obj, model.Statement) and obj.type=='call':
+        if isinstance(obj, ast.Statement) and obj.type=='call':
             if LOG.isEnabledFor(FINEST):
                 LOG.log(FINEST, "Found call %s" % obj)
             caller = obj
-            while caller!=None and not caller.__class__ in (model.ProgramUnit, model.Subprogram):
+            while caller!=None and not caller.__class__ in (ast.ProgramUnit, ast.Subprogram):
                 if LOG.isEnabledFor(FINEST):
                     LOG.log(FINEST, "potential caller is %s" % caller)
                 caller = caller.parent

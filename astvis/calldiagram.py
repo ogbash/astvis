@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from model import ASTObject, ProgramUnit, Subprogram
-from model import ACTIVE_CHANGED
+from model import ast
+from model.ast import ACTIVE_CHANGED
 from common import OPTIONS
 from gaphasx import EllipseItem, RectangleItem, MorphConstraint
 import diagram
@@ -15,15 +15,15 @@ class CallDiagram(diagram.Diagram):
     def __init__(self, project = None):
         self.project = project
         diagram.Diagram.__init__(self, CallDiagram.ItemFactory())
-        event.manager.subscribeClass(self._notify, ASTObject)
+        event.manager.subscribeClass(self._notify, ast.ASTObject)
 
     class ItemFactory(diagram.ItemFactory):
         def getDiagramItem(self, obj):
-            if isinstance(obj, ProgramUnit):
+            if isinstance(obj, ast.ProgramUnit):
                 item = RectangleItem(obj.name)
                 item.object = obj
                 return item
-            elif isinstance(obj, Subprogram):
+            elif isinstance(obj, ast.Subprogram):
                 item= SubprogramItem(obj)
                 item.object = obj
                 return item
