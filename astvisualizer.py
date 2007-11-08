@@ -26,7 +26,7 @@ import gaphas.examples
 import math
 import pickle
 from astvis import INFO_OBJECT_NAME, OPTIONS
-from astvis import gaphasx
+from astvis import gaphasx, event, xmlmap
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
@@ -42,6 +42,10 @@ class MainWindow:
         self.wTree = gtk.glade.XML("astvisualizer.glade", "main_window")
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
+        
+        dwTree = gtk.glade.XML("astvisualizer.glade", "xmlmap_progress_dialog")
+        self.xmlmapProgressDialog = dwTree.get_widget('xmlmap_progress_dialog')
+        self.xmlmapProgressbar = dwTree.get_widget('xmlmap_progressbar')
 
         self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
@@ -81,6 +85,21 @@ class MainWindow:
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
         
+        event.manager.subscribeClass(self._notify, xmlmap.XMLLoader)
+        
+    def _notify(self, obj, event_, args):
+        if event_ is event.XMLMAP_STARTED:
+            print event_
+        elif event_ is event.XMLMAP_ENDED:
+            print event_
+        elif event_ is event.XMLMAP_PROGRESSED:
+            ratio, = args
+            LOG.debug('progress')
+            #self.xmlmapProgressbar.set_fraction(ratio)
+            #self.xmlmapProgressDialog.queue_draw()
+            LOG.debug('progress exit')
+            #print event_, ratio
+
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:
             clazz, name = pickle.loads(data.data)
@@ -115,8 +134,15 @@ class MainWindow:
     def astFileChanged(self, obj):
         LOG.debug("Loading %s" % obj.get_filename())
         try:
-            self.project._loadAstFile(obj.get_filename())
+            self.xmlmapProgressDialog.show()
+            import threading
+            self.thread = threading.Thread(target=self.project._loadAstFile, args=(obj.get_filename(),))
+            LOG.debug("Thread created %s" % self.thread)
+            self.thread.start()
+            LOG.debug("Thread started %s" % self.thread)
+            #self.xmlmapProgressDialog.show(False)
         except(Exception), e:
+            #self.xmlmapProgressDialog.show(False)
             LOG.error("Error loading file, %s", e, exc_info=e)
             obj.unselect_all()
         else:

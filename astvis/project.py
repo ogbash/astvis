@@ -55,6 +55,7 @@ class Project:
     def _loadAstFile(self, fileName):
         # load xml file
         #loader = xmltool.XMLLoader(self)
+        LOG.debug('Loading AST file in %s' % self)
         loader = xmlmap.XMLLoader(self, Project.classes, "/ASTCollection")
         loader.callback = self._newObjectCallback
         self.files = loader.loadFile(fileName)
@@ -62,6 +63,7 @@ class Project:
         event.manager.notifyObservers(self, event.FILES_CHANGED, None)
         
         self._generateObjects(self.files)
+        LOG.debug('Finished loading AST file in %s' % self)
             
     def addCall(self, callerName, calleeName):
         callerName = callerName.lower()

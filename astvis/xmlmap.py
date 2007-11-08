@@ -6,6 +6,7 @@ from common import FINE, FINER, FINEST
 
 import xml.sax
 import operator
+import event
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, project, classes, path="/"):
@@ -16,6 +17,28 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.callback = None
         self.pathList = self._parsePath(path)
         LOG.debug("pathList = %s" % self.pathList)
+        
+    def loadFile(self, filename):
+        LOG.debug("loadFile started")
+        self._file = open(filename, "r")
+        import os
+        stat = os.fstat(self._file.fileno())
+        self._fileSize = stat.st_size
+        try:
+            LOG.debug("File %s opened" % self._file)
+            event.manager.notifyObservers(self, event.XMLMAP_STARTED, None)
+            xmlTree = xml.sax.parse(self._file, self)
+            event.manager.notifyObservers(self, event.XMLMAP_ENDED, None)
+        finally:
+            self._file.close()
+            LOG.debug("File %s closed" % self._file)
+        return self.objects
+        
+    def _parsePath(self, path):
+        pathList = path.split("/")
+        if len(pathList)>1 and not pathList[-1]:
+            del pathList[-1] # remove empty element in case there was trailing /
+        return pathList
         
     def startElement(self, name, attrs):
         for clazz in self.classes:
@@ -39,6 +62,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             obj = None
         
         self.elements.append((name, attrs, obj))
+        event.manager.notifyObservers(self, event.XMLMAP_PROGRESSED, (self._file.tell()/float(self._fileSize),))
 
     def _tagMatches(self, name, attrs, _xmlTags):
         for tagName, attrPredicate in _xmlTags:
@@ -132,20 +156,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             if LOG.isEnabledFor(FINE):
                 LOG.log(FINE, "Set (with eval) child %s to %s" %(obj, parentObj))    
 
-    def loadFile(self, filename):
-        f = open(filename, "r")
-        try:
-            xmlTree = xml.sax.parse(f, self)
-        finally:
-            f.close()
-        return self.objects
-        
-    def _parsePath(self, path):
-        pathList = path.split("/")
-        if len(pathList)>1 and not pathList[-1]:
-            del pathList[-1] # remove empty element in case there was trailing /
-        return pathList
-        
     def _match(self, pathList):
         pathIndex = len(pathList)-1
         index = len(self.elements)-1

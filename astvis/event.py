@@ -8,6 +8,10 @@ ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
 FILES_CHANGED = "files changed"
 
+XMLMAP_STARTED = 'xmlmap started'
+XMLMAP_PROGRESSED = 'xmlmap progressed'
+XMLMAP_ENDED = 'xmlmap ended'
+
 class Observer:
     "Interface for observers"
     def notify(self, obj, event, args):
