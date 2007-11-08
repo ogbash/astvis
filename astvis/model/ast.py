@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-"""Basic model  classes for the application."""
+"""AST model  classes for the application."""
 
-import gaphas
 from astvis.common import OPTIONS
 
 ACTIVE_CHANGED = "active"
@@ -94,7 +93,7 @@ class ProgramUnit(ASTObject):
         return children
         
     def __str__(self):
-        return "<ProgramUnit %s>" % self.name
+        return "<%s %s>" % (self.type or 'ProgramUnit', self.name)
 
 class Subprogram(ASTObject):
     def _setBlock(self, value):
@@ -149,7 +148,7 @@ class Block(ASTObject):
         self.statements.append(statement)
 
     def __str__(self):
-        return "{%s}" % self.type
+        return "{%s}"%(self.type or '')
         
 class Statement(ASTObject):
     _xmlTags = [("statement", None)]
@@ -165,7 +164,7 @@ class Statement(ASTObject):
         self.name = None
         
     def __str__(self):
-        return "<%s>"%self.type
+        return "<%s>"%(self.type or 'statement')
 
     def getChildren(self):
         return self.blocks
@@ -189,7 +188,7 @@ class Assignment(Statement):
         return children
 
     def __str__(self):
-        return " = "
+        return "<assignment>"
 
 
 class Declaration(ASTObject):
@@ -342,4 +341,14 @@ class Point(object):
 
     def __init__(self, project):
         pass
+
+def getScope(astObj):
+    if isinstance(astObj, (Subprogram, ProgramUnit)):
+        return astObj
+    return astObj.parent and getScope(astObj.parent) or None
+
+def getStatement(astObj):
+    if isinstance(astObj, Statement):
+        return astObj
+    return astObj.parent and getStatement(astObj.parent) or None
 

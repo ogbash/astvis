@@ -31,7 +31,7 @@ from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
 from astvis.model import ast
-from astvis.diagram import CallDiagram
+from astvis.calldiagram import CallDiagram
 
 class MainWindow:
     
@@ -90,7 +90,7 @@ class MainWindow:
                 m.invert()
                 cx, cy = m.transform_point(x,y)
                 # add item
-                obj = self.project.objects[name.lower()]
+                obj = self.project.astObjects[name.lower()]
                 item = self.diagram.add(obj, cx,cy)
                 context.drop_finish(True, timestamp)
             else:
@@ -191,7 +191,7 @@ class MainWindow:
         if not self.project:
             return   
         # clean tags and generate MPI caller tags
-        for name, obj in self.project.objects.iteritems():
+        for name, obj in self.project.astObjects.iteritems():
             obj.tags.clear()
             if not hasattr(obj, "callNames"):
                 continue
@@ -201,7 +201,7 @@ class MainWindow:
                     break
         # generate _indirect_ MPI caller tags
         reverseCalls = {}
-        for obj in self.project.objects.itervalues():
+        for obj in self.project.astObjects.itervalues():
             if not hasattr(obj, "callNames"):
                 continue
             for name in obj.callNames:
@@ -216,11 +216,11 @@ class MainWindow:
         while len(unprocessed)>0:
             name = unprocessed.pop()
             processed.add(name)
-            callee = self.project.objects.get(name, None)
+            callee = self.project.astObjects.get(name, None)
             if callee and not callee.getActive(): # do not process inactive
                 continue
             for callerName in reverseCalls.get(name, ()):
-                self.project.objects[callerName].tags.add("indirect MPI caller")
+                self.project.astObjects[callerName].tags.add("indirect MPI caller")
                 if not callerName in processed:
                     unprocessed.add(callerName)
 

@@ -121,8 +121,8 @@ class CallTree:
         calleeNames = project.calleeNames.get(name, ())
         LOG.log(FINE, "Number of callees for %s: %d" %(obj, len(calleeNames)))
         for name in calleeNames:
-            if project.objects.has_key(name.lower()):
-                callObj = project.objects[name.lower()]
+            if project.astObjects.has_key(name.lower()):
+                callObj = project.astObjects[name.lower()]
                 data = factory.getRow(callObj)
                 color = self.root.diagram.hasObject(callObj) and green or black
                 data[3] = color

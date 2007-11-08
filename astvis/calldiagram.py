@@ -67,11 +67,11 @@ class CallDiagram(diagram.Diagram):
                     self.addConnector(ContainerConnector(obj, child, self))
             # get all calls/callers for obj and add connectors
             for ID in self.project.calleeNames.get(obj.name.lower(), ()):
-                callee = self.project.objects.get(ID.lower(), None)
+                callee = self.project.astObjects.get(ID.lower(), None)
                 if callee and self.hasObject(callee):
                     self.addConnector(CallConnector(obj, callee, self))            
             for ID in self.project.callerNames.get(obj.name.lower(), ()):
-                caller = self.project.objects.get(ID.lower(), None)
+                caller = self.project.astObjects.get(ID.lower(), None)
                 if caller and self.hasObject(caller):
                     self.addConnector(CallConnector(caller, obj, self))            
 

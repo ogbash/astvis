@@ -68,32 +68,8 @@ class Diagram(object):
             return False
         connector.teardown_diagram()
         self._connectors.remove(connector)
-        return True        
-        
-#    def addRelation(self, relation):
-#        if self._connectors.has_key(relation):
-#            return False
-
-#        items = map(lambda obj: self._items.get(obj, None), relation.getObjects())
-#        if None in items:
-#            return False
-        
-#        connector = self._factory.getDiagramConnector(relation)
-#        self._connectors[relation] = connector
-#        self._canvas.add(connector)
-#        self._connectItems(items, connector)
-        
-#    def removeRelation(self, relation):
-#        if self._connectors.has_key(relation):
-#            self._canvas.remove(self._connectors[relation])
-#            del self._connectors[relation]
-#            return True
-#        return False
+        return True
         
     def getCanvas(self):
         return self._canvas
-
-# exports
-
-from calldiagram import *
 

@@ -112,11 +112,11 @@ class AstTree:
         # generate sidebar tree
         self._generateSidebarTree(None, self.project.files)
         
-    def _generateSidebarTree(self, iParent, objects):
+    def _generateSidebarTree(self, iParent, astObjects):
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Generating for %s %d children" % \
-                    (iParent and self.model[iParent][1] or '', len(objects)))
-        for obj in objects:
+                    (iParent and self.model[iParent][1] or '', len(astObjects)))
+        for obj in astObjects:
             action = self.filter.apply(obj)
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Filter result for %s is %s" % (obj, action))
