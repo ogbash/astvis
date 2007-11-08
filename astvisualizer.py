@@ -18,7 +18,8 @@ try:
 except:
     pass
 
-import gtk  
+import gtk, gobject
+gtk.gdk.threads_init()
 import gtk.glade
 import cairo
 import gaphas
@@ -94,10 +95,7 @@ class MainWindow:
             print event_
         elif event_ is event.XMLMAP_PROGRESSED:
             ratio, = args
-            LOG.debug('progress')
-            #self.xmlmapProgressbar.set_fraction(ratio)
-            #self.xmlmapProgressDialog.queue_draw()
-            LOG.debug('progress exit')
+            self.xmlmapProgressbar.set_fraction(ratio)
             #print event_, ratio
 
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
@@ -147,7 +145,7 @@ class MainWindow:
             obj.unselect_all()
         else:
             LOG.info("Loaded %s" % obj.get_filename())
-        
+                
     def _initProjectTreeView(self):
         self.projectTreeView = self.wTree.get_widget("project_tree")
         column = gtk.TreeViewColumn("Name")

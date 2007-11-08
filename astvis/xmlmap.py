@@ -24,6 +24,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         import os
         stat = os.fstat(self._file.fileno())
         self._fileSize = stat.st_size
+        self._fileProgress = 0.
         try:
             LOG.debug("File %s opened" % self._file)
             event.manager.notifyObservers(self, event.XMLMAP_STARTED, None)
@@ -62,7 +63,11 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             obj = None
         
         self.elements.append((name, attrs, obj))
-        event.manager.notifyObservers(self, event.XMLMAP_PROGRESSED, (self._file.tell()/float(self._fileSize),))
+
+        newProgress = float(self._file.tell())
+        if newProgress - self._fileProgress > 0.05:
+            event.manager.notifyObservers(self, event.XMLMAP_PROGRESSED, (newProgress/self._fileSize,))
+            self._fileProgress = newProgress
 
     def _tagMatches(self, name, attrs, _xmlTags):
         for tagName, attrPredicate in _xmlTags:
