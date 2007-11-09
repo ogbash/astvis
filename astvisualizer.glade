@@ -3,7 +3,7 @@
 <!--*- mode: xml -*-->
 <glade-interface>
   <widget class="GtkWindow" id="main_window">
-    <property name="width_request">600</property>
+    <property name="width_request">800</property>
     <property name="height_request">600</property>
     <property name="visible">True</property>
     <property name="title" translatable="yes">AST Visualizer</property>
@@ -137,6 +137,20 @@
                             <property name="label" translatable="yes">MPI tags</property>
                             <property name="use_underline">True</property>
                             <signal name="activate" handler="view_mpi_tags"/>
+                          </widget>
+                        </child>
+                        <child>
+                          <widget class="GtkSeparatorMenuItem" id="separatormenuitem3">
+                            <property name="visible">True</property>
+                          </widget>
+                        </child>
+                        <child>
+                          <widget class="GtkMenuItem" id="menuitem5">
+                            <property name="visible">True</property>
+                            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                            <property name="label" translatable="yes">Tasks dialog</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="_show_tasks_dialog"/>
                           </widget>
                         </child>
                       </widget>
@@ -423,12 +437,22 @@
           </packing>
         </child>
         <child>
-          <widget class="GtkStatusbar" id="statusbar">
+          <widget class="GtkHBox" id="hbox2">
             <property name="visible">True</property>
+            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+            <child>
+              <widget class="GtkStatusbar" id="statusbar">
+                <property name="visible">True</property>
+                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                <property name="spacing">2</property>
+              </widget>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
           </widget>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
             <property name="position">2</property>
           </packing>
         </child>
@@ -480,23 +504,32 @@
       </widget>
     </child>
   </widget>
-  <widget class="GtkDialog" id="xmlmap_progress_dialog">
+  <widget class="GtkDialog" id="task_progress_dialog">
+    <property name="width_request">200</property>
+    <property name="height_request">100</property>
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">Tasks</property>
     <property name="window_position">GTK_WIN_POS_CENTER_ON_PARENT</property>
     <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
     <property name="has_separator">False</property>
+    <signal name="delete_event" handler="_hideWidget"/>
     <child internal-child="vbox">
-      <widget class="GtkVBox" id="xmlmap_vbox">
+      <widget class="GtkVBox" id="task_vbox">
         <property name="visible">True</property>
         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
         <property name="spacing">2</property>
         <child>
-          <widget class="GtkProgressBar" id="xmlmap_progressbar">
+          <widget class="GtkTable" id="task_progressbars">
             <property name="visible">True</property>
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-            <property name="pulse_step">0.05000000074505806</property>
-            <property name="text" translatable="yes">scanning AST</property>
+            <property name="n_columns">2</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
           </widget>
           <packing>
             <property name="expand">False</property>
@@ -509,14 +542,7 @@
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="layout_style">GTK_BUTTONBOX_END</property>
             <child>
-              <widget class="GtkButton" id="cancel">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                <property name="label" translatable="yes">cancel</property>
-                <property name="response_id">0</property>
-              </widget>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>

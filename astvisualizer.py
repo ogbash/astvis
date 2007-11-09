@@ -27,7 +27,7 @@ import gaphas.examples
 import math
 import pickle
 from astvis import INFO_OBJECT_NAME, OPTIONS
-from astvis import gaphasx, event, xmlmap
+from astvis import gaphasx, event, xmlmap, thread
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
@@ -44,9 +44,12 @@ class MainWindow:
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
-        dwTree = gtk.glade.XML("astvisualizer.glade", "xmlmap_progress_dialog")
-        self.xmlmapProgressDialog = dwTree.get_widget('xmlmap_progress_dialog')
-        self.xmlmapProgressbar = dwTree.get_widget('xmlmap_progressbar')
+        dwTree = gtk.glade.XML("astvisualizer.glade", "task_progress_dialog")
+        self.taskProgressDialog = dwTree.get_widget('task_progress_dialog')
+        taskProgressbars = dwTree.get_widget('task_progressbars')
+        import astvis.widgets.task
+        self.taskHandler = astvis.widgets.task.TaskHandler(taskProgressbars)
+        dwTree.signal_autoconnect(self)
 
         self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
@@ -85,18 +88,13 @@ class MainWindow:
         self._setProject(Project())
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
-        
-        event.manager.subscribeClass(self._notify, xmlmap.XMLLoader)
-        
-    def _notify(self, obj, event_, args):
-        if event_ is event.XMLMAP_STARTED:
-            print event_
-        elif event_ is event.XMLMAP_ENDED:
-            print event_
-        elif event_ is event.XMLMAP_PROGRESSED:
-            ratio, = args
-            self.xmlmapProgressbar.set_fraction(ratio)
-            #print event_, ratio
+
+    def _hideWidget(self, widget, data):
+        widget.hide()
+        return True
+
+    def _show_tasks_dialog(self, obj):
+        self.taskProgressDialog.show()
 
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:
@@ -130,22 +128,21 @@ class MainWindow:
             self.wTree.get_widget("astfile_chooserbutton").hide()
 
     def astFileChanged(self, obj):
+        self.taskProgressDialog.show()
+        self._astFileChanged(obj)
+
+    @thread.threaded                
+    def _astFileChanged(self, obj):
         LOG.debug("Loading %s" % obj.get_filename())
         try:
-            self.xmlmapProgressDialog.show()
-            import threading
-            self.thread = threading.Thread(target=self.project._loadAstFile, args=(obj.get_filename(),))
-            LOG.debug("Thread created %s" % self.thread)
-            self.thread.start()
-            LOG.debug("Thread started %s" % self.thread)
-            #self.xmlmapProgressDialog.show(False)
+            self.project._loadAstFile(obj.get_filename())
         except(Exception), e:
-            #self.xmlmapProgressDialog.show(False)
             LOG.error("Error loading file, %s", e, exc_info=e)
             obj.unselect_all()
         else:
             LOG.info("Loaded %s" % obj.get_filename())
-                
+    
+    
     def _initProjectTreeView(self):
         self.projectTreeView = self.wTree.get_widget("project_tree")
         column = gtk.TreeViewColumn("Name")
