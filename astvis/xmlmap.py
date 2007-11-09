@@ -7,6 +7,7 @@ from common import FINE, FINER, FINEST
 import xml.sax
 import operator
 import event
+import os.path
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, project, classes, path="/"):
@@ -27,12 +28,13 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self._fileProgress = 0.
         try:
             LOG.debug("File %s opened" % self._file)
-            event.manager.notifyObservers(self, event.XMLMAP_STARTED, None)
+            event.manager.notifyObservers(self, event.TASK_STARTED, \
+                    ('Loading AST %s' % os.path.basename(filename),))
             xmlTree = xml.sax.parse(self._file, self)
-            event.manager.notifyObservers(self, event.XMLMAP_ENDED, None)
         finally:
             self._file.close()
             LOG.debug("File %s closed" % self._file)
+            event.manager.notifyObservers(self, event.TASK_ENDED, None)
         return self.objects
         
     def _parsePath(self, path):
@@ -66,7 +68,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
         newProgress = float(self._file.tell())
         if newProgress - self._fileProgress > 0.05:
-            event.manager.notifyObservers(self, event.XMLMAP_PROGRESSED, (newProgress/self._fileSize,))
+            event.manager.notifyObservers(self, event.TASK_PROGRESSED, (newProgress/self._fileSize,))
             self._fileProgress = newProgress
 
     def _tagMatches(self, name, attrs, _xmlTags):

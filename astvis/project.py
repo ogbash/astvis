@@ -12,7 +12,7 @@ from model import ast, basic
 class Project:
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
-    classes.extend([ast.Block, 
+    classes.extend([ast.Block, ast.Use,
             ast.Assignment, ast.Call, ast.Statement,
             ast.TypeDeclaration, ast.Type, ast.Entity,
             ast.Constant, ast.Reference, ast.Operator,
@@ -57,12 +57,19 @@ class Project:
         #loader = xmltool.XMLLoader(self)
         LOG.debug('Loading AST file in %s' % self)
         loader = xmlmap.XMLLoader(self, Project.classes, "/ASTCollection")
-        loader.callback = self._newObjectCallback
-        self.files = loader.loadFile(fileName)
+        #loader.callback = self._newObjectCallback
+        files = loader.loadFile(fileName)
         LOG.debug("len(calleNames)=%d, len(callerNames)=%d" % (len(self.calleeNames), len(self.callerNames)))
-        event.manager.notifyObservers(self, event.FILES_CHANGED, None)
         
-        self._generateObjects(self.files)
+        try:
+            event.manager.notifyObservers(self, event.TASK_STARTED, \
+                    ('Generating basic objects',))
+            self._generateObjects(files)
+            self.files = files
+            event.manager.notifyObservers(self, event.FILES_CHANGED, None)
+        finally:
+            event.manager.notifyObservers(self, event.TASK_ENDED, None)        
+        
         LOG.debug('Finished loading AST file in %s' % self)
             
     def addCall(self, callerName, calleeName):
@@ -82,7 +89,8 @@ class Project:
         LOG.debug("Generating basic objects from %d files" % len(astFiles))
     
         # first lets create core tree
-        for file_ in astFiles:
+        for n, file_ in enumerate(astFiles):
+            event.manager.notifyObservers(self, event.TASK_PROGRESSED, (0.5*n/len(astFiles),))
             # subroutine, module->subroutine, module->variable
             for astObj in file_.units:
                 obj = self._createObject(None, astObj)
@@ -94,7 +102,8 @@ class Project:
                         obj.subprograms[subObj.name] = subObj
                         
         # generate variables
-        for astObj in astFiles:
+        for n, astObj in enumerate(astFiles):
+            event.manager.notifyObservers(self, event.TASK_PROGRESSED, (0.5+0.5*n/len(astFiles),))
             self._fillObject(astObj)
     
     def getObjectByASTObject(self, astObj):
@@ -130,7 +139,18 @@ class Project:
             astScope = ast.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
             scope.scanDeclaration(astObj)
-
+        elif isinstance(astObj, ast.Use):
+            astScope = ast.getScope(astObj)
+            scope = self.getObjectByASTObject(astScope)
+            use = ast.Use()
+            use.name = astObj.name.lower()
+            use.module = self.globalObjects.get(use.name, None)
+        elif isinstance(astObj, ast.Statement) and astObj.type=='call':
+            astScope = ast.getScope(astObj)
+            scope = self.getObjectByASTObject(astScope)
+            calleeName = astObj.name
+        
+        # recurse for children
         for childAstObj in astObj.getChildren():
             self._fillObject(childAstObj)
 

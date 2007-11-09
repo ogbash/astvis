@@ -68,7 +68,8 @@ class ProgramUnit(ASTObject):
     _xmlTags = [("module", None), ("program", None)]
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subroutine", "function"),
-            _setBlock: ("block",)}
+            _setBlock: ("block",),
+            'uses': ('use',)}
     _xmlChildren.update(ASTObject._xmlChildren)
     
     def _xmlPreProcess(self, name, attrs):
@@ -79,12 +80,14 @@ class ProgramUnit(ASTObject):
         self.parent = parent
         self.type = None
         self.name = '<unknown>'
+        self.uses = []
         self.declarationBlock = None
         self.statementBlock = None
         self.subprograms = []
 
     def getChildren(self):
         children = []
+        children.extend(self.uses)
         if self.declarationBlock:
             children.append(self.declarationBlock)
         if self.statementBlock:
@@ -105,7 +108,8 @@ class Subprogram(ASTObject):
     _xmlTags = [("subroutine", None), ("function", None)]
     _xmlAttributes = {"name": "id"}
     _xmlChildren = {"subprograms": ("subprogram",),
-            "statementBlock": ("block",) }
+            "statementBlock": ("block",),
+            'uses': ('use',) }
     _xmlChildren.update(ASTObject._xmlChildren)
     
     def __init__(self, project, parent = None):
@@ -113,12 +117,14 @@ class Subprogram(ASTObject):
         ASTObject.__init__(self, project)
         self.parent = parent
         self.name = '<unknown>'
+        self.uses = []
         self.declarationBlock = None
         self.statementBlock = None
         self.subprograms = []
 
     def getChildren(self):
         children = []
+        children.extend(self.uses)
         if self.declarationBlock:
             children.append(self.declarationBlock)
         if self.statementBlock:
@@ -316,6 +322,19 @@ class Reference(Expression):
 
     def __str__(self):
         return "%s.%s" % ((self.base or ''), self.name)
+
+class Use(ASTObject):
+    _xmlTags = [('use', None)]
+    _xmlAttributes = {'name': 'id'}
+    _xmlChildren = {}
+
+    def __init__(self, project, parent = None):
+        ASTObject.__init__(self, project)
+        self.parent = parent
+        self.name = None
+
+    def __str__(self):
+        return "<use %s>" % self.name
         
 class Location(dict):
     _xmlTags = [("location", None)]

@@ -11,6 +11,7 @@ class BasicObject(object):
     
 class Scope(BasicObject):
     def __init__(self):
+        self.uses = {} # name ->obj
         self.variables = {}
 
     def getVariables(self):
@@ -40,7 +41,6 @@ class ProgramUnit(Scope):
         self.name = None
         self.subprograms = {} # name->obj
         
-        
     def __str__(self):
         return "<ProgramUnit %s>" % self.name
 
@@ -66,4 +66,13 @@ class Variable(BasicObject):
 
     def __str__(self):
         return "<Variable %s>" % self.name
+
+class Use(BasicObject):
+    def __init__(self):
+        self.name
+        self.module = None # Subprogram
+        self.only = {} # name->name
+    def __str__(self):
+        return "<Use %s>" % self.name
+
 

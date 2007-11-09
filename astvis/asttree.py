@@ -19,7 +19,8 @@ class RowFactory:
                     or "data/thumbnails/program.png",
             ast.Subprogram: "data/thumbnails/subroutine.png",
             ast.Statement: lambda obj: obj.type=='call' and 'data/thumbnails/call.png' or None,
-            ast.Call: "data/thumbnails/call.png"}
+            ast.Call: "data/thumbnails/call.png",
+            ast.Use: "data/thumbnails/use.png"}
             
     def __init__(self):
         self.thumbnails = {}    

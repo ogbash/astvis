@@ -8,9 +8,10 @@ ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
 FILES_CHANGED = "files changed"
 
-XMLMAP_STARTED = 'xmlmap started'
-XMLMAP_PROGRESSED = 'xmlmap progressed'
-XMLMAP_ENDED = 'xmlmap ended'
+TASK_STARTED = 'task started'
+TASK_PROGRESSED = 'task progressed'
+TASK_ENDED = 'task ended'
+TASK_CANCELLED = 'task cancelled'
 
 class Observer:
     "Interface for observers"
@@ -25,6 +26,7 @@ class EventManager:
     def __init__(self):
         self._subs = {} # obj -> set<observer>
         self._classSubs = {} # class -> set<observer>
+        self._eventSubs = {} # class -> set<observer>
 
     def subscribe(self, observer, obj):
         if not self._subs.has_key(obj):
@@ -46,10 +48,33 @@ class EventManager:
             return self._classSubs[clazz].remove(observer)
         return False
 
+    def subscribeEvent(self, observer, event_):
+        if not self._eventSubs.has_key(event_):
+            self._eventSubs[event_] = set()
+        return self._eventSubs[event_].add(observer)        
+
+    def unsubscribeEvent(self, observer, event_):
+        if self._eventSubs.has_key(event_):
+            return self._eventSubs[event_].remove(observer)
+        return False
+
     def _getMatchingBaseClasses(self, clazz):
         return filter(lambda base: issubclass(clazz, base), self._classSubs.keys())
 
     def notifyObservers(self, obj, event, args):
+        # notify for event observers
+        for obsEvent in self._eventSubs.iterkeys():
+            if event.startswith(obsEvent):
+                observers = self._eventSubs[obsEvent]
+                for observer in observers:
+                    try:
+                        if isinstance(observer,Observer):
+                            observer.notify(obj, event, args)
+                        else:
+                            observer(obj, event,args)
+                    except(Exception), e:
+                        LOG.warn("Exception during notify, %s", e, exc_info=True)            
+    
         # first notify class observers
         bases = self._getMatchingBaseClasses(obj.__class__)
         for base in bases:
