@@ -44,12 +44,11 @@ class MainWindow:
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
-        dwTree = gtk.glade.XML("astvisualizer.glade", "task_progress_dialog")
-        self.taskProgressDialog = dwTree.get_widget('task_progress_dialog')
-        taskProgressbars = dwTree.get_widget('task_progressbars')
+        self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
+        self.taskProgressbars = self.wTree.get_widget('task_progressbars')
+        gtklabel = self.sidebarNotebook.get_tab_label(self.taskProgressbars)
         import astvis.widgets.task
-        self.taskHandler = astvis.widgets.task.TaskHandler(taskProgressbars)
-        dwTree.signal_autoconnect(self)
+        self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
 
         self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
@@ -89,13 +88,6 @@ class MainWindow:
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
 
-    def _hideWidget(self, widget, data):
-        widget.hide()
-        return True
-
-    def _show_tasks_dialog(self, obj):
-        self.taskProgressDialog.show()
-
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         if info==INFO_OBJECT_NAME[1]:
             clazz, name = pickle.loads(data.data)
@@ -128,7 +120,7 @@ class MainWindow:
             self.wTree.get_widget("astfile_chooserbutton").hide()
 
     def astFileChanged(self, obj):
-        self.taskProgressDialog.show()
+        self.sidebarNotebook.set_current_page(self.sidebarNotebook.page_num(self.taskProgressbars))
         self._astFileChanged(obj)
 
     @thread.threaded                

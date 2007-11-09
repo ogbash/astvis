@@ -5,8 +5,9 @@ from astvis import event, xmlmap
 
 class TaskHandler:
 
-    def __init__(self, gtktable):
+    def __init__(self, gtktable, gtklabel):
         self.gtktable = gtktable
+        self.gtklabel = gtklabel
         self.tasks = {}
         event.manager.subscribeClass(self._notify, xmlmap.XMLLoader)
         
@@ -17,11 +18,12 @@ class TaskHandler:
             bar.show()
             nrows = len(self.tasks)
             self.tasks[obj] = bar
-            print nrows
-            self.gtktable.attach(bar,0,1,nrows,nrows+1)
+            self.gtktable.attach(bar,0,1,nrows,nrows+1,yoptions=0)
+            self.gtklabel.set_text('tasks(%d)' % len(self.tasks))
         elif event_ is event.XMLMAP_ENDED:
             self.gtktable.remove(self.tasks[obj])
             del self.tasks[obj]
+            self.gtklabel.set_text('tasks(%d)' % len(self.tasks))
         elif event_ is event.XMLMAP_PROGRESSED:
             ratio, = args
             self.tasks[obj].set_fraction(ratio)
