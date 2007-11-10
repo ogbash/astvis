@@ -142,7 +142,7 @@ class Project:
         elif isinstance(astObj, ast.Use):
             astScope = ast.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
-            use = ast.Use()
+            use = basic.Use()
             use.name = astObj.name.lower()
             use.module = self.globalObjects.get(use.name, None)
         elif isinstance(astObj, ast.Statement) and astObj.type=='call':

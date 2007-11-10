@@ -69,7 +69,7 @@ class Variable(BasicObject):
 
 class Use(BasicObject):
     def __init__(self):
-        self.name
+        self.name = None
         self.module = None # Subprogram
         self.only = {} # name->name
     def __str__(self):

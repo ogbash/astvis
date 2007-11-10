@@ -121,18 +121,17 @@ class MainWindow:
 
     def astFileChanged(self, obj):
         self.sidebarNotebook.set_current_page(self.sidebarNotebook.page_num(self.taskProgressbars))
-        self._astFileChanged(obj)
+        self._astFileChanged(obj.get_filename())
 
     @thread.threaded                
-    def _astFileChanged(self, obj):
-        LOG.debug("Loading %s" % obj.get_filename())
+    def _astFileChanged(self, filename):
+        LOG.debug("Loading %s" % filename)
         try:
-            self.project._loadAstFile(obj.get_filename())
+            self.project._loadAstFile(filename)
         except(Exception), e:
             LOG.error("Error loading file, %s", e, exc_info=e)
-            obj.unselect_all()
         else:
-            LOG.info("Loaded %s" % obj.get_filename())
+            LOG.info("Loaded %s" % filename)
     
     
     def _initProjectTreeView(self):
