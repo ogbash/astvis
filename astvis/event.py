@@ -6,7 +6,7 @@ LOG = logging.getLogger("event")
 # observer
 ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
-FILES_CHANGED = "files changed"
+ASTMODEL_CHANGED = "AST model changed"
 
 TASK_STARTED = 'task started'
 TASK_PROGRESSED = 'task progressed'

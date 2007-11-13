@@ -111,9 +111,10 @@ class AstTree:
         self.view.set_model(self.model)
         
         # generate sidebar tree
-        self._generateSidebarTree(None, self.project.files)
+        astModel = self.project.astModel
+        self._generateSidebarTree(None, astModel and astModel.files or ())
         
-    def _generateSidebarTree(self, iParent, astObjects):
+    def _generateSidebarTree(self, iParent, astObjects):            
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Generating for %s %d children" % \
                     (iParent and self.model[iParent][1] or '', len(astObjects)))
@@ -151,10 +152,11 @@ class AstTree:
             diagram, = args
             iObject = self._findInTree(obj)
             self.model[iObject][3] = gtk.gdk.color_parse("black")
-        elif _event==event.FILES_CHANGED and obj==self.project:
+        elif _event==event.ASTMODEL_CHANGED and obj==self.project:
             # generate sidebar tree
             self.model.clear()
-            self._generateSidebarTree(None, self.project.files)            
+            astModel = self.project.astModel
+            self._generateSidebarTree(None, astModel and astModel.files or ())
         
 
     def selectObject(self, obj):

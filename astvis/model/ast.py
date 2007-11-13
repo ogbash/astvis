@@ -3,8 +3,17 @@
 """AST model  classes for the application."""
 
 from astvis.common import OPTIONS
+import itertools
 
 ACTIVE_CHANGED = "active"
+
+class ASTModel(object):
+    def __init__(self):
+        self.files = None
+        
+    def itertree(self, callback):
+        for f in self.files:
+            f.itertree(callback)
 
 # basic model classes
 
@@ -12,6 +21,13 @@ class ASTObject(object):
     """Base class for all AST objects."""
 
     _xmlChildren = {'location': 'location'}
+
+    def _setProject(self, project):
+        self._project = project
+
+    project = property(lambda self: self._project, _setProject,
+            doc="""Project where this AST object belongs to.
+            @todo: AST objects should not depend on project, replace with AST model?""")
 
     def __init__(self, project):
         self.project = project
@@ -39,7 +55,11 @@ class ASTObject(object):
     def getChildren(self):
         "List of element children"
         return []
-
+        
+    def itertree(self, callback):
+        for f in self.getChildren():
+            f.itertree(callback)
+            callback(self)
 
 class File(ASTObject):
     _xmlTags = [("file",None)]
