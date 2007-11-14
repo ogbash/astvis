@@ -27,7 +27,7 @@ import gaphas.examples
 import math
 import pickle
 from astvis import INFO_OBJECT_NAME, OPTIONS
-from astvis import gaphasx, event, xmlmap, thread
+from astvis import gaphasx, event, xmlmap, thread, core
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
@@ -243,6 +243,8 @@ class MainWindow:
         self.view.queue_draw_refresh()
 
 if __name__ == "__main__":
+    from astvis.services import references
+    core.registerService('ASTTreeWalker', references.ASTTreeWalker())
     window = MainWindow()
     gtk.main()
 

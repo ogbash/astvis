@@ -11,6 +11,7 @@ from common import INFO_TEXT, INFO_OBJECT_NAME
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
 from model import ast
+from astvis import core
 
 class RowFactory:
     thumbnailFilenames = {ast.File: "data/thumbnails/file.png",
@@ -105,7 +106,6 @@ class CallTree:
 
     def showObject(self, obj):
         self._clearModel()
-        project = obj.project
     
         black = gtk.gdk.color_parse("black")
         green = gtk.gdk.color_parse("darkgreen")
@@ -118,16 +118,30 @@ class CallTree:
         if not name:
             return
         
-        calleeNames = project.calleeNames.get(name, ())
-        LOG.log(FINE, "Number of callees for %s: %d" %(obj, len(calleeNames)))
-        for name in calleeNames:
-            if project.astObjects.has_key(name.lower()):
-                callObj = project.astObjects[name.lower()]
+        resolver = core.getService('ASTTreeWalker')
+        references = resolver.getReferencesFrom(obj)
+        #calleeNames = project.calleeNames.get(name, ())
+        #LOG.log(FINE, "Number of callees for %s: %d" %(obj, len(calleeNames)))
+        LOG.log(FINE, "Number of references for %s: %d" %(obj, len(references)))
+        for ref in references:
+            # generate row for subprograms only
+            if not (isinstance(ref, ast.Statement) and ref.type=='call'\
+                    or isinstance(ref, ast.Call)):
+                continue
+            
+            astModel = ref.getModel()
+            astScope = astModel.getScope(ref)
+            basicModel = astModel.basicModel
+            scope = basicModel.getObjectByASTObject(astScope)
+            callee = basicModel.getObjectByName(ref.name.lower(), scope)
+          
+            if callee is not None:
+                callObj = callee.astObject
                 data = factory.getRow(callObj)
                 color = self.root.diagram.hasObject(callObj) and green or black
                 data[3] = color
             else:
-                data = (name, None, None, black)
+                data = (ref.name, None, None, black)
             self.model.append(iObj, data)
 
         self.view.expand_row(self.model.get_path(iObj), False)        

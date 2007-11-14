@@ -16,8 +16,8 @@ def getService(name):
 
 def registerService(name, component):
     if name in _services.keys():
-        LOG.info("Replacing service '%s': %s with %s" % (name, _services[name], component)
+        LOG.info("Replacing service '%s': %s with %s" % (name, _services[name], component))
     else:
-        LOG.info("Adding service '%s': %s" % (name, component)
+        LOG.info("Adding service '%s': %s" % (name, component))
     _services[name] = component
 

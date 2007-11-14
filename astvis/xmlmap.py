@@ -10,8 +10,8 @@ import event
 import os.path
 
 class XMLLoader(xml.sax.handler.ContentHandler):
-    def __init__(self, project, classes, path="/"):
-        self.project = project
+    def __init__(self, model, classes, path="/"):
+        self.model = model
         self.classes = classes
         self.elements = [] # (tagname, attrs, obj)
         self.objects = []
@@ -47,7 +47,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         for clazz in self.classes:
             if self._tagMatches(name, attrs, clazz._xmlTags):
                 LOG.log(FINER, "Found tag '%s'" % name)
-                obj = clazz(self.project)
+                obj = clazz(self.model)
                 for propEval, attrName in clazz._xmlAttributes.iteritems():
                     if attrs.has_key(attrName):
                         if LOG.isEnabledFor(FINER):

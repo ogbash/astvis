@@ -31,11 +31,9 @@ class Project:
 
     def _loadAstFile(self, fileName):
         # load xml file
-        #loader = xmltool.XMLLoader(self)
         LOG.debug('Loading AST file in %s' % self)
-        loader = xmlmap.XMLLoader(self, Project.classes, "/ASTCollection")
-        #loader.callback = self._newObjectCallback
         astModel = ast.ASTModel()
+        loader = xmlmap.XMLLoader(astModel, Project.classes, "/ASTCollection")
         astModel.files = loader.loadFile(fileName)
         self.astModel = astModel
         event.manager.notifyObservers(self, event.ASTMODEL_CHANGED, None)

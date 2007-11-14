@@ -12,6 +12,7 @@ from astvis.common import FINE, FINER, FINEST
 class BasicModel(object):
     def __init__(self, astModel):
         self.astModel = astModel
+        astModel.basicModel = self
         self.globalObjects = {} #  name (of top level program unit or subroutine) -> obj
         self.objectsMap = {} # ast object -> object
 
@@ -41,7 +42,7 @@ class BasicModel(object):
                 self.globalObjects[obj.name] = obj
                 _generateSubroutines(astObj, obj)
                         
-        # generate variables
+        # generate variables, uses
         for n, astObj in enumerate(astFiles):
             event.manager.notifyObservers(self, event.TASK_PROGRESSED, (0.5+0.5*n/len(astFiles),))
             self._fillObject(astObj)
@@ -49,13 +50,13 @@ class BasicModel(object):
     def _createObject(self, parentObj, astObj):
         "Creates basic object from given C{astObj} and its parent basic object"
         if isinstance(astObj, ast.ProgramUnit):
-            obj = ProgramUnit()
+            obj = ProgramUnit(self)
             obj.parent = parentObj
             obj.astObject = astObj
             obj.name = astObj.name.lower()
 
         elif isinstance(astObj, ast.Subprogram):
-            obj = Subprogram()
+            obj = Subprogram(self)
             obj.parent = parentObj
             obj.astObject = astObj
             obj.name = astObj.name.lower()
@@ -65,15 +66,16 @@ class BasicModel(object):
         
     def _fillObject(self, astObj):
         if isinstance(astObj, ast.TypeDeclaration):
-            astScope = ast.getScope(astObj)
+            astScope = self.astModel.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
             scope.scanDeclaration(astObj)
         elif isinstance(astObj, ast.Use):
-            astScope = ast.getScope(astObj)
+            astScope = self.astModel.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
-            use = Use()
+            use = Use(self)
             use.name = astObj.name.lower()
             use.module = self.globalObjects.get(use.name, None)
+            scope.uses[use.name] = use
         
         # recurse for children
         for childAstObj in astObj.getChildren():
@@ -107,40 +109,47 @@ class BasicModel(object):
             parentObj = self.getObjectByASTObject(parentAstObj)
             return parentObj[astObj.name]
 
+    def getObjectByName(self, name, scope):
+        if name=='master':
+            print '--- %s'%scope
+        if scope.variables.has_key(name):
+            return scope.variables[name]
+        if scope.subprograms.has_key(name):
+            return scope.subprograms[name];
+            
+        # @todo handle renamed 'use'
+        for use in scope.uses.itervalues():
+            if use.module is not None:
+                v = self.getObjectByName(name, use.module)
+                if v: return v
+            else:
+                LOG.log(FINER, 'No module named %s'%use.name)
+            
+        # recurse to upper scopes
+        if scope.parent is not None and isinstance(scope.parent, Scope):
+            return self.getObjectByName(name, scope.parent)
+
+
 class BasicObject(object):
-    pass
+    def __init__(self, model):
+        self.model = model
+
+    def getModel(self):
+        self.model
     
 class Scope(BasicObject):
-    def __init__(self):
+    def __init__(self, model):
+        BasicObject.__init__(self, model)
         self.uses = {} # name ->obj
         self.variables = {}
         self.subprograms = {} # name->obj
-
-    def getByName(self, name):
-        if self.variables.has_key(name):
-            return self.variables[name]
-        if self.subprograms.has_key(name):
-            return self.subprograms[name];
-            
-        # @todo handle renamed 'use'
-        for use in self.uses:
-            v = use.module.getByName(name)
-            if v: return v
-
-
-    def getVariables(self):
-        """Get all variables declared in the scope.
-        
-        @return: list of L{Variable} objects
-        """
-        raise NotImplementedError('Should implement in subclass')
         
     def scanDeclaration(self, astDecl):
         'Scan AST declaration and extend scope variables.'
         for entity in astDecl.entities:
             variable = self.variables.get(entity.name.lower())
             if variable==None:
-                variable = Variable()
+                variable = Variable(self.model)
                 variable.name = entity.name.lower()
                 self.variables[variable.name] = variable
                 if LOG.isEnabledFor(FINER):
@@ -148,8 +157,8 @@ class Scope(BasicObject):
             variable.scanDeclaration(astDecl)
 
 class ProgramUnit(Scope):
-    def __init__(self):
-        Scope.__init__(self)
+    def __init__(self, model):
+        Scope.__init__(self, model)
         self.astObject = None
         self.parent = None
         self.name = None
@@ -158,8 +167,8 @@ class ProgramUnit(Scope):
         return "<ProgramUnit %s>" % self.name
 
 class Subprogram(Scope):
-    def __init__(self):
-        Scope.__init__(self)
+    def __init__(self, model):
+        Scope.__init__(self, model)
         self.astObject = None
         self.parent = None
         self.name = None
@@ -168,7 +177,8 @@ class Subprogram(Scope):
         return "<Subprogram %s>" % self.name
     
 class Variable(BasicObject):
-    def __init__(self):
+    def __init__(self, model):
+        BasicObject.__init__(self, model)
         self.astDeclarations = []
         self.parent = None
         self.name = None
@@ -180,7 +190,8 @@ class Variable(BasicObject):
         return "<Variable %s>" % self.name
 
 class Use(BasicObject):
-    def __init__(self):
+    def __init__(self, model):
+        BasicObject.__init__(self, model)
         self.name = None
         self.module = None # Subprogram
         self.only = {} # name->name

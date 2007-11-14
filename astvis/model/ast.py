@@ -10,10 +10,22 @@ ACTIVE_CHANGED = "active"
 class ASTModel(object):
     def __init__(self):
         self.files = None
+        self.basicModel = None
         
     def itertree(self, callback):
         for f in self.files:
             f.itertree(callback)
+
+    def getScope(self, astObj):
+        if isinstance(astObj, (Subprogram, ProgramUnit)):
+            return astObj
+        return astObj.parent and self.getScope(astObj.parent) or None
+
+    def getStatement(self, astObj):
+        if isinstance(astObj, Statement):
+            return astObj
+        return astObj.parent and self.getStatement(astObj.parent) or None
+
 
 # basic model classes
 
@@ -22,15 +34,14 @@ class ASTObject(object):
 
     _xmlChildren = {'location': 'location'}
 
-    def _setProject(self, project):
-        self._project = project
+    def _setModel(self, model):
+        self._model = model
 
-    project = property(lambda self: self._project, _setProject,
-            doc="""Project where this AST object belongs to.
-            @todo: AST objects should not depend on project, replace with AST model?""")
+    model = property(lambda self: self._model, _setModel,
+            doc="AST model where this AST object belongs to.")
 
-    def __init__(self, project):
-        self.project = project
+    def __init__(self, model):
+        self.model = model
         self.location = None
         self.__active = True
         self.tags = set()
@@ -46,8 +57,10 @@ class ASTObject(object):
             return self
         if hasattr(self, 'parent'):
             return self.parent.getFile()
-            
         return None
+        
+    def getModel(self):
+        return self.model
     
     def getActive(self):
         return self.__active
@@ -59,7 +72,7 @@ class ASTObject(object):
     def itertree(self, callback):
         for f in self.getChildren():
             f.itertree(callback)
-            callback(self)
+        callback(self)
 
 class File(ASTObject):
     _xmlTags = [("file",None)]
@@ -67,8 +80,8 @@ class File(ASTObject):
     _xmlChildren = {"units": ("module", "program") }
     _xmlChildren.update(ASTObject._xmlChildren)
 
-    def __init__(self, project = None):
-        ASTObject.__init__(self, project = None)
+    def __init__(self, model):
+        ASTObject.__init__(self, model)
         self.name = '<unknown>'
         self.units = []
 
@@ -95,8 +108,8 @@ class ProgramUnit(ASTObject):
     def _xmlPreProcess(self, name, attrs):
         self.type = name
 
-    def __init__(self, project = None, parent = None):
-        ASTObject.__init__(self, project)
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
         self.parent = parent
         self.type = None
         self.name = '<unknown>'
@@ -127,14 +140,14 @@ class Subprogram(ASTObject):
 
     _xmlTags = [("subroutine", None), ("function", None)]
     _xmlAttributes = {"name": "id"}
-    _xmlChildren = {"subprograms": ("subprogram",),
-            "statementBlock": ("block",),
+    _xmlChildren = {"subprograms": ('subroutine', 'function'),
+            _setBlock: ("block",),
             'uses': ('use',) }
     _xmlChildren.update(ASTObject._xmlChildren)
     
-    def __init__(self, project, parent = None):
+    def __init__(self, model, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
-        ASTObject.__init__(self, project)
+        ASTObject.__init__(self, model)
         self.parent = parent
         self.name = '<unknown>'
         self.uses = []
@@ -161,8 +174,8 @@ class Block(ASTObject):
     _xmlChildren = {'statements': ('statement','declaration') }
     _xmlChildren.update(ASTObject._xmlChildren)
 
-    def __init__(self, project, parent = None):
-        ASTObject.__init__(self, project)
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
         self.parent = parent
         self.statements = []
         self.type = None
@@ -182,8 +195,8 @@ class Statement(ASTObject):
     _xmlChildren = {"blocks": ("block",)}
     _xmlChildren.update(ASTObject._xmlChildren)
     
-    def __init__(self, project, parent = None):
-        ASTObject.__init__(self, project)
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
         self.parent = parent
         self.type = "<unknown>"
         self.blocks = []
@@ -202,8 +215,8 @@ class Assignment(Statement):
             "value": ("value",) }
     #_xmlChildren.update(Statement._xmlChildren)
 
-    def __init__(self, project, parent = None):
-        Statement.__init__(self, project, parent)
+    def __init__(self, model, parent = None):
+        Statement.__init__(self, model, parent)
         self.target = None
         self.value = None
         
@@ -230,7 +243,7 @@ class Type(ASTObject):
         elif childName=='kind':
             self.kind = value.strip()
         
-    def __init__(self, project):
+    def __init__(self, model):
         self.name = '<unknown type>'
         self.kind = None
 
@@ -245,7 +258,7 @@ class Entity(ASTObject):
         if childName=='name':
             self.name = value.strip()
         
-    def __init__(self, project):
+    def __init__(self, model):
         self.name = '<entity>'
 
     def __str__(self):
@@ -257,8 +270,8 @@ class TypeDeclaration(Declaration):
     _xmlChildren = {'type': ('type',),
             'entities': ('entities',)}
     
-    def __init__(self, project):
-        Declaration.__init__(self, project)
+    def __init__(self, model):
+        Declaration.__init__(self, model)
         self.decltype = '<unknown>'
         self.type = None
         self.entities = []
@@ -270,16 +283,16 @@ class TypeDeclaration(Declaration):
         return self.entities
 
 class Expression(ASTObject):
-    def __init__(self, project, parent = None):
-        ASTObject.__init__(self, project)
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
 
 class Call(Expression):
     _xmlTags = [("call", None)]
     _xmlAttributes = {"type": 'type', "name": "name"}
     _xmlChildren = {}
         
-    def __init__(self, project, parent = None):
-        Expression.__init__(self, project, parent)
+    def __init__(self, model, parent = None):
+        Expression.__init__(self, model, parent)
         self.name = '<unknown call>'
         
 class Operator(Expression):
@@ -288,8 +301,8 @@ class Operator(Expression):
     _xmlChildren = {'right': ('left',),
             'right': ('right',)}
     
-    def __init__(self, project, parent = None):
-        Expression.__init__(self, project)
+    def __init__(self, model, parent = None):
+        Expression.__init__(self, model)
         self.parent = parent
         self.type = "(op)"
         self.left = None
@@ -313,8 +326,8 @@ class Constant(Expression):
     _xmlChildren = {}
     _xmlContent = _setContent
 
-    def __init__(self, project, parent = None):
-        Expression.__init__(self, project)
+    def __init__(self, model, parent = None):
+        Expression.__init__(self, model)
         self.parent = parent
         self.type = None
         self.value = None
@@ -327,8 +340,8 @@ class Reference(Expression):
     _xmlAttributes = {"name": "name"}
     _xmlChildren = {"base": ("base",)}
 
-    def __init__(self, project, parent = None):
-        Expression.__init__(self, project)
+    def __init__(self, model, parent = None):
+        Expression.__init__(self, model)
         self.parent = parent
         self.name = None
         self.base = None
@@ -348,8 +361,8 @@ class Use(ASTObject):
     _xmlAttributes = {'name': 'id'}
     _xmlChildren = {}
 
-    def __init__(self, project, parent = None):
-        ASTObject.__init__(self, project)
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
         self.parent = parent
         self.name = None
 
@@ -362,7 +375,7 @@ class Location(dict):
     _xmlChildren = {'begin': ("begin",),
             'end': ("end",)}
             
-    def __init__(self, project):
+    def __init__(self, model):
         super(Location, self).__init__()
         self.begin = None
         self.end = None
@@ -378,16 +391,6 @@ class Point(object):
             _setColumn: 'column'}
     _xmlChildren = {}
 
-    def __init__(self, project):
+    def __init__(self, model):
         pass
-
-def getScope(astObj):
-    if isinstance(astObj, (Subprogram, ProgramUnit)):
-        return astObj
-    return astObj.parent and getScope(astObj.parent) or None
-
-def getStatement(astObj):
-    if isinstance(astObj, Statement):
-        return astObj
-    return astObj.parent and getStatement(astObj.parent) or None
 
