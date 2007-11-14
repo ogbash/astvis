@@ -90,8 +90,8 @@ class AstTree:
         self.view.get_selection().connect("changed", self._selectionChanged, None)        
         self.view.connect("drag-data-get", self._dragDataGet)
         self.view.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, 
-                [(INFO_TEXT[0], 0, INFO_TEXT[1]),
-                 (INFO_OBJECT_NAME[0], 0, INFO_OBJECT_NAME[1])],
+                [(INFO_TEXT.name, 0, INFO_TEXT.number),
+                 (INFO_OBJECT_PATH.name, 0, INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
                 
@@ -184,7 +184,10 @@ class AstTree:
         return False
                             
     def _dragDataGet(self, widget, context, data, info, timestamp):
+        "Returns data for the GTK DnD protocol."
         model, iRow = self.view.get_selection().get_selected()
         obj = model[iRow][1]
-        data.set(INFO_OBJECT_NAME[0], 0, pickle.dumps((obj.__class__,obj.name)) )
+        path = obj.model.getPath(obj)
+        data.set(INFO_OBJECT_PATH.name, 0, pickle.dumps((obj.__class__,path)) )
+        LOG.debug("GTK DnD dragDataGet with info=%d, path=%s"%(info, path))
 

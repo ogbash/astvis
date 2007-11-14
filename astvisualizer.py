@@ -26,8 +26,8 @@ import gaphas
 import gaphas.examples
 import math
 import pickle
-from astvis import INFO_OBJECT_NAME, OPTIONS
 from astvis import gaphasx, event, xmlmap, thread, core
+from astvis.common import *
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
@@ -58,7 +58,7 @@ class MainWindow:
         outer.set_vadjustment(self.view.vadjustment)        
         self.view.connect("key-press-event", self.keyPress, None)
         self.view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
-                [(INFO_OBJECT_NAME[0],0,INFO_OBJECT_NAME[1])],
+                [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)
         self.view.connect("drag-data-received", self._data_recv)
 
@@ -89,15 +89,16 @@ class MainWindow:
         self.view.canvas = self.diagram.getCanvas()
 
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
-        if info==INFO_OBJECT_NAME[1]:
-            clazz, name = pickle.loads(data.data)
+        LOG.debug("GTK DnD data_recv with info=%d"%info)
+        if info==INFO_OBJECT_PATH.number:
+            clazz, path = pickle.loads(data.data)
             if clazz==ast.ProgramUnit or clazz==ast.Subprogram:
                 # get canvas coordinates
                 m = cairo.Matrix(*self.view.matrix)
                 m.invert()
                 cx, cy = m.transform_point(x,y)
                 # add item
-                obj = self.project.astObjects[name.lower()]
+                obj = self.project.astModel.getObjectByPath(path)
                 item = self.diagram.add(obj, cx,cy)
                 context.drop_finish(True, timestamp)
             else:

@@ -7,7 +7,7 @@ from common import FINE, FINER, FINEST
 import gtk
 import pickle
 
-from common import INFO_TEXT, INFO_OBJECT_NAME
+from common import *
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
 from model import ast
@@ -67,8 +67,8 @@ class CallTree:
         self.view.connect("button-press-event", self._buttonPress)        
         self.view.connect("drag-data-get", self._dragDataGet)
         self.view.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, 
-                [(INFO_TEXT[0], 0, INFO_TEXT[1]),
-                 (INFO_OBJECT_NAME[0], 0, INFO_OBJECT_NAME[1])],
+                [(INFO_TEXT.name, 0, INFO_TEXT.number),
+                 (INFO_OBJECT_PATH.name, 0, INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)        
 
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
@@ -114,7 +114,7 @@ class CallTree:
         data[3] = self.root.diagram.hasObject(obj) and green or black
         iObj = self.model.append(None, data)
         
-        name = hasattr(obj, 'name') and obj.name.lower() or None
+        name = hasattr(obj, 'name') and obj.name and obj.name.lower() or None
         if not name:
             return
         
@@ -154,7 +154,7 @@ class CallTree:
             data = (obj.__class__,obj.name)
         else:
             data = (None, model[iRow][0])
-        selection_data.set(INFO_OBJECT_NAME[0], 0, pickle.dumps(data))
+        selection_data.set(INFO_OBJECT_PATH.name, 0, pickle.dumps(data))
         
     def _findInTree(self, obj):    
         def each(model, path, iObj, data):

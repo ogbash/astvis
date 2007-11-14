@@ -35,10 +35,10 @@ class Project:
         astModel = ast.ASTModel()
         loader = xmlmap.XMLLoader(astModel, Project.classes, "/ASTCollection")
         astModel.files = loader.loadFile(fileName)
-        self.astModel = astModel
-        event.manager.notifyObservers(self, event.ASTMODEL_CHANGED, None)
-        
+        self.astModel = astModel        
         self.model = basic.BasicModel(astModel)
+
+        event.manager.notifyObservers(self, event.ASTMODEL_CHANGED, None)
         
         LOG.debug('Finished loading AST file in %s' % self)
 

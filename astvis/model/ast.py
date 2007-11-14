@@ -25,7 +25,51 @@ class ASTModel(object):
         if isinstance(astObj, Statement):
             return astObj
         return astObj.parent and self.getStatement(astObj.parent) or None
+        
+    def getPath(self, astObj):
+        if astObj is None:
+            return []
+        
+        path = self.getPath(astObj.parent)
 
+        if isinstance(astObj, (File,ProgramUnit,Subprogram)):
+            path.append(astObj.name)
+        else:
+            # unnamed object
+            path.append('*')
+        return path
+        
+    def getObjectByPath(self, path):
+        for f in self.files:
+            if f.name == path[0]:
+                obj = f
+                break
+        else:
+            return None
+
+        i = 1
+        while i<len(path):
+            if path[i]=='*' or path[i]=='**': # can't get when unnamed objects in the path
+                return None
+            if isinstance(obj, File):
+                for subObj in itertools.chain(obj.units, obj.subprograms):
+                    if subObj.name==path[i]:
+                        obj = subObj
+                        i = i+1
+                        break
+                else:
+                    return None
+            elif isinstance(obj, (ProgramUnit, Subprogram)):
+                for subObj in obj.subprograms:
+                    if subObj.name==path[i]:
+                        obj = subObj
+                        i = i+1
+                        break
+                else:
+                    return None
+            else:
+                return None
+        return obj
 
 # basic model classes
 
@@ -42,6 +86,7 @@ class ASTObject(object):
 
     def __init__(self, model):
         self.model = model
+        self.parent = None        
         self.location = None
         self.__active = True
         self.tags = set()
@@ -84,6 +129,7 @@ class File(ASTObject):
         ASTObject.__init__(self, model)
         self.name = '<unknown>'
         self.units = []
+        self.subprograms = []
 
     def getChildren(self):
         return self.units

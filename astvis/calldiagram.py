@@ -2,7 +2,7 @@
 
 from model import ast
 from model.ast import ACTIVE_CHANGED
-from common import OPTIONS
+from common import *
 from gaphasx import EllipseItem, RectangleItem, MorphConstraint
 import diagram
 import event
@@ -58,6 +58,9 @@ class CallDiagram(diagram.Diagram):
         self._canvas.solver.add_constraint(constraints[1])
         
     def _notify(self, obj, event, args):
+        """Notified when objects are added to or removed from diagram.
+        
+        @todo: reimplement calle[er]Names with ReferenceResolver"""
         if event==ADDED_TO_DIAGRAM and args[0]==self:
             # add container connector
             if self.hasObject(obj.parent):

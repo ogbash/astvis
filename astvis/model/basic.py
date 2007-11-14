@@ -129,7 +129,6 @@ class BasicModel(object):
         if scope.parent is not None and isinstance(scope.parent, Scope):
             return self.getObjectByName(name, scope.parent)
 
-
 class BasicObject(object):
     def __init__(self, model):
         self.model = model
