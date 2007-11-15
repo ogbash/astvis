@@ -114,14 +114,8 @@ class CallTree:
         data[3] = self.root.diagram.hasObject(obj) and green or black
         iObj = self.model.append(None, data)
         
-        name = hasattr(obj, 'name') and obj.name and obj.name.lower() or None
-        if not name:
-            return
-        
         resolver = core.getService('ASTTreeWalker')
         references = resolver.getReferencesFrom(obj)
-        #calleeNames = project.calleeNames.get(name, ())
-        #LOG.log(FINE, "Number of callees for %s: %d" %(obj, len(calleeNames)))
         LOG.log(FINE, "Number of references for %s: %d" %(obj, len(references)))
         for ref in references:
             # generate row for subprograms only

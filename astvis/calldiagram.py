@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 
-from model import ast
+from model import ast, basic
 from model.ast import ACTIVE_CHANGED
 from common import *
 from gaphasx import EllipseItem, RectangleItem, MorphConstraint
 import diagram
 import event
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from astvis import core
 
 import gaphas
 
@@ -69,12 +70,20 @@ class CallDiagram(diagram.Diagram):
                 if self.hasObject(child):
                     self.addConnector(ContainerConnector(obj, child, self))
             # get all calls/callers for obj and add connectors
-            for ID in self.project.calleeNames.get(obj.name.lower(), ()):
-                callee = self.project.astObjects.get(ID.lower(), None)
+            resolver = core.getService('ReferenceResolver')
+
+            refObjs = resolver.getReferencedObjects(obj)            
+            for refObj in refObjs:
+                if not isinstance(refObj, (basic.ProgramUnit, basic.Subprogram)):
+                    continue
+                callee = refObj.astObject
                 if callee and self.hasObject(callee):
                     self.addConnector(CallConnector(obj, callee, self))            
-            for ID in self.project.callerNames.get(obj.name.lower(), ()):
-                caller = self.project.astObjects.get(ID.lower(), None)
+
+            basicObj = obj.model.basicModel.getObjectByASTObject(obj)
+            refObjs = resolver.getReferringObjects(basicObj)
+            for refObj in refObjs:
+                caller = refObj
                 if caller and self.hasObject(caller):
                     self.addConnector(CallConnector(caller, obj, self))            
 

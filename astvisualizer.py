@@ -246,6 +246,7 @@ class MainWindow:
 if __name__ == "__main__":
     from astvis.services import references
     core.registerService('ASTTreeWalker', references.ASTTreeWalker())
+    core.registerService('ReferenceResolver', references.ReferenceResolver())
     window = MainWindow()
     gtk.main()
 
