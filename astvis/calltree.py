@@ -142,10 +142,13 @@ class CallTree:
         self.show()
         
     def _dragDataGet(self, widget, context, selection_data, info, timestamp):
+        "GTK DnD protocol"
+        LOG.debug("GTK DnD dragDataGet with info=%d",info)
         model, iRow = self.view.get_selection().get_selected()
         obj = model[iRow][1]
         if obj:
-            data = (obj.__class__,obj.name)
+            path = obj.model.getPath(obj)
+            data = (obj.__class__,path)
         else:
             data = (None, model[iRow][0])
         selection_data.set(INFO_OBJECT_PATH.name, 0, pickle.dumps(data))

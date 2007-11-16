@@ -86,7 +86,8 @@ class AstTree:
         self.view.append_column(column)
 
         self.view.connect("key-press-event", self._keyPress, None)
-        self.view.connect("button-press-event", self._buttonPress)        
+        self.view.connect("button-press-event", self._buttonPress)
+        self.view.connect_after("popup-menu", self._popupMenu)
         self.view.get_selection().connect("changed", self._selectionChanged, None)        
         self.view.connect("drag-data-get", self._dragDataGet)
         self.view.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, 
@@ -180,9 +181,19 @@ class AstTree:
             if isinstance(obj, ast.Subprogram):
                 self.root.showFile(obj.getFile(), obj.location.begin.line-1)
                 return True
-                                
+
+        if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:
+            self._popupMenu(widget, event.get_time())
+            return True
+        
         return False
-                            
+
+    def _popupMenu(self, widget, time=0):
+        _model, iRow = self.view.get_selection().get_selected()
+        obj = _model[iRow][1]
+        if obj is not None:
+            self.menu.popup(None, None, None, 3, time)
+     
     def _dragDataGet(self, widget, context, data, info, timestamp):
         "Returns data for the GTK DnD protocol."
         model, iRow = self.view.get_selection().get_selected()

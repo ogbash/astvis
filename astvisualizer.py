@@ -26,7 +26,7 @@ import gaphas
 import gaphas.examples
 import math
 import pickle
-from astvis import gaphasx, event, xmlmap, thread, core
+from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
 from astvis.calltree import CallTree
@@ -40,7 +40,7 @@ class MainWindow:
         self.project = None
         self.files = {} # model.File -> gtk.TextView
 
-        self.wTree = gtk.glade.XML("astvisualizer.glade", "main_window")
+        self.wTree = gtk.glade.XML("astvisualizer.glade")
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
@@ -74,6 +74,7 @@ class MainWindow:
         # ast tree view
         astTreeView = self.wTree.get_widget("ast_tree")
         self.astTree = AstTree(self, astTreeView)
+        self.astTree.menu = self.wTree.get_widget('object_menu')
         
         # create call tree
         callTreeView = self.wTree.get_widget("call_tree")
@@ -242,6 +243,16 @@ class MainWindow:
     def view_mpi_tags(self, widget):
         OPTIONS["view MPI tags"] = not OPTIONS["view MPI tags"]
         self.view.queue_draw_refresh()
+        
+        
+    def _on_show_references_activate(self, widget):
+        lst = widgets.ObjectList()
+        _model, iRow = self.astTree.view.get_selection().get_selected()
+        astObj = _model[iRow][1]
+        obj = astObj.model.basicModel.getObjectByASTObject(astObj)
+        lst.showObject(obj)
+        lst.show_all()
+        self.sidebarNotebook.append_page(lst, gtk.Label('refs(%s)'%obj))
 
 if __name__ == "__main__":
     from astvis.services import references

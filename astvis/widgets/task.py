@@ -3,6 +3,8 @@
 import gtk
 from astvis import event, xmlmap
 
+__all__ = ['TaskHandler']
+
 class TaskHandler:
 
     def __init__(self, gtktable, gtklabel):
