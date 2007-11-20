@@ -106,6 +106,8 @@ class AstTree:
 
         obj = model[iRow][1]
         self.root.callTree.showObject(obj)
+        basicObj = obj.model.basicModel.getObjectByASTObject(obj)
+        self.root.backCallTree.showObject(basicObj)
 
     def setProject(self, project):
         self.project = project

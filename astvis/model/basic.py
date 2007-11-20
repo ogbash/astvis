@@ -53,6 +53,7 @@ class BasicModel(object):
             obj = ProgramUnit(self)
             obj.parent = parentObj
             obj.astObject = astObj
+            obj.type = astObj.type
             obj.name = astObj.name.lower()
 
         elif isinstance(astObj, ast.Subprogram):
@@ -107,11 +108,11 @@ class BasicModel(object):
             return self.globalObjects.get(astObj.name)
         else:
             parentObj = self.getObjectByASTObject(parentAstObj)
+            if parentObj is None:
+                return None
             return parentObj[astObj.name]
 
     def getObjectByName(self, name, scope):
-        if name=='master':
-            print '--- %s'%scope
         if scope.variables.has_key(name):
             return scope.variables[name]
         if scope.subprograms.has_key(name):
@@ -132,9 +133,14 @@ class BasicModel(object):
 class BasicObject(object):
     def __init__(self, model):
         self.model = model
+        self.astObjects = []
 
-    def getModel(self):
-        self.model
+    astObject = property(lambda self: self.astObjects and self.astObjects[0],
+            lambda self, obj: self.astObjects.append(obj))
+        
+    def __getitem__(self, key):
+        return None
+        
     
 class Scope(BasicObject):
     def __init__(self, model):
@@ -154,13 +160,17 @@ class Scope(BasicObject):
                 if LOG.isEnabledFor(FINER):
                     LOG.log(FINER, "Add %s to %s", variable, self)
             variable.scanDeclaration(astDecl)
+            
+    def __getitem__(self, key):
+        return self.variables.get(key, None)
+
 
 class ProgramUnit(Scope):
     def __init__(self, model):
         Scope.__init__(self, model)
-        self.astObject = None
         self.parent = None
         self.name = None
+        self.type = None
         
     def __str__(self):
         return "<ProgramUnit %s>" % self.name
@@ -168,7 +178,6 @@ class ProgramUnit(Scope):
 class Subprogram(Scope):
     def __init__(self, model):
         Scope.__init__(self, model)
-        self.astObject = None
         self.parent = None
         self.name = None
         
@@ -178,12 +187,11 @@ class Subprogram(Scope):
 class Variable(BasicObject):
     def __init__(self, model):
         BasicObject.__init__(self, model)
-        self.astDeclarations = []
         self.parent = None
         self.name = None
         
     def scanDeclaration(self, astDecl):
-        self.astDeclarations.append(astDecl)
+        self.astObjects.append(astDecl)
 
     def __str__(self):
         return "<Variable %s>" % self.name

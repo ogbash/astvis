@@ -286,6 +286,7 @@
                     <property name="can_focus">True</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                     <property name="scrollable">True</property>
+                    <property name="group_id">1</property>
                     <child>
                       <widget class="GtkScrolledWindow" id="ast_tree_outer">
                         <property name="width_request">250</property>
@@ -352,43 +353,75 @@
                         <property name="position">1</property>
                         <property name="tab_expand">False</property>
                         <property name="tab_fill">False</property>
+                        <property name="detachable">True</property>
                       </packing>
                     </child>
+                  </widget>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkNotebook" id="notebook1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                    <property name="scrollable">True</property>
+                    <property name="group_id">1</property>
                     <child>
                       <widget class="GtkTable" id="task_progressbars">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="n_columns">2</property>
-                        <property name="row_spacing">3</property>
-                        <child>
-                          <placeholder/>
-                        </child>
+                        <property name="n_rows">1</property>
+                        <property name="n_columns">1</property>
                         <child>
                           <placeholder/>
                         </child>
                       </widget>
                       <packing>
-                        <property name="position">2</property>
                         <property name="tab_expand">False</property>
-                        <property name="tab_fill">False</property>
                       </packing>
                     </child>
                     <child>
-                      <widget class="GtkLabel" id="label3">
+                      <widget class="GtkLabel" id="label5">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="label" translatable="yes">tasks</property>
                       </widget>
                       <packing>
                         <property name="type">tab</property>
-                        <property name="position">2</property>
+                        <property name="tab_expand">False</property>
+                        <property name="tab_fill">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="GtkTreeView" id="back_call_tree">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                        <property name="headers_visible">False</property>
+                      </widget>
+                      <packing>
+                        <property name="position">1</property>
+                        <property name="tab_expand">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="GtkLabel" id="label4">
+                        <property name="visible">True</property>
+                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                        <property name="label" translatable="yes">back tree</property>
+                      </widget>
+                      <packing>
+                        <property name="type">tab</property>
+                        <property name="position">1</property>
                         <property name="tab_expand">False</property>
                         <property name="tab_fill">False</property>
                       </packing>
                     </child>
                   </widget>
                   <packing>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </widget>

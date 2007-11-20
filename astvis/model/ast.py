@@ -80,8 +80,12 @@ class ASTObject(object):
 
     def _setModel(self, model):
         self._model = model
-
-    model = property(lambda self: self._model, _setModel,
+    def _getModel(self):
+        if hasattr(self,'_model'):
+            return self._model
+        return self.parent is not None and self.parent.model or None
+        
+    model = property(_getModel, _setModel,
             doc="AST model where this AST object belongs to.")
 
     def __init__(self, model):

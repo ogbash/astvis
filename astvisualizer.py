@@ -31,6 +31,7 @@ from astvis.common import *
 from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
+from astvis import widgets
 from astvis.model import ast
 from astvis.calldiagram import CallDiagram
 
@@ -46,7 +47,7 @@ class MainWindow:
         
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
-        gtklabel = self.sidebarNotebook.get_tab_label(self.taskProgressbars)
+        gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
         import astvis.widgets.task
         self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
 
@@ -79,6 +80,10 @@ class MainWindow:
         # create call tree
         callTreeView = self.wTree.get_widget("call_tree")
         self.callTree = CallTree(self, callTreeView)
+
+        # create back call tree
+        backCallTreeView = self.wTree.get_widget("back_call_tree")
+        self.backCallTree = widgets.BackCallTree(self, backCallTreeView)
 
         self.notebook = self.wTree.get_widget("notebook")
 
