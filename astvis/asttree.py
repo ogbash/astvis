@@ -181,7 +181,7 @@ class AstTree:
                 self.root.showFile(obj)
                 return True
             if hasattr(obj, 'location'):
-                self.root.showFile(obj.getFile(), obj.location.begin.line-1)
+                self.root.showFile(obj.getFile(), obj.location)
                 return True
 
         if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:

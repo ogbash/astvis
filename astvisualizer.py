@@ -173,7 +173,7 @@ class MainWindow:
                 if item and item.object:
                     item.object.setActive(not item.object.getActive())
 
-    def showFile(self, _file, lineNumber = 0):
+    def showFile(self, _file, location = None):
         if not self.files.has_key(_file):
             import os.path
             fl = file(os.path.join(self.project.sourceDir or '', _file.name))
@@ -187,9 +187,15 @@ class MainWindow:
         for i, child in enumerate(children):
             if child==view or child.child==view:
                 self.notebook.set_current_page(i)
-                iLine = view.get_buffer().get_iter_at_line(lineNumber)
-                view.scroll_to_iter(iLine, 0, True, 0., 0.)
-        
+                buf = view.get_buffer()
+                if location is not None:
+                    iBegin = buf.get_iter_at_line_offset(location.begin.line-1, location.begin.column)
+                    iEnd = buf.get_iter_at_line_offset(location.end.line-1, location.end.column)
+                else:
+                    iBegin = buf.get_iter_at_line(0)
+                    iEnd = buf.get_iter_at_line(0)
+                view.scroll_to_iter(iBegin, 0, True, 0., 0.)
+                buf.select_range(iBegin, iEnd)
                     
     def _openFile(self, fl):
         import os.path
