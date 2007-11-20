@@ -70,18 +70,19 @@ class BackCallTree:
     def showObject(self, obj):
         "@type: BasicObject"
         self._clearModel()
-        
+        self._addObject(obj, None)
+
+    def _addObject(self, obj, iParent):
         data = factory.getRow(obj)
-        iObj = self.model.append(None, data)
+        iObj = self.model.append(iParent, data)
         
         resolver = core.getService('ReferenceResolver')
         references = resolver.getReferringObjects(obj)
 
-        LOG.debug("Number of referring objects for %s: %d", obj, len(references))
+        LOG.log(FINER, "Number of referring objects for %s: %d", obj, len(references))
         for ref in references:
             basicObj = ref.model.basicModel.getObjectByASTObject(ref)
-            data = factory.getRow(basicObj)
-            self.model.append(iObj, data)
+            self._addObject(basicObj, iObj)
 
         self.view.expand_row(self.model.get_path(iObj), False)        
 
