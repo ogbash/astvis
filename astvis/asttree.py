@@ -180,7 +180,7 @@ class AstTree:
             if isinstance(obj, ast.File):
                 self.root.showFile(obj)
                 return True
-            if isinstance(obj, ast.Subprogram):
+            if hasattr(obj, 'location'):
                 self.root.showFile(obj.getFile(), obj.location.begin.line-1)
                 return True
 

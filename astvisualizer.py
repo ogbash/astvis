@@ -195,7 +195,7 @@ class MainWindow:
         import os.path
         view = gtk.TextView()
         view.set_editable(False)
-        view.get_buffer().set_text(fl.read())
+        view.get_buffer().set_text(unicode(fl.read(), 'iso8859-15'))
         window = gtk.ScrolledWindow()
         window.add(view)
         window.show_all()
