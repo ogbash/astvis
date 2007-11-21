@@ -419,7 +419,7 @@ class Use(ASTObject):
     def __str__(self):
         return "<use %s>" % self.name
         
-class Location(dict):
+class Location(object):
     _xmlTags = [("location", None)]
     _xmlAttributes = {}
     _xmlChildren = {'begin': ("begin",),
@@ -429,6 +429,10 @@ class Location(dict):
         super(Location, self).__init__()
         self.begin = None
         self.end = None
+        
+    def __str__(self):
+        return "<Location %d.%d to %d.%d>" % (self.begin.line, self.begin.column,
+                self.end.line, self.end.column)
         
 class Point(object):
     def _setLine(self, line):

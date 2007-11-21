@@ -32,6 +32,7 @@ from astvis.project import Project
 from astvis.calltree import CallTree
 from astvis.asttree import AstTree
 from astvis import widgets
+from astvis.misc import console
 from astvis.model import ast
 from astvis.calldiagram import CallDiagram
 
@@ -40,7 +41,7 @@ class MainWindow:
     def __init__(self):
         self.project = None
         self.files = {} # model.File -> gtk.TextView
-
+        
         self.wTree = gtk.glade.XML("astvisualizer.glade")
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
@@ -73,17 +74,20 @@ class MainWindow:
         self._initProjectTreeView()
         
         # ast tree view
-        astTreeView = self.wTree.get_widget("ast_tree")
+        astTreeViewOuter, astTreeView = self._createWidget('ast_tree_outer', ('ast_tree',))
         self.astTree = AstTree(self, astTreeView)
+        self.sidebarNotebook.append_page(astTreeViewOuter, gtk.Label('ast'))
         self.astTree.menu = self.wTree.get_widget('object_menu')
         
         # create call tree
-        callTreeView = self.wTree.get_widget("call_tree")
+        callTreeViewOuter, callTreeView = self._createWidget('call_tree_outer', ('call_tree',))
         self.callTree = CallTree(self, callTreeView)
+        self.sidebarNotebook.append_page(callTreeViewOuter, gtk.Label('call'))
 
         # create back call tree
-        backCallTreeView = self.wTree.get_widget("back_call_tree")
+        backCallTreeView, = self._createWidget('back_call_tree')
         self.backCallTree = widgets.BackCallTree(self, backCallTreeView)
+        self.sidebarNotebook.append_page(backCallTreeView, gtk.Label('back'))
 
         self.notebook = self.wTree.get_widget("notebook")
 
@@ -93,6 +97,26 @@ class MainWindow:
         self._setProject(Project())
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
+        
+        self.consoleWindow = gtk.Window()
+        pyconsole = console.GTKInterpreterConsole()
+        pyconsole.set_size_request(640,480)
+        self.consoleWindow.add(pyconsole)
+        #self.consoleWindow.show_all()
+
+    def _createWidget(self, name, otherNames=None):
+        wTree = gtk.glade.XML("astvisualizer.glade", 'widgets_window')
+        widgets = []
+        
+        widget = wTree.get_widget(name)
+        widget.get_parent().remove(widget)
+        widgets.append(widget)
+        
+        for name in otherNames or ():
+            widget = wTree.get_widget(name)
+            widgets.append(widget)
+
+        return widgets
 
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         LOG.debug("GTK DnD data_recv with info=%d"%info)
