@@ -42,7 +42,7 @@ class MainWindow:
         self.project = None
         self.files = {} # model.File -> gtk.TextView
         
-        self.wTree = gtk.glade.XML("astvisualizer.glade")
+        self.wTree = gtk.glade.XML("astvisualizer.glade", 'main_window')
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
@@ -55,7 +55,7 @@ class MainWindow:
         self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
         self.view.show()
-        outer.add(self.view)
+        outer.add_with_viewport(self.view)
         outer.set_hadjustment(self.view.hadjustment)
         outer.set_vadjustment(self.view.vadjustment)        
         self.view.connect("key-press-event", self.keyPress, None)
@@ -74,18 +74,19 @@ class MainWindow:
         self._initProjectTreeView()
         
         # ast tree view
-        astTreeViewOuter, astTreeView = self._createWidget('ast_tree_outer', ('ast_tree',))
+        wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
         self.astTree = AstTree(self, astTreeView)
+        wTree.signal_autoconnect(self.astTree)
         self.sidebarNotebook.append_page(astTreeViewOuter, gtk.Label('ast'))
         self.astTree.menu = self.wTree.get_widget('object_menu')
         
         # create call tree
-        callTreeViewOuter, callTreeView = self._createWidget('call_tree_outer', ('call_tree',))
+        wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
         self.callTree = CallTree(self, callTreeView)
         self.sidebarNotebook.append_page(callTreeViewOuter, gtk.Label('call'))
 
         # create back call tree
-        backCallTreeView, = self._createWidget('back_call_tree')
+        wTree, backCallTreeView, = self._readWidget('back_call_tree')
         self.backCallTree = widgets.BackCallTree(self, backCallTreeView)
         self.sidebarNotebook.append_page(backCallTreeView, gtk.Label('back'))
 
@@ -104,9 +105,10 @@ class MainWindow:
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
 
-    def _createWidget(self, name, otherNames=None):
+    def _readWidget(self, name, otherNames=None):
+        "@return: [wTree, mainWidget, otherWidgets...]"
         wTree = gtk.glade.XML("astvisualizer.glade", 'widgets_window')
-        widgets = []
+        widgets = [wTree]
         
         widget = wTree.get_widget(name)
         widget.get_parent().remove(widget)

@@ -46,25 +46,43 @@ class RowFactory:
 
 factory = RowFactory()
 
+class FilterRule:
+    def __init__(self, action, path, type_, value):
+        self.action = action
+        self.path = path
+        self.type = type_
+        self.value = value
+        
 class Filter:
-    ALLOW = 'allow'
-    DENY = 'deny'
+    ALLOW = 'ALLOW'
+    HIDE = 'HIDE'
+    DENY = 'DENY'
 
-    TYPES_FILTER = {'file': lambda obj: isinstance(obj, ast.File),
-        'module':  lambda obj: isinstance(obj, ast.ProgramUnit),
-        'subprogram':  lambda obj: isinstance(obj, ast.Subprogram)
-        }
-    FILTERS = {'type':TYPES_FILTER}
+    TYPES_FILTER = lambda obj, value: isinstance(obj, value)
+    EQ_FILTER = lambda obj, value: obj == value
+    FILTERS = {'type':TYPES_FILTER, 'eq': EQ_FILTER}
+
+    hideFilesRule = FilterRule(DENY, None, 'type', ast.File)
     
     def __init__(self):
-        self.filters = [(Filter.FILTERS['type']['file'], Filter.DENY)] #
+        self.filters = [Filter.hideFilesRule] #
         
     def apply(self, obj):
-        for filt, action in self.filters:
-            res = filt(obj)
+        for rule in self.filters:
+            filter_ = Filter.FILTERS[rule.type]
+            filterObj = self.resolvePath(obj, rule.path)
+            res = apply(filter_, (filterObj, rule.value))
             if res:
-                return action
+                return rule.action
         return None
+
+    def resolvePath(self, obj, path):
+        if not path:
+            return obj
+        elements = path.split('.')
+        for elem in elements:
+            obj = getattr(obj, elem)
+        return obj
 
 class AstTree:
     
@@ -203,4 +221,97 @@ class AstTree:
         path = obj.model.getPath(obj)
         data.set(INFO_OBJECT_PATH.name, 0, pickle.dumps((obj.__class__,path)) )
         LOG.debug("GTK DnD dragDataGet with info=%d, path=%s"%(info, path))
+        
+    def filter_clicked(self, button):
+        dialog = FilterDialog(self.filter.filters)
+        # show dialog
+        result = dialog.run()
+        dialog.destroy()
+        print result
+        
+class FilterDialog:
+    FILTER_VALUES = {
+        'eq': [lambda value: int(value), lambda value: float(value), lambda value: str(value)],
+        'type': {'file': ast.File, 'program': ast.ProgramUnit, 'subprogram': ast.Subprogram}
+        }
+    
+    def __init__(self, filters):
+        wTree = gtk.glade.XML("astvisualizer.glade", 'astfilter_dialog')
+        wTree.signal_autoconnect(self)
+        self.wTree = wTree
+        self.widget = wTree.get_widget('astfilter_dialog')
+        
+        # initialize dialog
+        self.actionModel = gtk.ListStore(str)
+        self.actionModel = wTree.get_widget('filter_action').get_model()
+
+        self.typeModel = gtk.ListStore(str)
+        wTree.get_widget('filter_type').set_model(self.typeModel)
+        for type_ in Filter.FILTERS.keys():
+            wTree.get_widget('filter_type').append_text(type_)
+
+        self.pathModel = gtk.ListStore(str)
+        wTree.get_widget('filter_object_path').set_model(self.pathModel)        
+        wTree.get_widget('filter_object_path').append_text('')
+        wTree.get_widget('filter_object_path').append_text('parent')
+        
+        self.valueModel = gtk.ListStore(str)
+        wTree.get_widget('filter_value').set_model(self.valueModel)
+
+        # initialize filters view
+        filtersView = wTree.get_widget('filters')
+
+        column = gtk.TreeViewColumn("Action")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 0)
+        filtersView.append_column(column)
+        column = gtk.TreeViewColumn("Object path")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 1)
+        filtersView.append_column(column)
+        column = gtk.TreeViewColumn("Filter type")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 2)
+        filtersView.append_column(column)
+        column = gtk.TreeViewColumn("Value")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 3)
+        filtersView.append_column(column)
+        
+        self.filtersModel = gtk.ListStore(str,str,str,str)
+        for filter_ in filters:
+            row = (filter_.action, filter_.path, filter_.type, filter_.value)
+            self.filtersModel.append(row)
+        filtersView.set_model(self.filtersModel)
+        filtersView.show()
+        
+    def run(self):
+        self.widget.run()
+    
+    def destroy(self):
+        self.widget.destroy()
+
+    def add_filter(self, button):
+        i = self.wTree.get_widget('filter_action').get_active()
+        if i==-1:
+            return # report error
+        action = self.actionModel[i][0]
+
+        path = self.wTree.get_widget('filter_object_path').get_active_text()
+
+        i = self.wTree.get_widget('filter_type').get_active()
+        if i==-1:
+            return # report error
+        type_ = self.typeModel[i][0]
+        
+        value = self.wTree.get_widget('filter_value').get_active_text()
+        #value = FilterDialog.FILTER_VALUES[type_][value]
+    
+        row = (action, path, type_, value)
+        LOG.debug('Adding filter %s' % (row,))
+        self.filtersModel.append(row)
 
