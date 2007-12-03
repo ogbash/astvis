@@ -145,9 +145,9 @@ class BasicObject(object):
 class Scope(BasicObject):
     def __init__(self, model):
         BasicObject.__init__(self, model)
-        self.uses = {} # name ->obj
+        self.uses = {} #: name ->obj
         self.variables = {}
-        self.subprograms = {} # name->obj
+        self.subprograms = {} #: name->obj
         
     def scanDeclaration(self, astDecl):
         'Scan AST declaration and extend scope variables.'

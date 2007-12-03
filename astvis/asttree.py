@@ -23,7 +23,7 @@ class RowFactory:
             ast.Use: "data/thumbnails/use.png"}
             
     def __init__(self):
-        self.thumbnails = {}    
+        self.thumbnails = {}
 
     def getRow(self, obj):
         name = hasattr(obj,"name") and obj.name or str(obj)
@@ -53,6 +53,12 @@ class FilterRule:
         self.type = type_
         self.value = value
         
+    def __str__(self):
+        return 'action=%s, path=%s, type=%s, value=%s' % (self.action, self.path, self.type, self.value)
+
+    def __repr__(self):
+        return str(self)
+        
 class Filter:
     ALLOW = 'ALLOW'
     HIDE = 'HIDE'
@@ -62,13 +68,13 @@ class Filter:
     EQ_FILTER = lambda obj, value: obj == value
     FILTERS = {'type':TYPES_FILTER, 'eq': EQ_FILTER}
 
-    hideFilesRule = FilterRule(DENY, None, 'type', ast.File)
+    PREDEFINED_FILTERS = {}
     
-    def __init__(self):
-        self.filters = [Filter.hideFilesRule] #
+    def __init__(self, rules = []):
+        self.rules = rules #: list of filter rules
         
     def apply(self, obj):
-        for rule in self.filters:
+        for rule in self.rules:
             filter_ = Filter.FILTERS[rule.type]
             filterObj = self.resolvePath(obj, rule.path)
             res = apply(filter_, (filterObj, rule.value))
@@ -84,14 +90,17 @@ class Filter:
             obj = getattr(obj, elem)
         return obj
 
+Filter.PREDEFINED_FILTERS['hide files'] = Filter([FilterRule(Filter.HIDE, None, 'type', ast.File)])
+
+
 class AstTree:
     
     def __init__(self, root, view):
         self.root = root
         self.project = None
-        self.model = None    
-        self.view = view
-        self.filter = Filter()
+        self.model = None #: GTK tree model for the AST tree  
+        self.view = view #: GTK tree view
+        self.filters = {} #: enabled filters, name->filter
         
         column = gtk.TreeViewColumn("Name")
         cell = gtk.CellRendererPixbuf()
@@ -132,6 +141,11 @@ class AstTree:
         self.view.set_model(self.model)
         
         # generate sidebar tree
+        self.regenerateSidebarTree()
+        
+    def regenerateSidebarTree(self):
+        LOG.debug("Regenerating sidebar tree")
+        self.model.clear()
         astModel = self.project.astModel
         self._generateSidebarTree(None, astModel and astModel.files or ())
         
@@ -140,15 +154,19 @@ class AstTree:
             LOG.log(FINEST, "Generating for %s %d children" % \
                     (iParent and self.model[iParent][1] or '', len(astObjects)))
         for obj in astObjects:
-            action = self.filter.apply(obj)
+            action = None
+            for filterName, filter_ in self.filters.iteritems():
+                action = filter_.apply(obj)
+                # @todo: this must be OR operation, resolve several DENY, HIDE filters
+                if action==Filter.ALLOW: break
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Filter result for %s is %s" % (obj, action))
-            if action is Filter.ALLOW or action is None:
+            if action==Filter.ALLOW or action is None:
                 #data=[obj.getName(), obj, obj.getThumbnail(), gtk.gdk.color_parse("black")]
                 data = factory.getRow(obj)
                 iRow = self.model.append(iParent,data)
                 self._generateSidebarTree(iRow, obj.getChildren())
-            else:
+            elif action==Filter.HIDE:
                 self._generateSidebarTree(iParent, obj.getChildren())
         
     def _findInTree(self, obj):
@@ -175,9 +193,7 @@ class AstTree:
             self.model[iObject][3] = gtk.gdk.color_parse("black")
         elif _event==event.ASTMODEL_CHANGED and obj==self.project:
             # generate sidebar tree
-            self.model.clear()
-            astModel = self.project.astModel
-            self._generateSidebarTree(None, astModel and astModel.files or ())
+            self.regenerateSidebarTree()
         
 
     def selectObject(self, obj):
@@ -223,11 +239,13 @@ class AstTree:
         LOG.debug("GTK DnD dragDataGet with info=%d, path=%s"%(info, path))
         
     def filter_clicked(self, button):
-        dialog = FilterDialog(self.filter.filters)
+        dialog = FilterDialog(self.filters)
         # show dialog
         result = dialog.run()
+        if result > 0:
+            self.filters = dialog.filters
+            self.regenerateSidebarTree()
         dialog.destroy()
-        print result
         
 class FilterDialog:
     FILTER_VALUES = {
@@ -235,14 +253,16 @@ class FilterDialog:
         'type': {'file': ast.File, 'program': ast.ProgramUnit, 'subprogram': ast.Subprogram}
         }
     
-    def __init__(self, filters):
+    def __init__(self, selectedFilters):
+        self.filters = {} #! Filter objects by name
+    
         wTree = gtk.glade.XML("astvisualizer.glade", 'astfilter_dialog')
         wTree.signal_autoconnect(self)
         self.wTree = wTree
         self.widget = wTree.get_widget('astfilter_dialog')
         
         # initialize dialog
-        self.actionModel = gtk.ListStore(str)
+        self.actionModel = gtk.ListStore(str) #: GTK tree model of the filter action combo box
         self.actionModel = wTree.get_widget('filter_action').get_model()
 
         self.typeModel = gtk.ListStore(str)
@@ -252,50 +272,75 @@ class FilterDialog:
 
         self.pathModel = gtk.ListStore(str)
         wTree.get_widget('filter_object_path').set_model(self.pathModel)        
-        wTree.get_widget('filter_object_path').append_text('')
-        wTree.get_widget('filter_object_path').append_text('parent')
+        map(wTree.get_widget('filter_object_path').append_text, ['parent'])
         
         self.valueModel = gtk.ListStore(str)
         wTree.get_widget('filter_value').set_model(self.valueModel)
 
-        # initialize filters view
-        filtersView = wTree.get_widget('filters')
+        # initialize rules and filters view
+        def createColumn(header, prop, cnum, view, ctype=None):
+            column = gtk.TreeViewColumn(header)
+            if ctype==bool:
+                cell = gtk.CellRendererToggle()
+                cell.set_property('activatable', True)
+            else:            
+                cell = gtk.CellRendererText()
+            column.pack_start(cell, True)
+            column.add_attribute(cell, prop, cnum)
+            view.append_column(column)
+            return cell, column
 
-        column = gtk.TreeViewColumn("Action")
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 0)
-        filtersView.append_column(column)
-        column = gtk.TreeViewColumn("Object path")
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 1)
-        filtersView.append_column(column)
-        column = gtk.TreeViewColumn("Filter type")
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 2)
-        filtersView.append_column(column)
-        column = gtk.TreeViewColumn("Value")
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 3)
-        filtersView.append_column(column)
+        self.rulesModel = gtk.ListStore(str,str,str,str,object) #: GTK list model for the rules of selected filter
+        rulesView = wTree.get_widget('rules_view')
+        rulesView.set_model(self.rulesModel)
+        createColumn("Action", "text", 0, rulesView)
+        createColumn("Object path", "text", 1, rulesView)
+        createColumn("Filter type", "text", 2, rulesView)
+        createColumn("Value", "text", 3, rulesView)
         
-        self.filtersModel = gtk.ListStore(str,str,str,str)
-        for filter_ in filters:
-            row = (filter_.action, filter_.path, filter_.type, filter_.value)
-            self.filtersModel.append(row)
+        self.filtersModel = gtk.ListStore(str, object, bool) #: GTK list model for the filters
+        filtersView = wTree.get_widget('filters_view')
+        filtersView.get_selection().connect('changed', self._filterRowSelected)
         filtersView.set_model(self.filtersModel)
-        filtersView.show()
+        def toggled(button, path):
+            state = self.filtersModel[path][2]
+            self.filtersModel[path][2] = not state
+        cell, column = createColumn(" ", "active", 2, filtersView, bool)
+        cell.connect('toggled', toggled)
+        createColumn("Name", "text", 0, filtersView)
+        for filterName, filter_ in Filter.PREDEFINED_FILTERS.iteritems():
+            self.filters[filterName] = filter_
+            self.filtersModel.append((filterName, filter_, selectedFilters.has_key(filterName)))
+                    
+    def _showFilterRules(self, filter_):
+        self.rulesModel.clear()
+        if filter_ is not None:
+            for rule in filter_.rules:
+                row = (rule.action, rule.path, rule.type, str(rule.value), rule.value)
+                self.rulesModel.append(row)
         
     def run(self):
-        self.widget.run()
+        res = self.widget.run()
+        if res > 0:
+            self._createFilters()
+            LOG.log(FINE, 'Found %d filters' % len(self.filters))
+        return res
+            
+    def _createFilters(self):
+        "After we exit dialog take the GUI filter list and create filters"
+        filters = {}
+        for row in iter(self.filtersModel):
+            filterName, filter_, selected = row
+            print filterName, filter_, selected
+            if selected:
+                filters[filterName] = filter_
+        self.filters = filters
     
     def destroy(self):
-        self.widget.destroy()
+        return self.widget.destroy()
 
     def add_filter(self, button):
+        "Add filter to the list"
         i = self.wTree.get_widget('filter_action').get_active()
         if i==-1:
             return # report error
@@ -309,9 +354,31 @@ class FilterDialog:
         type_ = self.typeModel[i][0]
         
         value = self.wTree.get_widget('filter_value').get_active_text()
-        #value = FilterDialog.FILTER_VALUES[type_][value]
-    
-        row = (action, path, type_, value)
+        obj = self._getValue(type_, value)
+        row = (action, path, type_, str(obj), obj)
         LOG.debug('Adding filter %s' % (row,))
         self.filtersModel.append(row)
+
+    def _getValue(self, type_, key):
+        "Cast value received from the UI"
+        valFuns = FilterDialog.FILTER_VALUES[type_]
+        if isinstance(valFuns, dict):
+            # the value is just in the dictionary
+            return valFuns[key]
+        elif isinstance(valFuns, list):
+            # the value is a list of lambdas
+            for fun in valFuns:
+                try:
+                    value = fun(key)
+                    return value
+                except:
+                    pass
+                    
+    def _filterRowSelected(self, obj):
+        model, iRow = obj.get_selected()
+        if iRow is None:
+            self._showFilterRules(None)
+        else:
+            filterName = model[iRow][0]
+            self._showFilterRules(self.filters[filterName])
 

@@ -55,7 +55,7 @@ class MainWindow:
         self.view = gaphas.view.GtkView()
         outer = self.wTree.get_widget("canvas_view_outer")
         self.view.show()
-        outer.add_with_viewport(self.view)
+        outer.add(self.view)
         outer.set_hadjustment(self.view.hadjustment)
         outer.set_vadjustment(self.view.vadjustment)        
         self.view.connect("key-press-event", self.keyPress, None)
