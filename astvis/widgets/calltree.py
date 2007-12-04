@@ -2,16 +2,15 @@
 
 import logging
 LOG = logging.getLogger("calltree")
-from common import FINE, FINER, FINEST
+from astvis.common import FINE, FINER, FINEST
+
+from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
+from astvis.model import ast
+from astvis import core, event
+from astvis.event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 
 import gtk
 import pickle
-
-from common import *
-from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
-import event
-from model import ast
-from astvis import core
 
 class RowFactory:
     thumbnailFilenames = {ast.File: "data/thumbnails/file.png",

@@ -29,8 +29,7 @@ import pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
-from astvis.calltree import CallTree
-from astvis.asttree import AstTree
+from astvis.widgets import CallTree, AstTree
 from astvis import widgets
 from astvis.misc import console
 from astvis.model import ast

@@ -4,14 +4,13 @@
 
 import logging
 LOG = logging.getLogger("asttree")
-from common import FINE, FINER, FINEST
+from astvis.common import FINE, FINER, FINEST
 
-from common import *
+from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
+from astvis.model import ast
+from astvis import event, project
 import gtk
 import pickle
-from model import ast
-import event
-import project
 
 class RowFactory:
     thumbnailFilenames = {ast.File: "data/thumbnails/file.png",
