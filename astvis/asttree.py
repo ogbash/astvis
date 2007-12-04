@@ -66,7 +66,7 @@ class Filter:
 
     TYPES_FILTER = lambda obj, value: isinstance(obj, value)
     EQ_FILTER = lambda obj, value: obj == value
-    FILTERS = {'type':TYPES_FILTER, 'eq': EQ_FILTER}
+    FILTERS = {'type':TYPES_FILTER, 'eq': EQ_FILTER, 'true': lambda obj, value: True}
 
     PREDEFINED_FILTERS = {}
     
@@ -91,6 +91,14 @@ class Filter:
         return obj
 
 Filter.PREDEFINED_FILTERS['hide files'] = Filter([FilterRule(Filter.HIDE, None, 'type', ast.File)])
+Filter.PREDEFINED_FILTERS['show globals'] = Filter([
+        FilterRule(Filter.HIDE, None, 'type', ast.File),
+        FilterRule(Filter.ALLOW, None, 'type', ast.ProgramUnit),
+        FilterRule(Filter.HIDE, None, 'type', ast.TypeDeclaration),
+        FilterRule(Filter.ALLOW, None, 'type', ast.Entity),
+        FilterRule(Filter.HIDE, None, 'type', ast.Block),
+        FilterRule(Filter.DENY, None, 'true', None)
+        ])
 
 
 class AstTree:
@@ -158,7 +166,7 @@ class AstTree:
             for filterName, filter_ in self.filters.iteritems():
                 action = filter_.apply(obj)
                 # @todo: this must be OR operation, resolve several DENY, HIDE filters
-                if action==Filter.ALLOW: break
+                if action is not None: break
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Filter result for %s is %s" % (obj, action))
             if action==Filter.ALLOW or action is None:
