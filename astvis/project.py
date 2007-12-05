@@ -38,16 +38,21 @@ class Project(object):
     def _setASTModel(self, astModel):
         self._astModel = astModel
         self.model = basic.BasicModel(astModel)
-        event.manager.notifyObservers(self, event.ASTMODEL_CHANGED, None)
+    def _setBasicModel(self, basicModel):
+        self._basicModel = basicModel
 
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
 
     astModel = property(lambda self: self._astModel, _setASTModel)
+    astModel = event.Property(astModel,'astModel')
+
+    model = property(lambda self: self._basicModel, _setBasicModel)
+    model = event.Property(model,'basicModel')
 
     def __init__(self, projectFileName=None):
         self._name = "(unnamed)"
         self.sourceDir = None
         self._astModel = None #: ast model
-        self.model = None #: basic model
+        self._basicModel = None #: basic model
 

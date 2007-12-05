@@ -6,7 +6,6 @@ LOG = logging.getLogger("event")
 # observer
 ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
-ASTMODEL_CHANGED = "AST model changed"
 
 TASK_STARTED = 'task started'
 TASK_PROGRESSED = 'task progressed'
@@ -112,6 +111,7 @@ class Property(object):
         return self.property.__get__(obj, type)
         
     def __set__(self, obj, value):
+        oldValue = self.property.__get__(obj)
         self.property.__set__(obj, value)
-        manager.notifyObservers(obj, PROPERTY_CHANGED, (self.propertyName,))
+        manager.notifyObservers(obj, PROPERTY_CHANGED, (self.propertyName,value,oldValue))
 

@@ -198,9 +198,11 @@ class AstTree:
             diagram, = args
             iObject = self._findInTree(obj)
             self.model[iObject][3] = gtk.gdk.color_parse("black")
-        elif _event==event.ASTMODEL_CHANGED and obj==self.project:
-            # generate sidebar tree
-            self.regenerateSidebarTree()
+        elif _event==event.PROPERTY_CHANGED and obj==self.project:
+            propertyName = args[0]
+            if propertyName == 'astModel':
+                # generate sidebar tree
+                self.regenerateSidebarTree()
         
 
     def selectObject(self, obj):

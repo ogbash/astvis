@@ -96,7 +96,6 @@ class MainWindow:
         self.wTree.signal_autoconnect(self)
 
         #self._setProject(Project(astFileName="tree.xml"))
-        self._setProject(Project())
         self.diagram = CallDiagram(self.project)
         self.view.canvas = self.diagram.getCanvas()
         
@@ -139,11 +138,10 @@ class MainWindow:
         else:
             context.drop_finish(False, timestamp)
          
-    def newProject(self, obj):
-        # self._setProject(Project())
-        pass
+    def _newProject(self, obj):
+        self._addProject(Project())
 
-    def _setProject(self, project):
+    def _addProject(self, project):
         if self.project:
             LOG.info("%s is being replaced" % self.project)
         self.project = project

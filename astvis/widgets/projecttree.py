@@ -6,6 +6,7 @@ from astvis.common import FINE, FINER, FINEST
 
 from astvis.project import Project, readASTModel
 from astvis import event, thread, xmlmap
+from astvis.model import ast, basic
 
 import gtk
 
@@ -29,17 +30,39 @@ class ProjectTree:
 
     def addProject(self, project):
         iProject = self.model.append(None, (project.name, project, None))
-        if project.astModel is not None:
+        if project.astModel!=None:
             self.model.append(iProject, ('AST model', project.astModel, None))
-        if project.model is not None:
+        if project.model!=None:
             self.model.append(iProject, ('Basic model', project.model, None))
             
         event.manager.subscribe(self._projectChanged, project)
 
     def _projectChanged(self, project, event_, args):
         if event_ == event.PROPERTY_CHANGED:
-            #: @todo: find index dynamicly?
-            self.model[(0,)][0] = project.name
+            print "prop", args
+            propertyName, newValue, oldValue = args
+            iProject = self.findRow(lambda iRow: self.model[iRow][1] == project)
+            if propertyName == 'name':
+                self.model[iProject][0] = project.name
+            elif propertyName == 'astModel':
+                iASTModel = self.findRow(lambda iRow: isinstance(self.model[iRow][1], ast.ASTModel), iProject)
+                if iASTModel==None and project.astModel!=None:
+                    self.model.append(iProject, ('AST model', project.astModel, None))
+                elif iASTModel is not None and project.astModel is None:
+                    self.model.remove(iASTModel)
+                elif iASTModel is not None:
+                    self.model[iASTModel][1] = project.astModel
+
+    def findRow(self, fun, parent = None):
+        iRow = self.model.iter_children(parent)
+        while iRow is not None:
+            if fun(iRow):
+                return iRow
+            iResult = self.findRow(fun, iRow)
+            if iResult is not None:
+                return iResult
+            iRow = self.model.iter_next(iRow)
+        return None
 
     def _on_project_tree_row_activated(self, view, path, column):
         model = view.get_model()
@@ -90,15 +113,17 @@ class ProjectDialog:
     def run(self):
         res = self.widget.run()
 
-        # get project name
-        self.projectName = self.projectNameEntry.get_text()
-        # load ast file
-        astFilename = self.astfileChooserbutton.get_filename()
-        if self.project.astModel is None \
-                or astFilename != self.project.astModel.filename:
-            self.astModel = readASTModel(astFilename)        
-        # get source dir name
-        self.sourceDir = self.sourcedirChooserbutton.get_filename()
+        if res > 0:
+            # get project name
+            self.projectName = self.projectNameEntry.get_text()
+            # load ast file
+            astFilename = self.astfileChooserbutton.get_filename()
+            if astFilename:
+                if self.project.astModel is None \
+                        or astFilename != self.project.astModel.filename:
+                    self.astModel = readASTModel(astFilename)        
+            # get source dir name
+            self.sourceDir = self.sourcedirChooserbutton.get_filename()
         
         self.widget.destroy()
         return res

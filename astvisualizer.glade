@@ -29,7 +29,7 @@
                             <property name="label">gtk-new</property>
                             <property name="use_underline">True</property>
                             <property name="use_stock">True</property>
-                            <signal name="activate" handler="newProject"/>
+                            <signal name="activate" handler="_newProject"/>
                           </widget>
                         </child>
                         <child>
@@ -208,7 +208,7 @@
                   <widget class="GtkToolButton" id="new_project_button">
                     <property name="visible">True</property>
                     <property name="stock_id">gtk-new</property>
-                    <signal name="clicked" handler="newProject"/>
+                    <signal name="clicked" handler="_newProject"/>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
