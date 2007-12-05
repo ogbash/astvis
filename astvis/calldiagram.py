@@ -94,7 +94,6 @@ def _draw_head(context):
     cr.line_to(5,-5)
     cr.line_to(0,0)
     cr.move_to(5,0)
-    
 
 ### diagram items
 

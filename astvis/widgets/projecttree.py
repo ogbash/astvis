@@ -1,0 +1,113 @@
+#! /usr/bin/env python
+
+import logging
+LOG = logging.getLogger("projecttree")
+from astvis.common import FINE, FINER, FINEST
+
+from astvis.project import Project, readASTModel
+from astvis import event, thread, xmlmap
+
+import gtk
+
+class ProjectTree:
+    def __init__(self, view):
+        self.view = view
+
+        self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
+        
+        column = gtk.TreeViewColumn("Name")
+        cell = gtk.CellRendererPixbuf()
+        column.pack_start(cell, False)
+        column.add_attribute(cell, "pixbuf", 2)
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 0)
+        #column.add_attribute(cell, "foreground-gdk", 3)
+        self.view.append_column(column)
+
+        self.view.set_model(self.model)
+
+    def addProject(self, project):
+        iProject = self.model.append(None, (project.name, project, None))
+        if project.astModel is not None:
+            self.model.append(iProject, ('AST model', project.astModel, None))
+        if project.model is not None:
+            self.model.append(iProject, ('Basic model', project.model, None))
+            
+        event.manager.subscribe(self._projectChanged, project)
+
+    def _projectChanged(self, project, event_, args):
+        if event_ == event.PROPERTY_CHANGED:
+            #: @todo: find index dynamicly?
+            self.model[(0,)][0] = project.name
+
+    def _on_project_tree_row_activated(self, view, path, column):
+        model = view.get_model()
+        obj = model[path][1]
+        
+        if isinstance(obj, Project):
+            self._handleProjectDialog(obj)
+            
+    def _handleProjectDialog(self, project):
+        dialog = ProjectDialog(project)
+        res = dialog.run()
+        if res > 0:
+            project.name = dialog.projectName
+            if hasattr(dialog, 'astModel'):
+                project.astModel = dialog.astModel
+            project.sourceDir = dialog.sourceDir
+
+#    @thread.threaded                
+    def _astFileChanged(self, filename):
+        LOG.debug("Loading %s" % filename)
+        try:
+            astModel = readASTModel(filename)
+        except(Exception), e:
+            LOG.error("Error loading file, %s", e, exc_info=e)
+        else:
+            LOG.info("Loaded %s" % filename)        
+
+
+class ProjectDialog:
+    def __init__(self, project):
+        self.project = project
+        wTree = gtk.glade.XML("astvisualizer.glade", 'project_dialog')
+        wTree.signal_autoconnect(self)
+        self.wTree = wTree
+        self.widget = wTree.get_widget('project_dialog')
+        
+        self.projectNameEntry = wTree.get_widget('projectname_entry')
+        self.projectNameEntry.set_text(project.name)
+
+        self.astfileChooserbutton = wTree.get_widget('astfile_chooserbutton')
+        if project.astModel is not None:
+            self.astfileChooserbutton.set_filename(project.astModel.filename)
+
+        self.sourcedirChooserbutton = wTree.get_widget('sourcedir_chooserbutton')
+        if project.sourceDir is not None:
+            self.sourcedirChooserbutton.set_filename(project.sourceDir)
+
+    def run(self):
+        res = self.widget.run()
+
+        # get project name
+        self.projectName = self.projectNameEntry.get_text()
+        # load ast file
+        astFilename = self.astfileChooserbutton.get_filename()
+        if self.project.astModel is None \
+                or astFilename != self.project.astModel.filename:
+            self.astModel = readASTModel(astFilename)        
+        # get source dir name
+        self.sourceDir = self.sourcedirChooserbutton.get_filename()
+        
+        self.widget.destroy()
+        return res
+        
+    def destroy(self):
+        return self.widget.destroy()
+        
+    def _on_astfile_chooserbutton(self, obj):
+        #self.sidebarNotebook.set_current_page(self.sidebarNotebook.page_num(self.taskProgressbars))
+        #self._astFileChanged(obj.get_filename())
+        pass
+

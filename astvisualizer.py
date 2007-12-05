@@ -29,7 +29,6 @@ import pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
-from astvis.widgets import CallTree, AstTree
 from astvis import widgets
 from astvis.misc import console
 from astvis.model import ast
@@ -70,18 +69,21 @@ class MainWindow:
         tool.append(gaphas.tool.RubberbandTool())
         self.view.tool = tool
 
-        self._initProjectTreeView()
+        # project tree
+        projectTreeView = self.wTree.get_widget("project_tree")
+        self.projectTree = widgets.ProjectTree(projectTreeView)
+        self.wTree.signal_autoconnect(self.projectTree)        
         
         # ast tree view
         wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
-        self.astTree = AstTree(self, astTreeView)
+        self.astTree = widgets.AstTree(self, astTreeView)
         wTree.signal_autoconnect(self.astTree)
         self.sidebarNotebook.append_page(astTreeViewOuter, gtk.Label('ast'))
         self.astTree.menu = self.wTree.get_widget('object_menu')
         
         # create call tree
         wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
-        self.callTree = CallTree(self, callTreeView)
+        self.callTree = widgets.CallTree(self, callTreeView)
         self.sidebarNotebook.append_page(callTreeViewOuter, gtk.Label('call'))
 
         # create back call tree
@@ -146,38 +148,12 @@ class MainWindow:
             LOG.info("%s is being replaced" % self.project)
         self.project = project
         if project:
-            self.wTree.get_widget("astfile_chooserbutton").show()
+            self.projectTree.addProject(project)
+            #self.wTree.get_widget("astfile_chooserbutton").show()
             self.astTree.setProject(project)
         else:
-            self.wTree.get_widget("astfile_chooserbutton").hide()
-
-    def astFileChanged(self, obj):
-        self.sidebarNotebook.set_current_page(self.sidebarNotebook.page_num(self.taskProgressbars))
-        self._astFileChanged(obj.get_filename())
-
-    @thread.threaded                
-    def _astFileChanged(self, filename):
-        LOG.debug("Loading %s" % filename)
-        try:
-            self.project._loadAstFile(filename)
-        except(Exception), e:
-            LOG.error("Error loading file, %s", e, exc_info=e)
-        else:
-            LOG.info("Loaded %s" % filename)
-    
-    
-    def _initProjectTreeView(self):
-        self.projectTreeView = self.wTree.get_widget("project_tree")
-        column = gtk.TreeViewColumn("Name")
-        #cell = gtk.CellRendererPixbuf()
-        #column.pack_start(cell, False)
-        #column.add_attribute(cell, "pixbuf", 2)
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 0)
-        #column.add_attribute(cell, "foreground-gdk", 3)
-        self.projectTreeView.append_column(column)
-        
+            #self.wTree.get_widget("astfile_chooserbutton").hide()
+            pass
     
     def keyPress(self, widget, event, data):
         if widget is self.view:

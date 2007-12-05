@@ -13,6 +13,8 @@ TASK_PROGRESSED = 'task progressed'
 TASK_ENDED = 'task ended'
 TASK_CANCELLED = 'task cancelled'
 
+PROPERTY_CHANGED = 'property changed'
+
 class Observer:
     "Interface for observers"
     def notify(self, obj, event, args):
@@ -99,4 +101,17 @@ class EventManager:
                 LOG.warn("Exception during notify, %s", e, exc_info=True)
 
 manager = EventManager()
+
+class Property(object):
+    "Property wrapper that notifies event manager when setter is called."
+    def __init__(self, prop, propertyName):
+        self.property = prop
+        self.propertyName = propertyName
+
+    def __get__(self, obj, type=None):
+        return self.property.__get__(obj, type)
+        
+    def __set__(self, obj, value):
+        self.property.__set__(obj, value)
+        manager.notifyObservers(obj, PROPERTY_CHANGED, (self.propertyName,))
 
