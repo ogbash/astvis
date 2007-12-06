@@ -152,7 +152,45 @@ class MainWindow:
         else:
             #self.wTree.get_widget("astfile_chooserbutton").hide()
             pass
-    
+            
+    def _saveProject(self, widget):
+        "@todo: recognise selected project with the help of actions"
+        # for now hack, get the selected item
+        model, iRow = self.projectTree.view.get_selection().get_selected()
+        project = model[iRow][1]
+
+        wTree = gtk.glade.XML("astvisualizer.glade", 'saveproject_dialog')
+        dialog = wTree.get_widget('saveproject_dialog')
+        
+        try:        
+            result = dialog.run()
+            if result > 0 and dialog.get_filename():
+                filename = dialog.get_filename()
+                import pickle
+                file_ = open(filename, 'w')
+                pickle.dump(project, file_)
+                file_.close()
+                project.filename = filename
+        finally:
+            dialog.destroy()
+        
+    def _openProject(self, widget):
+        wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
+        dialog = wTree.get_widget('openproject_dialog')
+
+        try:
+            result = dialog.run()
+            if result > 0 and dialog.get_filename():
+                filename = dialog.get_filename()
+                import pickle
+                file_ = open(filename, 'r')
+                project = pickle.load(file_)
+                file_.close()
+                project.filename = filename
+                self._addProject(project)
+        finally:
+            dialog.destroy()
+
     def keyPress(self, widget, event, data):
         if widget is self.view:
             if event.keyval==ord("+"):

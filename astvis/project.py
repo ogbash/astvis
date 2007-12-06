@@ -45,6 +45,7 @@ class Project(object):
     name = event.Property(name,'name')
 
     astModel = property(lambda self: self._astModel, _setASTModel)
+    "AST model"
     astModel = event.Property(astModel,'astModel')
 
     model = property(lambda self: self._basicModel, _setBasicModel)
