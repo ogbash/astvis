@@ -45,7 +45,7 @@ class RowFactory:
 factory = RowFactory()
 
 class CallTree:
-    def __init__(self, root, view):
+    def __init__(self, root, view, astTree=None):
         self.root = root
         self.view = view
         self.hide()
@@ -76,6 +76,10 @@ class CallTree:
         
         event.manager.subscribeClass(self._objectChanged, ast.ASTObject)
         
+        if astTree!=None:
+            astTree.view.get_selection().connect('changed', self._astTreeChanged)
+            self._astTreeChanged(astTree.view.get_selection())
+        
     def _keyPress(self, widget, event, data):
         print event
         
@@ -87,6 +91,12 @@ class CallTree:
                 self.showObject(obj)
                 return True
         return False
+        
+    def _astTreeChanged(self, selection):
+        _model, iRow = selection.get_selected()
+        if iRow!=None:
+            astObj = _model[iRow][1]
+            self.showObject(astObj)     
 
     def hide(self):
         #self.view.get_parent().hide() # scrolled window

@@ -11,8 +11,9 @@ from astvis.model import ast, basic
 import gtk
 
 class ProjectTree:
-    def __init__(self, view):
+    def __init__(self, view, root):
         self.view = view
+        self.root = root
 
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
         
@@ -70,6 +71,8 @@ class ProjectTree:
         
         if isinstance(obj, Project):
             self._handleProjectDialog(obj)
+        elif isinstance(obj, ast.ASTModel):
+            self.root.openASTTree(obj)
             
     def _handleProjectDialog(self, project):
         dialog = ProjectDialog(project)

@@ -41,7 +41,7 @@ factory = RowFactory()
 
 class BackCallTree:
 
-    def __init__(self, root, view):
+    def __init__(self, root, view, astTree=None):
         self.root = root
         self.view = view
 
@@ -58,7 +58,17 @@ class BackCallTree:
 
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
         self.view.set_model(self.model)
-
+        
+        if astTree!=None:
+            astTree.view.get_selection().connect('changed', self._astTreeChanged)
+            self._astTreeChanged(astTree.view.get_selection())
+        
+    def _astTreeChanged(self, selection):
+        _model, iRow = selection.get_selected()
+        if iRow!=None:
+            astObj = _model[iRow][1]
+            obj = astObj.model.basicModel.getObjectByASTObject(astObj)            
+            self.showObject(obj)
 
     def _clearModel(self):
         def free(model, path, iRow):

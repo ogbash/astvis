@@ -38,7 +38,8 @@ class MainWindow:
     
     def __init__(self):
         self.project = None
-        self.files = {} # model.File -> gtk.TextView
+        self.files = {} #: opened files (model.File -> gtk.TextView)
+        self.views = {} #: opened views (models -> widgets)
         
         self.wTree = gtk.glade.XML("astvisualizer.glade", 'main_window')
         self.mainWindow = self.wTree.get_widget("main_window")
@@ -55,7 +56,7 @@ class MainWindow:
         self.view.show()
         outer.add(self.view)
         outer.set_hadjustment(self.view.hadjustment)
-        outer.set_vadjustment(self.view.vadjustment)        
+        outer.set_vadjustment(self.view.vadjustment)
         self.view.connect("key-press-event", self.keyPress, None)
         self.view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
                 [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
@@ -71,26 +72,9 @@ class MainWindow:
 
         # project tree
         projectTreeView = self.wTree.get_widget("project_tree")
-        self.projectTree = widgets.ProjectTree(projectTreeView)
+        self.projectTree = widgets.ProjectTree(projectTreeView, self)
         self.wTree.signal_autoconnect(self.projectTree)        
         
-        # ast tree view
-        wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
-        self.astTree = widgets.AstTree(self, astTreeView)
-        wTree.signal_autoconnect(self.astTree)
-        self.sidebarNotebook.append_page(astTreeViewOuter, gtk.Label('ast'))
-        self.astTree.menu = self.wTree.get_widget('object_menu')
-        
-        # create call tree
-        wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
-        self.callTree = widgets.CallTree(self, callTreeView)
-        self.sidebarNotebook.append_page(callTreeViewOuter, gtk.Label('call'))
-
-        # create back call tree
-        wTree, backCallTreeView, = self._readWidget('back_call_tree')
-        self.backCallTree = widgets.BackCallTree(self, backCallTreeView)
-        self.sidebarNotebook.append_page(backCallTreeView, gtk.Label('back'))
-
         self.notebook = self.wTree.get_widget("notebook")
 
         self.wTree.signal_autoconnect(self)
@@ -148,7 +132,6 @@ class MainWindow:
         if project:
             self.projectTree.addProject(project)
             #self.wTree.get_widget("astfile_chooserbutton").show()
-            self.astTree.setProject(project)
         else:
             #self.wTree.get_widget("astfile_chooserbutton").hide()
             pass
@@ -173,7 +156,7 @@ class MainWindow:
                 project.filename = filename
         finally:
             dialog.destroy()
-        
+
     def _openProject(self, widget):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
@@ -190,6 +173,44 @@ class MainWindow:
                 self._addProject(project)
         finally:
             dialog.destroy()
+
+    def addView(self, obj, widget, labelText):
+        self.views[obj] = widget
+        self.sidebarNotebook.append_page(widget, gtk.Label(labelText))
+
+    def openASTTree(self, astModel):
+        # ast tree view
+        wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
+        astTree = widgets.AstTree(self, astModel, astTreeView)
+        wTree.signal_autoconnect(astTree)
+        
+        wTree = gtk.glade.XML("astvisualizer.glade", 'object_menu')
+        astTree.menu = wTree.get_widget('object_menu')
+        wTree.signal_autoconnect(astTree)
+        
+        self.addView(astTree, astTreeViewOuter, 'ast')
+        
+    def openCallTree(self, astTree):
+        # create call tree
+        wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
+        callTree = widgets.CallTree(self, callTreeView, astTree)
+        self.addView(callTree, callTreeViewOuter, 'call')
+
+    def openBackCallTree(self, astTree):
+        # create back call tree
+        wTree, backCallTreeView, = self._readWidget('back_call_tree')
+        backCallTree = widgets.BackCallTree(self, backCallTreeView, astTree)
+        self.addView(backCallTree, backCallTreeView, 'back')
+
+    def openObjectList(self):
+        lst = widgets.ObjectList()
+        _model, iRow = self.astTree.view.get_selection().get_selected()
+        astObj = _model[iRow][1]
+        obj = astObj.model.basicModel.getObjectByASTObject(astObj)
+        lst.showObject(obj)
+        lst.show_all()
+        self.sidebarNotebook.append_page(lst, gtk.Label('refs(%s)'%obj))        
+
 
     def keyPress(self, widget, event, data):
         if widget is self.view:
@@ -291,16 +312,6 @@ class MainWindow:
     def view_mpi_tags(self, widget):
         OPTIONS["view MPI tags"] = not OPTIONS["view MPI tags"]
         self.view.queue_draw_refresh()
-        
-        
-    def _on_show_references_activate(self, widget):
-        lst = widgets.ObjectList()
-        _model, iRow = self.astTree.view.get_selection().get_selected()
-        astObj = _model[iRow][1]
-        obj = astObj.model.basicModel.getObjectByASTObject(astObj)
-        lst.showObject(obj)
-        lst.show_all()
-        self.sidebarNotebook.append_page(lst, gtk.Label('refs(%s)'%obj))
 
 if __name__ == "__main__":
     from astvis.services import references

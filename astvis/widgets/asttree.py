@@ -102,9 +102,10 @@ Filter.PREDEFINED_FILTERS['show globals'] = Filter([
 
 class AstTree:
     
-    def __init__(self, root, view):
+    def __init__(self, root, astModel, view):
+        LOG.debug('Generating AstTree with %s' % astModel)
         self.root = root
-        self.project = None
+        self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  
         self.view = view #: GTK tree view
         self.filters = {} #: enabled filters, name->filter
@@ -129,9 +130,12 @@ class AstTree:
                  (INFO_OBJECT_PATH.name, 0, INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
+        self.view.set_model(self.model)
                 
         event.manager.subscribeClass(self._objectChanged, ast.ASTObject)                
         event.manager.subscribeClass(self._objectChanged, project.Project)
+        
+        self.regenerateSidebarTree()
         
     def _selectionChanged(self, selection, param):
         model, iRow = selection.get_selected()
@@ -139,21 +143,14 @@ class AstTree:
             return
 
         obj = model[iRow][1]
-        self.root.callTree.showObject(obj)
-        basicObj = obj.model.basicModel.getObjectByASTObject(obj)
-        self.root.backCallTree.showObject(basicObj)
-
-    def setProject(self, project):
-        self.project = project
-        self.view.set_model(self.model)
-        
-        # generate sidebar tree
-        self.regenerateSidebarTree()
+        #self.root.callTree.showObject(obj)
+        #basicObj = obj.model.basicModel.getObjectByASTObject(obj)
+        #self.root.backCallTree.showObject(basicObj)
         
     def regenerateSidebarTree(self):
         LOG.debug("Regenerating sidebar tree")
         self.model.clear()
-        astModel = self.project.astModel
+        astModel = self.astModel
         self._generateSidebarTree(None, astModel and astModel.files or ())
         
     def _generateSidebarTree(self, iParent, astObjects):            
@@ -255,6 +252,12 @@ class AstTree:
             self.filters = dialog.filters
             self.regenerateSidebarTree()
         dialog.destroy()
+        
+    def _onShowCalls(self, widget):
+        self.root.openCallTree(self)
+        
+    def _onShowReferences(self, widget):
+        self.root.openBackCallTree(self)
         
 class FilterDialog:
     FILTER_VALUES = {

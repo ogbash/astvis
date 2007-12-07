@@ -70,6 +70,9 @@ class ASTModel(object):
             else:
                 return None
         return obj
+        
+    def __str__(self):
+        return "ASTModel(nFiles=%d)" % len(self.files)
 
 # basic model classes
 

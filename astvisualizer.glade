@@ -233,6 +233,7 @@
             <property name="can_focus">True</property>
             <child>
               <widget class="GtkVBox" id="vbox2">
+                <property name="width_request">200</property>
                 <property name="visible">True</property>
                 <child>
                   <widget class="GtkVBox" id="vbox4">
@@ -418,7 +419,16 @@
         <property name="tooltip" translatable="yes">Show all references to this object</property>
         <property name="label" translatable="yes">show references</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="_on_show_references_activate"/>
+        <signal name="activate" handler="_onShowReferences"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="show-calls">
+        <property name="visible">True</property>
+        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+        <property name="label" translatable="yes">show calls</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="_onShowCalls"/>
       </widget>
     </child>
   </widget>
