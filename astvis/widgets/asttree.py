@@ -9,6 +9,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
 from astvis import event, project
+from astvis.action import action
 import gtk
 import pickle
 
@@ -100,7 +101,7 @@ Filter.PREDEFINED_FILTERS['show globals'] = Filter([
         ])
 
 
-class AstTree:
+class AstTree(object):
     
     def __init__(self, root, astModel, view):
         LOG.debug('Generating AstTree with %s' % astModel)
@@ -252,10 +253,12 @@ class AstTree:
             self.filters = dialog.filters
             self.regenerateSidebarTree()
         dialog.destroy()
-        
+
+    @action('show-calls', label='Show calls')        
     def _onShowCalls(self, widget):
         self.root.openCallTree(self)
-        
+
+    @action('show-references', label='Show references')        
     def _onShowReferences(self, widget):
         self.root.openBackCallTree(self)
         

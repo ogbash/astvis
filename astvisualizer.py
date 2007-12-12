@@ -33,8 +33,11 @@ from astvis import widgets
 from astvis.misc import console
 from astvis.model import ast
 from astvis.calldiagram import CallDiagram
+from astvis.action import action
+import astvis.action # module
+import astvis.widgets.task
 
-class MainWindow:
+class MainWindow(object):
     
     def __init__(self):
         self.project = None
@@ -45,10 +48,12 @@ class MainWindow:
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
+        self._initActions(self.wTree)
+        astvis.action.manager.registerGroup('group-main', self)
+        
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
-        import astvis.widgets.task
         self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
 
         self.view = gaphas.view.GtkView()
@@ -88,6 +93,16 @@ class MainWindow:
         pyconsole.set_size_request(640,480)
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
+        
+    def _initActions(self, wTree):
+        "Scan widget tree and connect widgets to their actions"
+        for prefix in ['menu-', 'button-']:
+            widgets = wTree.get_widget_prefix(prefix)        
+            for widget in widgets:
+                name = gtk.glade.get_widget_name(widget)
+                actionName = name[len(prefix):]
+                action_ = astvis.action.manager.getAction(actionName)
+                action_.connect_proxy(widget)
 
     def _readWidget(self, name, otherNames=None):
         "@return: [wTree, mainWidget, otherWidgets...]"
@@ -121,7 +136,8 @@ class MainWindow:
                 context.drop_finish(False, timestamp)                
         else:
             context.drop_finish(False, timestamp)
-         
+    
+    @action('project-new', label='New project', icon='gtk-new')
     def _newProject(self, obj):
         self._addProject(Project())
 
@@ -136,6 +152,7 @@ class MainWindow:
             #self.wTree.get_widget("astfile_chooserbutton").hide()
             pass
             
+    @action('project-save', label='Save project', icon='gtk-save')
     def _saveProject(self, widget):
         "@todo: recognise selected project with the help of actions"
         # for now hack, get the selected item
@@ -157,6 +174,7 @@ class MainWindow:
         finally:
             dialog.destroy()
 
+    @action('project-open', label='Open project')
     def _openProject(self, widget):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
@@ -183,8 +201,10 @@ class MainWindow:
         wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
         astTree = widgets.AstTree(self, astModel, astTreeView)
         wTree.signal_autoconnect(astTree)
+        astvis.action.manager.registerGroup('group-object', astTree)
         
         wTree = gtk.glade.XML("astvisualizer.glade", 'object_menu')
+        self._initActions(wTree)
         astTree.menu = wTree.get_widget('object_menu')
         wTree.signal_autoconnect(astTree)
         

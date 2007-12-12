@@ -19,58 +19,38 @@
                 <child>
                   <widget class="GtkMenuItem" id="menuitem1">
                     <property name="visible">True</property>
+                    <property name="submenu">file-menu</property>
                     <property name="label" translatable="yes">_File</property>
                     <property name="use_underline">True</property>
                     <child>
-                      <widget class="GtkMenu" id="menuitem1_menu">
+                      <widget class="GtkMenu" id="file-menu">
+                        <property name="visible">True</property>
+                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <child>
-                          <widget class="GtkImageMenuItem" id="new1">
+                          <widget class="GtkImageMenuItem" id="menu-project-new">
                             <property name="visible">True</property>
-                            <property name="label">gtk-new</property>
+                            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                            <property name="label" translatable="yes">gtk-new</property>
                             <property name="use_underline">True</property>
                             <property name="use_stock">True</property>
-                            <signal name="activate" handler="_newProject"/>
                           </widget>
                         </child>
                         <child>
-                          <widget class="GtkImageMenuItem" id="open1">
+                          <widget class="GtkImageMenuItem" id="menu-project-open">
                             <property name="visible">True</property>
-                            <property name="label">gtk-open</property>
+                            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                            <property name="label" translatable="yes">gtk-open</property>
                             <property name="use_underline">True</property>
                             <property name="use_stock">True</property>
-                            <signal name="activate" handler="_openProject"/>
                           </widget>
                         </child>
                         <child>
-                          <widget class="GtkImageMenuItem" id="save1">
+                          <widget class="GtkImageMenuItem" id="menu-project-save">
                             <property name="visible">True</property>
-                            <property name="label">gtk-save</property>
+                            <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                            <property name="label" translatable="yes">gtk-save</property>
                             <property name="use_underline">True</property>
                             <property name="use_stock">True</property>
-                            <signal name="activate" handler="_saveProject"/>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkImageMenuItem" id="save_as1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-save-as</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="_saveAsProject"/>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkSeparatorMenuItem" id="separatormenuitem1">
-                            <property name="visible">True</property>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkImageMenuItem" id="quit1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-quit</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="on_quit1_activate"/>
                           </widget>
                         </child>
                       </widget>
@@ -82,46 +62,6 @@
                     <property name="visible">True</property>
                     <property name="label" translatable="yes">_Edit</property>
                     <property name="use_underline">True</property>
-                    <child>
-                      <widget class="GtkMenu" id="menuitem2_menu">
-                        <child>
-                          <widget class="GtkImageMenuItem" id="cut1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-cut</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="on_cut1_activate"/>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkImageMenuItem" id="copy1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-copy</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="on_copy1_activate"/>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkImageMenuItem" id="paste1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-paste</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="on_paste1_activate"/>
-                          </widget>
-                        </child>
-                        <child>
-                          <widget class="GtkImageMenuItem" id="delete1">
-                            <property name="visible">True</property>
-                            <property name="label">gtk-delete</property>
-                            <property name="use_underline">True</property>
-                            <property name="use_stock">True</property>
-                            <signal name="activate" handler="on_delete1_activate"/>
-                          </widget>
-                        </child>
-                      </widget>
-                    </child>
                   </widget>
                 </child>
                 <child>
@@ -129,18 +69,6 @@
                     <property name="visible">True</property>
                     <property name="label" translatable="yes">_View</property>
                     <property name="use_underline">True</property>
-                    <child>
-                      <widget class="GtkMenu" id="menuitem3_menu">
-                        <child>
-                          <widget class="GtkCheckMenuItem" id="mpi_tags3">
-                            <property name="visible">True</property>
-                            <property name="label" translatable="yes">MPI tags</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="view_mpi_tags"/>
-                          </widget>
-                        </child>
-                      </widget>
-                    </child>
                   </widget>
                 </child>
                 <child>
@@ -149,30 +77,6 @@
                     <property name="label" translatable="yes">_Project</property>
                     <property name="use_underline">True</property>
                     <signal name="activate" handler="on_project_activate"/>
-                    <child>
-                      <widget class="GtkMenu" id="project_menu">
-                        <child>
-                          <widget class="GtkMenuItem" id="generate">
-                            <property name="visible">True</property>
-                            <property name="label" translatable="yes">Generate</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="on_generate_activate"/>
-                            <child>
-                              <widget class="GtkMenu" id="generate_menu">
-                                <child>
-                                  <widget class="GtkMenuItem" id="mpi_tags2">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">MPI tags</property>
-                                    <property name="use_underline">True</property>
-                                    <signal name="activate" handler="generate_mpi_tags"/>
-                                  </widget>
-                                </child>
-                              </widget>
-                            </child>
-                          </widget>
-                        </child>
-                      </widget>
-                    </child>
                   </widget>
                 </child>
                 <child>
@@ -180,18 +84,6 @@
                     <property name="visible">True</property>
                     <property name="label" translatable="yes">_Help</property>
                     <property name="use_underline">True</property>
-                    <child>
-                      <widget class="GtkMenu" id="menuitem4_menu">
-                        <child>
-                          <widget class="GtkMenuItem" id="about1">
-                            <property name="visible">True</property>
-                            <property name="label" translatable="yes">_About</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="on_about1_activate"/>
-                          </widget>
-                        </child>
-                      </widget>
-                    </child>
                   </widget>
                 </child>
               </widget>
@@ -205,10 +97,9 @@
                 <property name="visible">True</property>
                 <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
                 <child>
-                  <widget class="GtkToolButton" id="new_project_button">
+                  <widget class="GtkToolButton" id="button-project-new">
                     <property name="visible">True</property>
                     <property name="stock_id">gtk-new</property>
-                    <signal name="clicked" handler="_newProject"/>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -314,9 +205,6 @@
                           <placeholder/>
                         </child>
                       </widget>
-                      <packing>
-                        <property name="tab_expand">False</property>
-                      </packing>
                     </child>
                     <child>
                       <widget class="GtkLabel" id="label5">
@@ -326,7 +214,6 @@
                       </widget>
                       <packing>
                         <property name="type">tab</property>
-                        <property name="tab_expand">False</property>
                         <property name="tab_fill">False</property>
                       </packing>
                     </child>
@@ -366,9 +253,6 @@
                       <placeholder/>
                     </child>
                   </widget>
-                  <packing>
-                    <property name="tab_expand">False</property>
-                  </packing>
                 </child>
                 <child>
                   <placeholder/>
@@ -413,22 +297,20 @@
   <widget class="GtkMenu" id="object_menu">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
     <child>
-      <widget class="GtkMenuItem" id="show_references">
+      <widget class="GtkMenuItem" id="menu-show-references">
         <property name="visible">True</property>
         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
         <property name="tooltip" translatable="yes">Show all references to this object</property>
         <property name="label" translatable="yes">show references</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="_onShowReferences"/>
       </widget>
     </child>
     <child>
-      <widget class="GtkMenuItem" id="show-calls">
+      <widget class="GtkMenuItem" id="menu-show-calls">
         <property name="visible">True</property>
         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
         <property name="label" translatable="yes">show calls</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="_onShowCalls"/>
       </widget>
     </child>
   </widget>
@@ -491,9 +373,6 @@
               </packing>
             </child>
           </widget>
-          <packing>
-            <property name="tab_expand">False</property>
-          </packing>
         </child>
         <child>
           <widget class="GtkLabel" id="label2">
@@ -503,7 +382,6 @@
           </widget>
           <packing>
             <property name="type">tab</property>
-            <property name="tab_expand">False</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -526,7 +404,6 @@
           </widget>
           <packing>
             <property name="position">1</property>
-            <property name="tab_expand">False</property>
           </packing>
         </child>
         <child>
@@ -538,7 +415,6 @@
           <packing>
             <property name="type">tab</property>
             <property name="position">1</property>
-            <property name="tab_expand">False</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -551,7 +427,6 @@
           </widget>
           <packing>
             <property name="position">2</property>
-            <property name="tab_expand">False</property>
           </packing>
         </child>
         <child>
@@ -563,7 +438,6 @@
           <packing>
             <property name="type">tab</property>
             <property name="position">2</property>
-            <property name="tab_expand">False</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -928,8 +802,8 @@ DENY</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
     <property name="has_separator">False</property>
-    <property name="do_overwrite_confirmation">True</property>
     <property name="action">GTK_FILE_CHOOSER_ACTION_SAVE</property>
+    <property name="do_overwrite_confirmation">True</property>
     <child internal-child="vbox">
       <widget class="GtkVBox" id="dialog-vbox3">
         <property name="visible">True</property>
@@ -1029,6 +903,37 @@ DENY</property>
             <property name="pack_type">GTK_PACK_END</property>
           </packing>
         </child>
+      </widget>
+    </child>
+  </widget>
+  <widget class="GtkMenu" id="file-menu">
+    <property name="visible">True</property>
+    <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+    <child>
+      <widget class="GtkImageMenuItem" id="menu-project-new">
+        <property name="visible">True</property>
+        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+        <property name="label" translatable="yes">gtk-new</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkImageMenuItem" id="menu-project-open">
+        <property name="visible">True</property>
+        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+        <property name="label" translatable="yes">gtk-open</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkImageMenuItem" id="menu-project-save">
+        <property name="visible">True</property>
+        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+        <property name="label" translatable="yes">gtk-save</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
       </widget>
     </child>
   </widget>

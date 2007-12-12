@@ -40,7 +40,6 @@ class ProjectTree:
 
     def _projectChanged(self, project, event_, args):
         if event_ == event.PROPERTY_CHANGED:
-            print "prop", args
             propertyName, newValue, oldValue = args
             iProject = self.findRow(lambda iRow: self.model[iRow][1] == project)
             if propertyName == 'name':
