@@ -5,7 +5,7 @@ LOG = logging.getLogger("projecttree")
 from astvis.common import FINE, FINER, FINEST
 
 from astvis.project import Project, readASTModel
-from astvis import event, thread, xmlmap
+from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
 
 import gtk
@@ -71,7 +71,7 @@ class ProjectTree:
         if isinstance(obj, Project):
             self._handleProjectDialog(obj)
         elif isinstance(obj, ast.ASTModel):
-            self.root.openASTTree(obj)
+            action.manager.activate('show-ast', obj, self)
             
     def _handleProjectDialog(self, project):
         dialog = ProjectDialog(project)

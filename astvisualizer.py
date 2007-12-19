@@ -33,8 +33,8 @@ from astvis import widgets
 from astvis.misc import console
 from astvis.model import ast
 from astvis.calldiagram import CallDiagram
-from astvis.action import action
-import astvis.action # module
+from astvis.action import Action
+from astvis import action
 import astvis.widgets.task
 
 class MainWindow(object):
@@ -48,8 +48,9 @@ class MainWindow(object):
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",gtk.main_quit)
         
-        self._initActions(self.wTree)
-        astvis.action.manager.registerGroup('group-main', self)
+        action.manager.registerActionService(self)
+        self.globalActionGroup = action.manager.createActionGroup('global', self)
+        self.globalActionGroup.connectWidgetTree(self.wTree)
         
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
@@ -94,16 +95,6 @@ class MainWindow(object):
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
         
-    def _initActions(self, wTree):
-        "Scan widget tree and connect widgets to their actions"
-        for prefix in ['menu-', 'button-']:
-            widgets = wTree.get_widget_prefix(prefix)        
-            for widget in widgets:
-                name = gtk.glade.get_widget_name(widget)
-                actionName = name[len(prefix):]
-                action_ = astvis.action.manager.getAction(actionName)
-                action_.connect_proxy(widget)
-
     def _readWidget(self, name, otherNames=None):
         "@return: [wTree, mainWidget, otherWidgets...]"
         wTree = gtk.glade.XML("astvisualizer.glade", 'widgets_window')
@@ -137,8 +128,8 @@ class MainWindow(object):
         else:
             context.drop_finish(False, timestamp)
     
-    @action('project-new', label='New project', icon='gtk-new')
-    def _newProject(self, obj):
+    @Action('project-new', label='New project', icon='gtk-new')
+    def _newProject(self, target, context):
         self._addProject(Project())
 
     def _addProject(self, project):
@@ -152,8 +143,8 @@ class MainWindow(object):
             #self.wTree.get_widget("astfile_chooserbutton").hide()
             pass
             
-    @action('project-save', label='Save project', icon='gtk-save')
-    def _saveProject(self, widget):
+    @Action('project-save', label='Save project', icon='gtk-save')
+    def _saveProject(self, project, context):
         "@todo: recognise selected project with the help of actions"
         # for now hack, get the selected item
         model, iRow = self.projectTree.view.get_selection().get_selected()
@@ -174,8 +165,8 @@ class MainWindow(object):
         finally:
             dialog.destroy()
 
-    @action('project-open', label='Open project')
-    def _openProject(self, widget):
+    @Action('project-open', label='Open project')
+    def _openProject(self, widget, context):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
 
@@ -196,30 +187,33 @@ class MainWindow(object):
         self.views[obj] = widget
         self.sidebarNotebook.append_page(widget, gtk.Label(labelText))
 
-    def openASTTree(self, astModel):
+    @Action('show-ast', 'Show AST tree', targetClass=ast.ASTModel)
+    def openASTTree(self, astModel, context):
         # ast tree view
         wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
         astTree = widgets.AstTree(self, astModel, astTreeView)
         wTree.signal_autoconnect(astTree)
-        astvis.action.manager.registerGroup('group-object', astTree)
+        astTreeGroup = action.manager.createActionGroup('astTree', context=astTree)
         
         wTree = gtk.glade.XML("astvisualizer.glade", 'object_menu')
-        self._initActions(wTree)
+        astTreeGroup.connectWidgetTree(wTree)
         astTree.menu = wTree.get_widget('object_menu')
-        wTree.signal_autoconnect(astTree)
+        #wTree.signal_autoconnect(astTree)
         
         self.addView(astTree, astTreeViewOuter, 'ast')
-        
-    def openCallTree(self, astTree):
+    
+    @Action('show-calls', 'Show calls', contextClass=widgets.AstTree)
+    def openCallTree(self, target, context):
         # create call tree
         wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
-        callTree = widgets.CallTree(self, callTreeView, astTree)
+        callTree = widgets.CallTree(self, callTreeView, context)
         self.addView(callTree, callTreeViewOuter, 'call')
 
-    def openBackCallTree(self, astTree):
+    @Action('show-references', 'Show references', contextClass=widgets.AstTree)
+    def openBackCallTree(self, target, context):
         # create back call tree
         wTree, backCallTreeView, = self._readWidget('back_call_tree')
-        backCallTree = widgets.BackCallTree(self, backCallTreeView, astTree)
+        backCallTree = widgets.BackCallTree(self, backCallTreeView, context)
         self.addView(backCallTree, backCallTreeView, 'back')
 
     def openObjectList(self):

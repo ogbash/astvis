@@ -9,7 +9,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
 from astvis import event, project
-from astvis.action import action
+from astvis.action import Action
 import gtk
 import pickle
 
@@ -254,11 +254,11 @@ class AstTree(object):
             self.regenerateSidebarTree()
         dialog.destroy()
 
-    @action('show-calls', label='Show calls')        
+    @Action('show-calls', label='Show calls')        
     def _onShowCalls(self, widget):
         self.root.openCallTree(self)
 
-    @action('show-references', label='Show references')        
+    @Action('show-references', label='Show references')        
     def _onShowReferences(self, widget):
         self.root.openBackCallTree(self)
         
@@ -346,7 +346,6 @@ class FilterDialog:
         filters = {}
         for row in iter(self.filtersModel):
             filterName, filter_, selected = row
-            print filterName, filter_, selected
             if selected:
                 filters[filterName] = filter_
         self.filters = filters
