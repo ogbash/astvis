@@ -8,6 +8,7 @@ from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
 from astvis import core, event
 from astvis.event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from astvis.widgets.base import BaseWidget
 
 import gtk
 import pickle
@@ -44,10 +45,11 @@ class RowFactory:
 
 factory = RowFactory()
 
-class CallTree:
-    def __init__(self, root, view, astTree=None):
+class CallTree(BaseWidget):
+    def __init__(self, root, astTree=None):
+        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer')
         self.root = root
-        self.view = view
+        self.view = self.widget
         self.hide()
         
         column = gtk.TreeViewColumn("Name")

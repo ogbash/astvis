@@ -95,21 +95,6 @@ class MainWindow(object):
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
         
-    def _readWidget(self, name, otherNames=None):
-        "@return: [wTree, mainWidget, otherWidgets...]"
-        wTree = gtk.glade.XML("astvisualizer.glade", 'widgets_window')
-        widgets = [wTree]
-        
-        widget = wTree.get_widget(name)
-        widget.get_parent().remove(widget)
-        widgets.append(widget)
-        
-        for name in otherNames or ():
-            widget = wTree.get_widget(name)
-            widgets.append(widget)
-
-        return widgets
-
     def _data_recv(self, widget, context, x, y, data, info, timestamp):
         LOG.debug("GTK DnD data_recv with info=%d"%info)
         if info==INFO_OBJECT_PATH.number:
@@ -189,32 +174,21 @@ class MainWindow(object):
 
     @Action('show-ast', 'Show AST tree', targetClass=ast.ASTModel)
     def openASTTree(self, astModel, context):
-        # ast tree view
-        wTree, astTreeViewOuter, astTreeView = self._readWidget('ast_tree_outer', ('ast_tree',))
-        astTree = widgets.AstTree(self, astModel, astTreeView)
-        wTree.signal_autoconnect(astTree)
-        astTreeGroup = action.manager.createActionGroup('astTree', context=astTree)
-        
-        wTree = gtk.glade.XML("astvisualizer.glade", 'object_menu')
-        astTreeGroup.connectWidgetTree(wTree)
-        astTree.menu = wTree.get_widget('object_menu')
-        #wTree.signal_autoconnect(astTree)
-        
-        self.addView(astTree, astTreeViewOuter, 'ast')
+        "ast tree view"
+        astTree = widgets.AstTree(self, astModel)        
+        self.addView(astTree, astTree.outerWidget, 'ast')
     
     @Action('show-calls', 'Show calls', contextClass=widgets.AstTree)
     def openCallTree(self, target, context):
-        # create call tree
-        wTree, callTreeViewOuter, callTreeView = self._readWidget('call_tree_outer', ('call_tree',))
-        callTree = widgets.CallTree(self, callTreeView, context)
-        self.addView(callTree, callTreeViewOuter, 'call')
+        "create call tree"
+        callTree = widgets.CallTree(self, context)
+        self.addView(callTree, callTree.outerWidget, 'call')
 
     @Action('show-references', 'Show references', contextClass=widgets.AstTree)
     def openBackCallTree(self, target, context):
-        # create back call tree
-        wTree, backCallTreeView, = self._readWidget('back_call_tree')
-        backCallTree = widgets.BackCallTree(self, backCallTreeView, context)
-        self.addView(backCallTree, backCallTreeView, 'back')
+        "create back call tree"
+        backCallTree = widgets.BackCallTree(self, context)
+        self.addView(backCallTree, backCallTree.outerWidget, 'back')
 
     def openObjectList(self):
         lst = widgets.ObjectList()

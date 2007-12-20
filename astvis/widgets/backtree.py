@@ -6,6 +6,7 @@ from astvis.common import FINE, FINER, FINEST
 
 from astvis.model import basic
 from astvis import core
+from astvis.widgets.base import BaseWidget
 
 import gtk
 
@@ -39,11 +40,12 @@ class RowFactory:
 
 factory = RowFactory()
 
-class BackCallTree:
+class BackCallTree(BaseWidget):
 
-    def __init__(self, root, view, astTree=None):
+    def __init__(self, root, astTree=None):
+        BaseWidget.__init__(self, 'back_call_tree')
         self.root = root
-        self.view = view
+        self.view = self.widget
 
         column = gtk.TreeViewColumn("Name")
         cell = gtk.CellRendererPixbuf()

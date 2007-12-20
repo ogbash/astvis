@@ -10,6 +10,7 @@ from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
 from astvis import event, project
 from astvis.action import Action
+from astvis.widgets.base import BaseWidget
 import gtk
 import pickle
 
@@ -101,14 +102,15 @@ Filter.PREDEFINED_FILTERS['show globals'] = Filter([
         ])
 
 
-class AstTree(object):
+class AstTree(BaseWidget):
     
-    def __init__(self, root, astModel, view):
+    def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
+        BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', menuName='object_menu')
         self.root = root
         self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  
-        self.view = view #: GTK tree view
+        self.view = self.widget #: GTK tree view
         self.filters = {} #: enabled filters, name->filter
         
         column = gtk.TreeViewColumn("Name")
@@ -235,7 +237,7 @@ class AstTree(object):
         _model, iRow = self.view.get_selection().get_selected()
         obj = _model[iRow][1]
         if obj is not None:
-            self.menu.popup(None, None, None, 3, time)
+            self.contextMenu.popup(None, None, None, 3, time)
      
     def _dragDataGet(self, widget, context, data, info, timestamp):
         "Returns data for the GTK DnD protocol."

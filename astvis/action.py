@@ -69,6 +69,7 @@ class ActionGroup(object):
             LOG.warn("Action %s not found, cannot connect %s" % (actionName, widget))
             return False
         gtkaction = self.gtkactions[actionName]
+        LOG.log(FINER, "Connecting proxy %s to %s" % (widget, gtkaction))
         gtkaction.connect_proxy(widget)
         return True
         
