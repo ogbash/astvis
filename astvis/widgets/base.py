@@ -19,7 +19,19 @@ class BaseWidget(object):
         if menuName:
             menuwTree = gtk.glade.XML(gladeFile, menuName)
             self.contextMenu = menuwTree.get_widget(menuName)
-            self.actionGroup.connectWidgetTree(menuwTree)
+            action.connectWidgetTree(self.actionGroup, menuwTree)
         else:
-            self.contextMenu = None
+            self.contextMenu = action.generateMenu(self.actionGroup)
+        self.widget.connect("button-press-event", self.__buttonPress)
+        self.widget.connect_after("popup-menu", self._popupMenu)
 
+    def _popupMenu(self, widget, time=0):
+        _model, iRow = self.widget.get_selection().get_selected()
+        obj = _model[iRow][1]
+        if obj is not None:
+            self.contextMenu.popup(None, None, None, 3, time)
+
+    def __buttonPress(self, widget, event):
+        if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:
+            self._popupMenu(widget, event.get_time())
+            return True

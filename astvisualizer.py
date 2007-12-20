@@ -50,7 +50,7 @@ class MainWindow(object):
         
         action.manager.registerActionService(self)
         self.globalActionGroup = action.manager.createActionGroup('global', self)
-        self.globalActionGroup.connectWidgetTree(self.wTree)
+        action.connectWidgetTree(self.globalActionGroup, self.wTree)
         
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')

@@ -73,16 +73,6 @@ class ActionGroup(object):
         gtkaction.connect_proxy(widget)
         return True
         
-    def connectWidgetTree(self, wTree):
-        "Scan widget tree and connect widgets to their actions"
-        for prefix in ['menu-', 'button-']:
-            widgets = wTree.get_widget_prefix(prefix)        
-            for widget in widgets:
-                name = gtk.glade.get_widget_name(widget)
-                actionName = name[len(prefix):]
-                self.connectProxy(actionName, widget)
-
-        
 class ActionManager(object):
 
     def __init__(self):
@@ -156,4 +146,20 @@ class ActionManager(object):
                     LOG.warn("Error during %s activation", action, exc_info=e)
 
 manager = ActionManager()
+
+def generateMenu(actionGroup):
+    menu = gtk.Menu()
+    for name, gtkaction in actionGroup.gtkactions.iteritems():
+        menuItem = gtkaction.create_menu_item()
+        menu.append(menuItem)
+    return menu
+
+def connectWidgetTree(actionGroup, wTree):
+    "Scan widget tree and connect widgets to their actions"
+    for prefix in ['menu-', 'button-']:
+        widgets = wTree.get_widget_prefix(prefix)        
+        for widget in widgets:
+            name = gtk.glade.get_widget_name(widget)
+            actionName = name[len(prefix):]
+            actionGroup.connectProxy(actionName, widget)
 
