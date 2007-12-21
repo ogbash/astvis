@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+"Classes and methods related to the UI actions."
+
 import logging as _logging
 from astvis.common import FINE, FINER, FINEST
 LOG = _logging.getLogger('action')
@@ -8,16 +10,17 @@ import gtk
 
 
 class Action(object):
+    "Logical action that is used as a template for the GTK actions."
     def __init__(self, name, label = None, tooltip = None, icon = None,
-            group = 'global', targetClass=None, contextClass=None):
+            targetClass=None, contextClass=None, sensitivePredicate=None):
         self.name = name
         self.label = label
         self.tooltip = tooltip
         self.icon = icon
         
-        self.group = group
-        self.targetClass = targetClass
-        self.contextClass = contextClass
+        self.targetClass = targetClass #: required target class
+        self.contextClass = contextClass #: required context class
+        self.sensitivePredicate = sensitivePredicate #: given target and context returns if action should be enabled
     
     def __call__(self, fun):
         fun.__action__ = self
@@ -27,26 +30,61 @@ class Action(object):
         return "Action<%s>" % self.name
         
 class ActionGroup(object):
-    def __init__(self, manager, groupName, context, contextAdapter, actionFilter):
+    """Set of action instances (GTK actions) related to some widget.
+    
+    Action filter is a dictionary with the following possible key-value pairs:
+      - C{'category':categoryName} filters actions with the given prefix in their names
+    
+    @param actionFilters: list of action filters
+    """
+    def __init__(self, manager, groupName, context, contextAdapter, actionFilters=[{}]):
         self.manager = manager #: host manager
         self.name = groupName #: group name
         self.context = context #: widget or other action context
         self.contextAdapter = contextAdapter #: function to extract target from context
-        self.actionFilter = actionFilter #: filter of action to include in this group
+        "filter of action to include in this group"
+        self.actionFilters = actionFilters
         self.gtkgroup = gtk.ActionGroup(groupName) #: corresponding GTK group
         self.gtkactions = {} #: action name -> GTK action
- 
-    def acceptsAction(self, action):       
-        if self.actionFilter!=None and not self.actionFilter(action):
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "Skip %s, filter returned False" % (action,))
-            return False
+
+    def _filterAcceptsAction(self, action, actionFilter):
+        "Check that if all conditions in the filter hold"
+        # check that action required context is satisfied
         if action.contextClass!=None and not isinstance(self.context, action.contextClass):
             if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "Skip %s, %s is not instance of %s" % (action, self.context, action.contextClass))
+                LOG.log(FINEST, "Context %s for action %s is not satisfied (given %s)" % (action.contextClass, action, self.context.__class__))
             return False
-
+        # check that action is in a given category
+        if actionFilter.has_key('category') and not action.name.startswith(actionFilter['category']):
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "%s is not in the category '%s'" % (action, actionFilter['category']))
+            return False        
         return True
+            
+    def acceptsAction(self, action):
+        "Checks if at least one filter for the action holds."
+        for actionFilter in self.actionFilters:
+            if self._filterAcceptsAction(action, actionFilter):
+                return True
+        return False
+        
+    def updateActions(self, target):
+        """Show/hide actions based on the currently selected object.
+        
+        @param target: selected object"""
+        # for all group actions
+        for name, gtkaction in self.gtkactions.iteritems():
+            action = manager.getAction(name)
+            # show/hide action
+            if action.targetClass!=None and not isinstance(target, action.targetClass):
+                gtkaction.props.visible = False
+            else:
+                gtkaction.props.visible = True
+            # enable/disable action
+            if action.sensitivePredicate!=None and not action.sensitivePredicate(target, self.context):
+                gtkaction.props.sensitive = False
+            else:
+                gtkaction.props.sensitive = True         
         
     def addAction(self, action):
         gtkaction = gtk.Action(action.name, action.label, action.tooltip, action.icon)
@@ -61,7 +99,7 @@ class ActionGroup(object):
         # resolve target
         target = self.context
         if self.contextAdapter!=None:
-            target = self.contextAdapter(context)
+            target = self.contextAdapter(self.context)
         manager.activate(gtkaction.get_name(), target, self.context)
         
     def connectProxy(self, actionName, widget):                
@@ -116,11 +154,11 @@ class ActionManager(object):
         self._services.append(actions)
         return actions
 
-    def createActionGroup(self, groupName, context, contextAdapter=None, actionFilter=None):
+    def createActionGroup(self, groupName, context, contextAdapter=None, actionFilters=[{}]):
         "Creates new group and fills it with gtk actions"
         LOG.debug('Creating action group "%s" with context %s', groupName, context)
                 
-        group = ActionGroup(self, groupName, context, contextAdapter, actionFilter)
+        group = ActionGroup(self, groupName, context, contextAdapter, actionFilters)
         for action in self._actions.itervalues():
             if group.acceptsAction(action):            
                 group.addAction(action)

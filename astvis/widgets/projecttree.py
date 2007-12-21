@@ -7,12 +7,14 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.project import Project, readASTModel
 from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
+from astvis.widgets.base import BaseWidget
 
 import gtk
 
-class ProjectTree:
-    def __init__(self, view, root):
-        self.view = view
+class ProjectTree(BaseWidget):
+    def __init__(self, root):
+        BaseWidget.__init__(self, 'project_tree', 'project_tree_outer')
+        self.view = self.widget
         self.root = root
 
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)

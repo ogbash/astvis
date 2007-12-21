@@ -106,7 +106,7 @@ class AstTree(BaseWidget):
     
     def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
-        BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', menuName='object_menu')
+        BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', actionFilters=[{'category':'show-'}], menuName='object_menu')
         self.root = root
         self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  
@@ -143,11 +143,7 @@ class AstTree(BaseWidget):
         model, iRow = selection.get_selected()
         if not model or not iRow:
             return
-
         obj = model[iRow][1]
-        #self.root.callTree.showObject(obj)
-        #basicObj = obj.model.basicModel.getObjectByASTObject(obj)
-        #self.root.backCallTree.showObject(basicObj)
         
     def regenerateSidebarTree(self):
         LOG.debug("Regenerating sidebar tree")

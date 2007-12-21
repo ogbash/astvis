@@ -47,7 +47,7 @@ factory = RowFactory()
 
 class CallTree(BaseWidget):
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer')
+        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer', actionFilters=[{'category':'show-'}])
         self.root = root
         self.view = self.widget
         self.hide()

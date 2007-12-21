@@ -43,7 +43,7 @@ factory = RowFactory()
 class BackCallTree(BaseWidget):
 
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'back_call_tree')
+        BaseWidget.__init__(self, 'back_call_tree', actionFilters=[{'category':'show-'}])
         self.root = root
         self.view = self.widget
 

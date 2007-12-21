@@ -77,9 +77,9 @@ class MainWindow(object):
         self.view.tool = tool
 
         # project tree
-        projectTreeView = self.wTree.get_widget("project_tree")
-        self.projectTree = widgets.ProjectTree(projectTreeView, self)
-        self.wTree.signal_autoconnect(self.projectTree)        
+        self.projectTree = widgets.ProjectTree(self)
+        leftPanel = self.wTree.get_widget('left_panel_top')
+        leftPanel.pack_start(self.projectTree.outerWidget)
         
         self.notebook = self.wTree.get_widget("notebook")
 
@@ -128,7 +128,7 @@ class MainWindow(object):
             #self.wTree.get_widget("astfile_chooserbutton").hide()
             pass
             
-    @Action('project-save', label='Save project', icon='gtk-save')
+    @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
     def _saveProject(self, project, context):
         "@todo: recognise selected project with the help of actions"
         # for now hack, get the selected item
