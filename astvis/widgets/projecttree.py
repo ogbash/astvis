@@ -8,6 +8,7 @@ from astvis.project import Project, readASTModel
 from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
 from astvis.widgets.base import BaseWidget
+from astvis import gtkx
 
 import gtk
 
@@ -17,7 +18,8 @@ class ProjectTree(BaseWidget):
         self.view = self.widget
         self.root = root
 
-        self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
+        #self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
+        self.model = gtkx.PythonTreeModel()
         
         column = gtk.TreeViewColumn("Name")
         cell = gtk.CellRendererPixbuf()
