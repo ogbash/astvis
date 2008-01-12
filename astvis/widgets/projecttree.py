@@ -13,13 +13,13 @@ from astvis import gtkx
 import gtk
 
 class ProjectTree(BaseWidget):
-    def __init__(self, root):
+    def __init__(self, projects):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer')
         self.view = self.widget
-        self.root = root
+        self.projects = projects
 
         #self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
-        self.model = gtkx.PythonTreeModel()
+        self.model = gtkx.PythonTreeModel(projects)
         
         column = gtk.TreeViewColumn("Name")
         cell = gtk.CellRendererPixbuf()

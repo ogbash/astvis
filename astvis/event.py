@@ -4,15 +4,18 @@ import logging
 LOG = logging.getLogger("event")
 
 # observer
-ADDED_TO_DIAGRAM = "added to diagram" # object, diagram
-REMOVED_FROM_DIAGRAM = "removed from diagram" # object, diagram
+ADDED_TO_DIAGRAM = "added to diagram" #: object, diagram
+REMOVED_FROM_DIAGRAM = "removed from diagram" #: object, diagram
 
 TASK_STARTED = 'task started'
 TASK_PROGRESSED = 'task progressed'
 TASK_ENDED = 'task ended'
 TASK_CANCELLED = 'task cancelled'
 
-PROPERTY_CHANGED = 'property changed'
+PROPERTY_CHANGED = 'property changed' #: args = (name, action,newvalue, oldvalue)
+PC_CHANGED = 1
+PC_ADDED = 2
+PC_REMOVED = 3
 
 class Observer:
     "Interface for observers"

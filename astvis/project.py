@@ -6,7 +6,7 @@ from common import FINE, FINER, FINEST
 
 import gtk
 import xmlmap
-from astvis import event
+from astvis import event, gtkx
 from model import ast, basic
 
 def readASTModel(filename):
@@ -25,14 +25,6 @@ def readASTModel(filename):
     return astModel
 
 class Project(object):
-    objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
-    classes = list(objClasses)
-    classes.extend([ast.Block, ast.Use,
-            ast.Assignment, ast.Call, ast.Statement,
-            ast.TypeDeclaration, ast.Type, ast.Entity,
-            ast.Constant, ast.Reference, ast.Operator,
-            ast.Location, ast.Point])
-
     def _setName(self, name):
         self._name = name
     def _setASTModel(self, astModel):
@@ -41,19 +33,38 @@ class Project(object):
     def _setBasicModel(self, basicModel):
         self._basicModel = basicModel
 
+    objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
+    classes = list(objClasses)
+    classes.extend([ast.Block, ast.Use,
+            ast.Assignment, ast.Call, ast.Statement,
+            ast.TypeDeclaration, ast.Type, ast.Entity,
+            ast.Constant, ast.Reference, ast.Operator,
+            ast.Location, ast.Point])
+            
+    __gtkmodel__ = gtkx.GtkModel()
+
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
+    __gtkmodel__.appendAttribute('name')    
 
-    astModel = property(lambda self: self._astModel, _setASTModel)
     "AST model"
+    astModel = property(lambda self: self._astModel, _setASTModel)
     astModel = event.Property(astModel,'astModel')
+    __gtkmodel__.appendChild('astModel')
 
+    "Basic model"
     model = property(lambda self: self._basicModel, _setBasicModel)
     model = event.Property(model,'basicModel')
+    __gtkmodel__.appendChild('basicModel', 'model')
+    
+    "Diagrams"
+    diagrams = property(lambda self: self._diagrams)
+    __gtkmodel__.appendChild('diagrams')
 
     def __init__(self, projectFileName=None):
         self._name = "(unnamed)"
         self.sourceDir = None
         self._astModel = None #: ast model
         self._basicModel = None #: basic model
+        self._diagrams = []
 

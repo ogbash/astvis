@@ -40,7 +40,7 @@ import astvis.widgets.task
 class MainWindow(object):
     
     def __init__(self):
-        self.project = None
+        self.projects = []
         self.files = {} #: opened files (model.File -> gtk.TextView)
         self.views = {} #: opened views (models -> widgets)
         
@@ -77,7 +77,7 @@ class MainWindow(object):
         self.view.tool = tool
 
         # project tree
-        self.projectTree = widgets.ProjectTree(self)
+        self.projectTree = widgets.ProjectTree(self.projects)
         leftPanel = self.wTree.get_widget('left_panel_top')
         leftPanel.pack_start(self.projectTree.outerWidget)
         
@@ -86,8 +86,8 @@ class MainWindow(object):
         self.wTree.signal_autoconnect(self)
 
         #self._setProject(Project(astFileName="tree.xml"))
-        self.diagram = CallDiagram(self.project)
-        self.view.canvas = self.diagram.getCanvas()
+        #self.diagram = CallDiagram(self.projects[])
+        #self.view.canvas = self.diagram.getCanvas()
         
         self.consoleWindow = gtk.Window()
         pyconsole = console.GTKInterpreterConsole()
@@ -118,15 +118,9 @@ class MainWindow(object):
         self._addProject(Project())
 
     def _addProject(self, project):
-        if self.project:
-            LOG.info("%s is being replaced" % self.project)
-        self.project = project
-        if project:
-            self.projectTree.addProject(project)
-            #self.wTree.get_widget("astfile_chooserbutton").show()
-        else:
-            #self.wTree.get_widget("astfile_chooserbutton").hide()
-            pass
+        LOG.debug("Adding %s" % project)
+        self.projects.append(project)
+        event.manager.notifyObservers(self.)
             
     @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
     def _saveProject(self, project, context):
