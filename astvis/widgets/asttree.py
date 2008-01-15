@@ -184,7 +184,7 @@ class AstTree(BaseWidget):
             iChild = self.model.iter_next(iChild)
         return iParent
         
-    def _objectChanged(self, obj, _event, args):
+    def _objectChanged(self, obj, _event, args, dargs):
         if _event==event.ADDED_TO_DIAGRAM:
             diagram, = args
             iObject = self._findInTree(obj)

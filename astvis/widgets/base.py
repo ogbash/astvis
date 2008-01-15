@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import gtk.glade
-from astvis import action
+from astvis import action, gtkx
 
 class BaseWidget(object):
     "Base widget for the tree widgets."
@@ -48,7 +48,10 @@ class BaseWidget(object):
     def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
         if iRow!=None:
-            obj = model[iRow][1]
+            if isinstance(model, gtkx.PythonTreeModel):
+                obj = model.getObject(iRow)
+            else:
+                obj = model[iRow][1]
         else:
             obj = None
         self.actionGroup.updateActions(obj)

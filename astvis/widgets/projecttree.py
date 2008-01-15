@@ -22,9 +22,9 @@ class ProjectTree(BaseWidget):
         self.model = gtkx.PythonTreeModel(projects)
         
         column = gtk.TreeViewColumn("Name")
-        cell = gtk.CellRendererPixbuf()
-        column.pack_start(cell, False)
-        column.add_attribute(cell, "pixbuf", 2)
+        #cell = gtk.CellRendererPixbuf()
+        #column.pack_start(cell, False)
+        #column.add_attribute(cell, "pixbuf", 2)
         cell = gtk.CellRendererText()
         column.pack_start(cell, True)
         column.add_attribute(cell, "text", 0)
@@ -42,7 +42,7 @@ class ProjectTree(BaseWidget):
             
         event.manager.subscribe(self._projectChanged, project)
 
-    def _projectChanged(self, project, event_, args):
+    def _projectChanged(self, project, event_, args, dargs):
         if event_ == event.PROPERTY_CHANGED:
             propertyName, newValue, oldValue = args
             iProject = self.findRow(lambda iRow: self.model[iRow][1] == project)
@@ -69,8 +69,9 @@ class ProjectTree(BaseWidget):
         return None
 
     def _on_project_tree_row_activated(self, view, path, column):
+        LOG.log(FINE, "Row activated: path=%s, column=%s", path, column)
         model = view.get_model()
-        obj = model[path][1]
+        obj = model.getObject(model.get_iter(path))
         
         if isinstance(obj, Project):
             self._handleProjectDialog(obj)

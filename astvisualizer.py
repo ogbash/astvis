@@ -77,6 +77,7 @@ class MainWindow(object):
         self.view.tool = tool
 
         # project tree
+        self._addProject(Project())
         self.projectTree = widgets.ProjectTree(self.projects)
         leftPanel = self.wTree.get_widget('left_panel_top')
         leftPanel.pack_start(self.projectTree.outerWidget)
@@ -85,7 +86,7 @@ class MainWindow(object):
 
         self.wTree.signal_autoconnect(self)
 
-        #self._setProject(Project(astFileName="tree.xml"))
+        #self._addProject(Project())
         #self.diagram = CallDiagram(self.projects[])
         #self.view.canvas = self.diagram.getCanvas()
         
@@ -120,7 +121,8 @@ class MainWindow(object):
     def _addProject(self, project):
         LOG.debug("Adding %s" % project)
         self.projects.append(project)
-        event.manager.notifyObservers(self.)
+        event.manager.notifyObservers(self.projects, event.PROPERTY_CHANGED, 
+                (None, event.PC_ADDED, project, None), {'index':len(self.projects)-1})
             
     @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
     def _saveProject(self, project, context):

@@ -58,7 +58,7 @@ class CallDiagram(diagram.Diagram):
         handles[1].disconnect = disconnect1
         self._canvas.solver.add_constraint(constraints[1])
         
-    def _notify(self, obj, event, args):
+    def _notify(self, obj, event, args, dargs):
         """Notified when objects are added to or removed from diagram.
         
         @todo: reimplement calle[er]Names with ReferenceResolver"""
@@ -117,7 +117,7 @@ class SubprogramItem(EllipseItem):
             cr.restore()
         super(SubprogramItem, self).draw(context)
 
-    def _objectChanged(self, event, args):
+    def _objectChanged(self, event, args, dargs):
         if event==ACTIVE_CHANGED:
             self.color = self.object.getActive() and (0,0,0,1) or (.6,.6,.6,1)
             self.canvas.request_update(self)
@@ -145,7 +145,7 @@ class ContainerConnector(diagram.Connector, event.Observer):
     def teardown_diagram(self):
         self._diagram._canvas.remove(self._line)        
         
-    def notify(self, obj, event, args):
+    def notify(self, obj, event, args, dargs):
         if event==REMOVED_FROM_DIAGRAM:
             diagram, = args
             if not diagram==self._diagram or not obj in (self._parent, self._child):
@@ -173,7 +173,7 @@ class CallConnector(diagram.Connector, event.Observer):
     def teardown_diagram(self):
         self._diagram._canvas.remove(self._line)
 
-    def notify(self, obj, _event, args):
+    def notify(self, obj, _event, args, dargs):
         if _event==REMOVED_FROM_DIAGRAM:
             diagram, = args
             if not diagram==self._diagram:

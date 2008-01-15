@@ -13,7 +13,7 @@ class TaskHandler:
         self.tasks = {}
         event.manager.subscribeEvent(self._notify, 'task')
         
-    def _notify(self, obj, event_, args):
+    def _notify(self, obj, event_, args, dargs):
         if event_ is event.TASK_STARTED:
             text, = args
             bar = gtk.ProgressBar()

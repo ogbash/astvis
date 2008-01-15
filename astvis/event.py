@@ -3,6 +3,8 @@
 import logging
 LOG = logging.getLogger("event")
 
+from astvis.misc.tools import hashable
+
 # observer
 ADDED_TO_DIAGRAM = "added to diagram" #: object, diagram
 REMOVED_FROM_DIAGRAM = "removed from diagram" #: object, diagram
@@ -65,7 +67,7 @@ class EventManager:
     def _getMatchingBaseClasses(self, clazz):
         return filter(lambda base: issubclass(clazz, base), self._classSubs.keys())
 
-    def notifyObservers(self, obj, event, args):
+    def notifyObservers(self, obj, event, args, dargs=None):
         # notify for event observers
         for obsEvent in self._eventSubs.iterkeys():
             if event.startswith(obsEvent):
@@ -73,11 +75,12 @@ class EventManager:
                 for observer in observers:
                     try:
                         if isinstance(observer,Observer):
-                            observer.notify(obj, event, args)
+                            observer.notify(obj, event, args, dargs)
                         else:
-                            observer(obj, event,args)
+                            observer(obj, event,args, dargs)
                     except(Exception), e:
-                        LOG.warn("Exception during notify, %s", e, exc_info=True)            
+                        LOG.warn("Exception during event notify<observer=%s>(obj=%s,event=%s): %s", 
+                                observer, obj, event, e, exc_info=True)
     
         # first notify class observers
         bases = self._getMatchingBaseClasses(obj.__class__)
@@ -86,21 +89,24 @@ class EventManager:
             for observer in observers:
                 try:
                     if isinstance(observer,Observer):
-                        observer.notify(obj, event, args)
+                        observer.notify(obj, event, args, dargs)
                     else:
-                        observer(obj, event,args)
+                        observer(obj, event, args, dargs)
                 except(Exception), e:
-                    LOG.warn("Exception during notify, %s", e, exc_info=True)            
+                    LOG.warn("Exception during class notify<observer=%s>(obj=%s,event=%s): %s", 
+                            observer, obj, event, e, exc_info=True)
 
         # notify object observers
-        for observer in self._subs.get(obj, ()):
-            try:
-                if isinstance(observer,Observer):
-                    observer.notify(obj, event, args)
-                else:
-                    observer(obj, event,args)
-            except(Exception), e:
-                LOG.warn("Exception during notify, %s", e, exc_info=True)
+        if hashable(obj):
+            for observer in self._subs.get(obj, ()):
+                try:
+                    if isinstance(observer,Observer):
+                        observer.notify(obj, event, args, dargs)
+                    else:
+                        observer(obj, event,args, dargs)
+                except(Exception), e:
+                    LOG.warn("Exception during object notify<observer=%s>(obj=%s,event=%s): %s", 
+                            observer, obj, event, e, exc_info=True)
 
 manager = EventManager()
 
@@ -116,5 +122,5 @@ class Property(object):
     def __set__(self, obj, value):
         oldValue = self.property.__get__(obj)
         self.property.__set__(obj, value)
-        manager.notifyObservers(obj, PROPERTY_CHANGED, (self.propertyName,value,oldValue))
+        manager.notifyObservers(obj, PROPERTY_CHANGED, (self.propertyName,PC_CHANGED,value,oldValue))
 
