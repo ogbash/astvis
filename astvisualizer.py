@@ -87,8 +87,8 @@ class MainWindow(object):
         self.wTree.signal_autoconnect(self)
 
         #self._addProject(Project())
-        #self.diagram = CallDiagram(self.projects[])
-        #self.view.canvas = self.diagram.getCanvas()
+        self.diagram = CallDiagram(self.projects[0])
+        self.view.canvas = self.diagram.getCanvas()
         
         self.consoleWindow = gtk.Window()
         pyconsole = console.GTKInterpreterConsole()
