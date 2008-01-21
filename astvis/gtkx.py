@@ -30,6 +30,132 @@ class GtkModelData(object):
     def __str__(self):
         return "GtkModelData{parentData=%s, index=%d, object=%s}" % (self.parentData,self.index,self.object)
         
+
+class _Adapter:
+    pass
+
+def _getAdapter(obj):
+    if isinstance(obj, types.ListType):
+        return _ListAdapter
+    return _ObjectAdapter
+
+class _ListAdapter(_Adapter):
+    "Adapter for the List."
+    
+    @staticmethod
+    def size(obj):
+        return len(obj)
+        
+    @staticmethod
+    def getIndex(obj, childIndex=-1, childSubindex = None):
+        if childIndex==-1:
+            return len(obj)
+        else:
+            return childIndex
+            
+    @staticmethod
+    def iterChildren(obj):
+        return iter(obj)
+
+    @staticmethod
+    def getChild(parent, index):
+        return parent[index]
+
+    @classmethod
+    def childChanged(clazz, obj, event_, args, dargs, model):
+        index = dargs['index']
+        propName, action, new, old = args
+        return action, index
+
+        
+class _ObjectAdapter(_Adapter):
+    "Adapter for the usual Object."
+    
+    @classmethod
+    def size(clazz, obj):
+        if not hasattr(obj, '__gtkmodel__'):
+            return 0        
+        return clazz.getIndex(obj)
+
+    @classmethod
+    def getIndex(clazz, obj, childIndex=-1, childSubindex = None):        
+        index = 0
+        if childIndex==-1:
+            childIndex = len(obj.__gtkmodel__._children)
+            
+        for iChildIndex in xrange(childIndex):
+            childName, propName = obj.__gtkmodel__._children[iChildIndex]
+            size = clazz._getSize(obj, propName)
+            index = index+size
+            
+        if childSubindex is not None:
+            index = index+childSubindex
+        return index
+
+    @staticmethod
+    def iterChildren(obj):
+        for childName,propName in obj.__gtkmodel__._children:
+            child = getattr(obj, propName)
+            if child is not None:
+                yield child
+
+    @classmethod
+    def getChild(clazz, parent, index):
+        i = 0
+        for iChild, child in enumerate(clazz.iterChildren(parent)):
+            if index==iChild:
+                return child
+        else:
+            raise IndexError(index)
+
+    @classmethod
+    def childChanged(clazz, obj, event_, args, dargs, model):
+        propName, action, new, old = args
+        childIndex = clazz._getChildIndex(obj, childName=propName)
+        index = clazz.getIndex(obj, childIndex)
+
+        objData = model._getData(obj)
+        clazz._fixChildrenIndices(objData, model)
+        
+        if action is event.PC_CHANGED:
+            if old is None and new is not None:
+                action = event.PC_ADDED
+            elif old is not None and new is None:
+                action = event.PC_REMOVED
+        return action, index
+
+    @staticmethod
+    def _getChildIndex(obj, childName = None, propName = None):
+        for childIndex,(childNameP, propNameP) in enumerate(obj.__gtkmodel__._children):
+            if childName==childNameP or propName==propNameP:
+                return childIndex
+        raise KeyError("No childName=%s nor propName=%s found for the %s" % (childName, propName, obj))
+
+    @staticmethod
+    def _getSize(obj, propName):
+        child = getattr(obj, propName)
+        if child is not None:
+            size = 1
+        else:
+            size = 0
+        # @todo: extend to included lists
+        return size
+
+    @classmethod
+    def _fixChildrenIndices(clazz, objData, model):
+        for i, child in enumerate(clazz.iterChildren(objData.object)):
+            print child
+            data = model._getData(child)
+            if data is None:
+                data = GtkModelData(objData, i)
+                data.object = child
+                model._setData(child, data)
+            elif data.index!=i:
+                if LOG.isEnabledFor(FINEST):
+                    LOG.log(FINEST, "Fixing index %d -> %d", data.index, i)
+                    data.index = i
+
+
 class PythonTreeModel(gtk.GenericTreeModel):
     def __init__(self, root, columns = ['name']):
         gtk.GenericTreeModel.__init__(self)
@@ -63,44 +189,33 @@ class PythonTreeModel(gtk.GenericTreeModel):
                     LOG.log(FINE, "Attribute changed: path=%s, iter=%s", path, iter_)
                 return
 
-            # update child
-            if propName is None:
-                childIndex = dargs['index']
-                index = childIndex
+            # update child            
+            adapter = _getAdapter(obj)
+            resultingAction, index = adapter.childChanged(obj, event_, args, dargs, self)
+            if obj is self._root:
+                path = (index,)
             else:
-                childIndex = self._getChildIndex(obj, childName=propName)
-
-            # get parent path
-            objData = self._getData(obj)
-            objIter = self.create_tree_iter(objData)
-            objPath = self.get_path(objIter)
-            
-            if action is event.PC_ADDED:
+                objData = self._getData(obj)
+                objIter = self.create_tree_iter(objData)
+                objPath = self.get_path(objIter)
                 path = objPath + (index,)
+            
+            if resultingAction is event.PC_ADDED:
                 iter_ = self.get_iter(path)
                 self.row_inserted(path, iter_)
-            if action is event.PC_CHANGED:
-                if new is not None and old is None:
-                    #: @todo: must be childName instead of propName
-                    if objData is None:
-                        return
-
-                    childIndex = self._getChildIndex(obj, childName=propName)
-                    index = self._findIndex(obj, childIndex)
-                    path = objPath + (index,)
-                    iter_ = self.get_iter(path)
-                    self._fixIndices(obj, index)
-                    self.row_inserted(path, iter_)
-                    if LOG.isEnabledFor(FINE):
-                        LOG.log(FINE, "Row inserted: path=%s, iter=%s", path, iter_)
-
-    def _fixIndices(self, obj, index):
-        childIndex, childSubindex = self._findChildIndices(obj, index)
-        for i in xrange(childIndex, len(obj.__gtkmodel__.children)):
-            child = 
-            data = self._getData(child)
-            
-            print "fixing %s" % data
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Row inserted: path=%s, iter=%s", path, iter_)
+            elif resultingAction is event.PC_REMOVED:
+                self.row_deleted(path)
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Row deleted: path=%s", path)
+            elif resultingAction is event.PC_CHANGED:
+                iter_ = self.get_iter(path)
+                self.row_changed(path, iter_)
+                if LOG.isEnabledFor(FINE):
+                    LOG.log(FINE, "Row changed: path=%s, iter=%s", path, iter_)
+            else:
+                raise Exception('childChanged() returned incorrect action %s' % resultingAction)
 
     def _getAttribute(self, obj, attrName):
         if LOG.isEnabledFor(FINEST):
@@ -121,86 +236,31 @@ class PythonTreeModel(gtk.GenericTreeModel):
         data = self._data.get(hObj, None)
         return data
 
-    def _getChildData(self, objData, index):
-        """Return certain child of the object."""
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "_getChildData(objData=%s, index=%d)", objData, index)
-        if objData is None:
-            obj = self._root
-        else:
-            obj = objData.object
+    def _setData(self, obj, objData):
+        hObj = makeHashable(obj)
+        self._data[hObj] = objData
 
-        if isinstance(obj, types.ListType):
-            child = obj[index]
+    def _getChildData(self, parentData, index):
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "_getChildData(%s, %s)", parentData, index)
+
+        if parentData is None:
+            parent = self._root
         else:
-            childIndex, childSubindex = self._findChildIndices(obj, index)
-            childName, propName = obj.__gtkmodel__._children[childIndex]
-            child = getattr(obj, propName)
-            
-        hObject = makeHashable(obj)
-        if self._data.has_key(hObject):
-            return self._data[hObject]            
-    
-        data = GtkModelData(objData, index)
-        data.object = child
-        self._data[hObject] = data
+            parent = parentData.object
+
+        adapter = _getAdapter(parent)
+        child = adapter.getChild(parent, index)
+
+        childData = self._getData(child)
+        if childData is None:
+            childData = GtkModelData(parentData, index)
+            childData.object = child
+            self._setData(child, childData)
         
         if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "_getChildData() returns: %s", data)
-        return data
-
-    def _getChildIndex(self, obj, childName = None, propName = None):
-        for childIndex,(childNameP, propNameP) in enumerate(obj.__gtkmodel__._children):
-            if childName==childNameP or propName==propNameP:
-                return childIndex
-        raise KeyError("No childName=%s nor propName=%s found for the %s" % (childName, propName, obj))
-
-    def _getSize(self, obj, propName):
-        child = getattr(obj, propName)
-        if child is not None:
-            size = 1
-        else:
-            size = 0
-        # @todo: extend to included lists
-        return size
-
-
-    def _findChildIndices(self, obj, index=None):
-        indexSum = 0
-        for childIndex,(childName, propName) in enumerate(obj.__gtkmodel__._children):
-            size = self._getSize(obj, propName)
-            
-            if index is not None and index<indexSum+size:
-                childSubindex = index-indexSum
-                break
-            indexSum = indexSum+size
-        else:
-            if index is not None:
-                raise IndexError("Index %d in %s", index, obj)
-            else:
-                childIndex = indexSum
-                childSubindex = None
-
-        return childIndex, childSubindex
-        
-    def _findIndex(self, obj, childIndex=-1, childSubindex = None):
-        if isinstance(obj, types.ListType):
-            if childIndex==-1:
-                return len(obj)
-            else:
-                return childIndex
-    
-        index = 0
-        if childIndex==-1:
-            childIndex = len(obj.__gtkmodel__._children)
-        for iChildIndex in xrange(childIndex):
-            childName, propName = obj.__gtkmodel__._children[iChildIndex]
-            size = self._getSize(obj, propName)
-            index = index+1
-            
-        if childSubindex is not None:
-            index = index+childSubindex
-        return index
+            LOG.log(FINEST, "_getChildData() returns: %s", childData)
+        return childData
         
     def on_get_flags(self):
         return 0
@@ -225,8 +285,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
         path = []
         data = rowref
         while data!=None:
-            if data.parentData!=None:
-                path.append(data.index)
+            path.append(data.index)
             data = data.parentData
         path.reverse()
         path = tuple(path)
@@ -244,6 +303,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
             LOG.log(FINEST, "on_iter_next(rowref=%s)", rowref)
         parentData = rowref.parentData
         index = rowref.index
+
         try:
             return self._getChildData(parentData, index+1)
         except IndexError, e:
@@ -264,15 +324,14 @@ class PythonTreeModel(gtk.GenericTreeModel):
     def on_iter_n_children(self, rowref):
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "on_iter_n_children(rowref=%s)", rowref)
-        if rowref is None:
-            obj = self.root
-        else:
-            obj = rowref.object
-            
-        if isinstance(rowref, types.ListType):
-            return len(obj)
-        else:
-            return self._findIndex(obj)
+        if rowref is None: obj = self.root
+        else: obj = rowref.object        
+        adapter = _getAdapter(obj)
+
+        size = adapter.size(obj)
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "on_iter_n_children() returns %d", size)
+        return size
         
     def on_iter_nth_child(self, parent, n):
         if LOG.isEnabledFor(FINEST):
@@ -290,4 +349,8 @@ class PythonTreeModel(gtk.GenericTreeModel):
     def getObject(self, iter_):
         data = self.get_user_data(iter_)
         return data.object
-
+        
+if __name__=='__main__':
+    l = [1,2,5]
+    la = _getAdapter(l)
+    print la.size(l)
