@@ -95,8 +95,12 @@ class PythonTreeModel(gtk.GenericTreeModel):
                         LOG.log(FINE, "Row inserted: path=%s, iter=%s", path, iter_)
 
     def _fixIndices(self, obj, index):
-        childIndex, childSubindex = self._findChildren
-        for obj.__gtkmodel__.children
+        childIndex, childSubindex = self._findChildIndices(obj, index)
+        for i in xrange(childIndex, len(obj.__gtkmodel__.children)):
+            child = 
+            data = self._getData(child)
+            
+            print "fixing %s" % data
 
     def _getAttribute(self, obj, attrName):
         if LOG.isEnabledFor(FINEST):
