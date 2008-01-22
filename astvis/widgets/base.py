@@ -37,8 +37,12 @@ class BaseWidget(object):
 
     def _popupMenu(self, widget, time=0):
         _model, iRow = self.widget.get_selection().get_selected()
-        obj = _model[iRow][1]
-        self.contextMenu.popup(None, None, None, 3, time)
+        if iRow is not None:
+            if isinstance(_model, gtkx.PythonTreeModel):
+                obj = _model.getObject(iRow)
+            else:
+                obj = _model[iRow][1]
+                self.contextMenu.popup(None, None, None, 3, time)
 
     def __buttonPress(self, widget, event):
         if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:

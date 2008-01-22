@@ -29,7 +29,6 @@ class Project(object):
         self._name = name
     def _setASTModel(self, astModel):
         self._astModel = astModel
-        self.model = basic.BasicModel(astModel)
     def _setBasicModel(self, basicModel):
         self._basicModel = basicModel
 
@@ -68,3 +67,7 @@ class Project(object):
         self._basicModel = None #: basic model
         self._diagrams = []
 
+    def addDiagram(self, diagram):
+        self._diagrams.append(diagram)
+        event.manager.notifyObservers(self._diagrams, event.PROPERTY_CHANGED,
+                                      (None,event.PC_ADDED,diagram,None), {'index':len(self._diagrams)-1})

@@ -85,6 +85,7 @@ class ProjectTree(BaseWidget):
             project.name = dialog.projectName
             if hasattr(dialog, 'astModel'):
                 project.astModel = dialog.astModel
+                project.model = basic.BasicModel(project.astModel)
             project.sourceDir = dialog.sourceDir
 
 #    @thread.threaded                
