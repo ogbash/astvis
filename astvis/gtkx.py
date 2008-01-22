@@ -160,9 +160,10 @@ class _ObjectAdapter(_Adapter):
 
 
 class PythonTreeModel(gtk.GenericTreeModel):
-    def __init__(self, root, columns = ['name']):
+    def __init__(self, root, columns = ['name', '__thumbnail__'], columnTypes = {'__thumbnail__': gtk.gdk.Pixbuf}):
         gtk.GenericTreeModel.__init__(self)
         self._columns = columns
+        self._columnTypes = columnTypes
         self._root = root
         self._data = {} #: object data cache: obj -> GtkModelData
         event.manager.subscribeEvent(self._objectChanged, event.PROPERTY_CHANGED)
@@ -226,12 +227,13 @@ class PythonTreeModel(gtk.GenericTreeModel):
         obj = objData.object
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "_getAttribute(attrName=%s)" % (attrName,))
-        
+
+        propName = None
         if hasattr(obj, '__gtkmodel__'):
             propName = obj.__gtkmodel__._attributes.get(attrName, None)        
             if LOG.isEnabledFor(FINEST):
                 LOG.log(FINEST, "_getAttribute{propName=%s}" % (propName,))
-        else:
+        if propName is None:
             propName = attrName
             
         # @todo: get some attributes from parent (e.g. name for list)
@@ -284,7 +286,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
         return len(self._columns)
         
     def on_get_column_type(self, index):
-        return str
+        return self._columnTypes.get(self._columns[index], str)
         
     def on_get_iter(self, path):
         if LOG.isEnabledFor(FINEST):
@@ -310,7 +312,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
         
     def on_get_value(self, rowref, column):
         if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "on_get_value(rowref=%s)", rowref)
+            LOG.log(FINEST, "on_get_value(rowref=%s, column=%d)", rowref, column)
         childName = self._columns[column]
         return self._getAttribute(rowref, childName)
         
@@ -365,6 +367,22 @@ class PythonTreeModel(gtk.GenericTreeModel):
     def getObject(self, iter_):
         data = self.get_user_data(iter_)
         return data.object
+
+def connectTreeView(treeView, pythonTreeModel):
+    columns = pythonTreeModel._columns
+    
+    column = gtk.TreeViewColumn("Name")
+    if '__thumbnail__' in columns:
+        cell = gtk.CellRendererPixbuf()
+        column.pack_start(cell, False)
+        column.add_attribute(cell, "pixbuf", columns.index('__thumbnail__'))
+    cell = gtk.CellRendererText()
+    column.pack_start(cell, True)
+    column.add_attribute(cell, "text", columns.index('name'))
+    #column.add_attribute(cell, "foreground-gdk", 3)
+    treeView.append_column(column)
+
+    treeView.set_model(pythonTreeModel)
         
 if __name__=='__main__':
     l = [1,2,5]

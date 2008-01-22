@@ -42,6 +42,9 @@ class Project(object):
             
     __gtkmodel__ = gtkx.GtkModel()
 
+    __thumbnail__ = gtk.gdk.pixbuf_new_from_file_at_size('data/thumbnails/project.png', 16, 16)
+    __gtkmodel__.appendAttribute('__thumbnail__')
+
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
     __gtkmodel__.appendAttribute('name')    

@@ -18,20 +18,9 @@ class ProjectTree(BaseWidget):
         self.view = self.widget
         self.projects = projects
 
-        #self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf)
         self.model = gtkx.PythonTreeModel(projects)
         
-        column = gtk.TreeViewColumn("Name")
-        #cell = gtk.CellRendererPixbuf()
-        #column.pack_start(cell, False)
-        #column.add_attribute(cell, "pixbuf", 2)
-        cell = gtk.CellRendererText()
-        column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 0)
-        #column.add_attribute(cell, "foreground-gdk", 3)
-        self.view.append_column(column)
-
-        self.view.set_model(self.model)
+        gtkx.connectTreeView(self.view, self.model)
 
     def addProject(self, project):
         iProject = self.model.append(None, (project.name, project, None))
