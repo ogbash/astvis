@@ -388,3 +388,10 @@ if __name__=='__main__':
     l = [1,2,5]
     la = _getAdapter(l)
     print la.size(l)
+
+    l1 = []
+    l2 = []
+    h1 = makeHashable(l1)
+    h2 = makeHashable(l2)
+    print l1==l2, h1==h2
+    

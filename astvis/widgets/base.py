@@ -40,6 +40,7 @@ class BaseWidget(object):
         if iRow is not None:
             if isinstance(_model, gtkx.PythonTreeModel):
                 obj = _model.getObject(iRow)
+                self.contextMenu.popup(None, None, None, 3, time)
             else:
                 obj = _model[iRow][1]
                 self.contextMenu.popup(None, None, None, 3, time)

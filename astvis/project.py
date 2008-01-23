@@ -63,12 +63,21 @@ class Project(object):
     diagrams = property(lambda self: self._diagrams)
     __gtkmodel__.appendChild('diagrams')
 
+    "Tag types"
+    tagTypes = property(lambda self: self._tagTypes)
+    __gtkmodel__.appendChild('tagTypes')
+
+    "Tags"
+    tags = property(lambda self: self._tags)
+
     def __init__(self, projectFileName=None):
         self._name = "(unnamed)"
         self.sourceDir = None
         self._astModel = None #: ast model
         self._basicModel = None #: basic model
         self._diagrams = []
+        self._tagTypes = []
+        self._tags = {}
 
     def addDiagram(self, diagram):
         self._diagrams.append(diagram)

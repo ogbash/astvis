@@ -57,24 +57,24 @@ class MainWindow(object):
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
         self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
 
-        self.view = gaphas.view.GtkView()
-        outer = self.wTree.get_widget("canvas_view_outer")
-        self.view.show()
-        outer.add(self.view)
-        outer.set_hadjustment(self.view.hadjustment)
-        outer.set_vadjustment(self.view.vadjustment)
-        self.view.connect("key-press-event", self.keyPress, None)
-        self.view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
-                [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
-                gtk.gdk.ACTION_COPY)
-        self.view.connect("drag-data-received", self._data_recv)
+        #self.view = gaphas.view.GtkView()
+        #outer = self.wTree.get_widget("canvas_view_outer")
+        #self.view.show()
+        #outer.add(self.view)
+        #outer.set_hadjustment(self.view.hadjustment)
+        #outer.set_vadjustment(self.view.vadjustment)
+        #self.view.connect("key-press-event", self.keyPress, None)
+        #self.view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
+        #        [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
+        #        gtk.gdk.ACTION_COPY)
+        #self.view.connect("drag-data-received", self._data_recv)
 
         tool = gaphas.tool.ToolChain()
         tool.append(gaphas.tool.HoverTool())
         tool.append(gaphasx.ConnectingTool())
         tool.append(gaphas.tool.ItemTool())
         tool.append(gaphas.tool.RubberbandTool())
-        self.view.tool = tool
+        #self.view.tool = tool
 
         # project tree
         self._addProject(Project())
@@ -86,11 +86,9 @@ class MainWindow(object):
 
         self.wTree.signal_autoconnect(self)
 
-        #self._addProject(Project())
-        project = self.projects[0]
-        diagram = CallDiagram(project)
-        project.addDiagram(diagram)
-        self.view.canvas = diagram.getCanvas()
+        #diagram = CallDiagram(project)
+        #project.addDiagram(diagram)
+        #self.view.canvas = diagram.getCanvas()
         
         self.consoleWindow = gtk.Window()
         pyconsole = console.GTKInterpreterConsole()

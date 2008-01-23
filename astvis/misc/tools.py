@@ -14,11 +14,12 @@ class _Hasher:
         return object.__hash__(self)
         
     def __eq__(self, other):
-        return object.__eq__(self, other)
+        return self is other
     
 def makeHashable(obj):
     if hashable(obj):
         return obj
+    return _Hasher(obj)
     
     
 if __name__=="__main__":
