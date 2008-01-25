@@ -146,7 +146,6 @@ class _ObjectAdapter(_Adapter):
     @classmethod
     def _fixChildrenIndices(clazz, objData, model):
         for i, (child, childIndex) in enumerate(clazz.iterChildren(objData.object)):
-            print child
             data = model._getData(child)
             if data is None:
                 data = GtkModelData(objData, i)

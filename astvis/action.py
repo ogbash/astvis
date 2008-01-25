@@ -72,6 +72,8 @@ class ActionGroup(object):
         """Show/hide actions based on the currently selected object.
         
         @param target: selected object"""
+        LOG.log(FINE, 'updateActions(%s)', target)
+        
         # for all group actions
         for name, gtkaction in self.gtkactions.iteritems():
             action = manager.getAction(name)
