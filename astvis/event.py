@@ -21,12 +21,12 @@ PC_REMOVED = 3
 
 class Observer:
     "Interface for observers"
-    def notify(self, obj, event, args):
-        pass
+    def notify(self, obj, event, args, dargs):
+        raise NotImplementedError('Must implement')
 
 # observer is either
-#  1) Observer with observer.notify(obj, event, args=(arg,..))
-#  2) observer(obj, event, args=(arg,..))
+#  1) Observer with observer.notify(obj, event, args=(arg,..), dargs)
+#  2) observer(obj, event, args=(arg,..), dargs)
 
 class EventManager:
     def __init__(self):

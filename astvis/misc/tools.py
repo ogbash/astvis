@@ -11,10 +11,15 @@ class _Hasher:
         self.__obj = obj
         
     def __hash__(self):
-        return object.__hash__(self)
+        return object.__hash__(self.__obj)
         
     def __eq__(self, other):
+        if isinstance(other, _Hasher):
+            return self.__obj is other.__obj
         return self is other
+        
+    def __str__(self):
+        return "Hasher{%s}" % self.__obj
     
 def makeHashable(obj):
     if hashable(obj):

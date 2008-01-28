@@ -14,7 +14,7 @@ class Action(object):
     def __init__(self, name, label = None, tooltip = None, icon = None,
             targetClass=None, contextClass=None, sensitivePredicate=None):
         self.name = name
-        self.label = label
+        self.label = label or name
         self.tooltip = tooltip
         self.icon = icon
         
@@ -68,7 +68,7 @@ class ActionGroup(object):
                 return True
         return False
         
-    def updateActions(self, target):
+    def updateActions(self, target, parent=None, childName=None):
         """Show/hide actions based on the currently selected object.
         
         @param target: selected object"""

@@ -8,6 +8,7 @@ import gtk
 import xmlmap
 from astvis import event, gtkx
 from model import ast, basic
+from astvis.misc.list import ObservableList
 
 def readASTModel(filename):
     """load xml file
@@ -23,6 +24,38 @@ def readASTModel(filename):
         LOG.debug('Failed loading AST file %s' % filename)
         raise e
     return astModel
+
+class TagType(object):
+    def _setName(self, name):
+        self._name = name
+
+    __gtkmodel__ = gtkx.GtkModel()
+
+    name = property(lambda self: self._name, _setName)
+    name = event.Property(name,'name')
+    __gtkmodel__.appendAttribute('name')
+
+    def __init__(self, name):
+        self._name = name
+
+class TagTypeList(ObservableList):
+    __gtkmodel__ = gtkx.GtkModel()
+
+    name = "Tag types"
+    __gtkmodel__.appendAttribute('name')    
+
+    def __init__(self, project):
+        list.__init__(self)
+        self.project = project
+
+    def __hash__(self,obj):
+        return object.__hash__(self,obj)
+
+    def __eq__(self, obj):
+        return self is obj
+        
+    def __str__(self):
+        return "<TagTypeList size=%s, project=%s>" % (len(self), self.project)
 
 class Project(object):
     def _setName(self, name):
@@ -47,7 +80,7 @@ class Project(object):
 
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
-    __gtkmodel__.appendAttribute('name')    
+    __gtkmodel__.appendAttribute('name')
 
     "AST model"
     astModel = property(lambda self: self._astModel, _setASTModel)
@@ -76,10 +109,11 @@ class Project(object):
         self._astModel = None #: ast model
         self._basicModel = None #: basic model
         self._diagrams = []
-        self._tagTypes = []
+        self._tagTypes = TagTypeList(self)
         self._tags = {}
 
     def addDiagram(self, diagram):
         self._diagrams.append(diagram)
         event.manager.notifyObservers(self._diagrams, event.PROPERTY_CHANGED,
                                       (None,event.PC_ADDED,diagram,None), {'index':len(self._diagrams)-1})
+

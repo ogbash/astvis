@@ -176,8 +176,8 @@ class PythonTreeModel(gtk.GenericTreeModel):
     
     def __objectChanged(self, obj, event_, args, dargs):
         if event_==event.PROPERTY_CHANGED:
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "Property changed obj=%s, args=%s, dargs=%s", obj, args, dargs)
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "Property changed obj=%s, args=%s, dargs=%s", obj, args, dargs)
             propName, action, new, old = args
 
             # update attribute
@@ -200,6 +200,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
             else:
                 objData = self._getData(obj)
                 if objData is None:
+                    if LOG.isEnabledFor(FINEST): LOG.log(FINEST, 'No data found for %s', obj)
                     return
                 objIter = self.create_tree_iter(objData)
                 objPath = self.get_path(objIter)
@@ -248,11 +249,15 @@ class PythonTreeModel(gtk.GenericTreeModel):
         
     def _getData(self, obj):
         hObj = makeHashable(obj)
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "_getData(obj=%s){hObj=%s}", obj, hObj)
         data = self._data.get(hObj, None)
         return data
 
     def _setData(self, obj, objData):
         hObj = makeHashable(obj)
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "_setData(obj=%s){hObj=%s}", obj, hObj)
         self._data[hObj] = objData
 
     def _getChildData(self, parentData, index):
@@ -366,6 +371,22 @@ class PythonTreeModel(gtk.GenericTreeModel):
     def getObject(self, iter_):
         data = self.get_user_data(iter_)
         return data.object
+        
+    def getChildName(self, iter_):
+        data = self.get_user_data(iter_)
+        childName = None
+        if data.parentData is not None:
+            parent = data.parentData.object
+            if hasattr(parent, '__gtkmodel__') and len(parent.__gtkmodel__._children)>0:
+                childName = parent.__gtkmodel__._children[data.childIndex]
+        return childName
+
+    def getParent(self, iter_):
+        data = self.get_user_data(iter_)
+        parent = None
+        if data.parentData is not None:
+            parent = data.parentData.object
+        return parent
 
 def connectTreeView(treeView, pythonTreeModel):
     columns = pythonTreeModel._columns

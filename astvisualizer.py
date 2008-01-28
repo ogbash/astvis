@@ -298,9 +298,12 @@ class MainWindow(object):
         self.view.queue_draw_refresh()
 
 if __name__ == "__main__":
-    from astvis.services import references
+    from astvis.services import references, tags
     core.registerService('ASTTreeWalker', references.ASTTreeWalker())
     core.registerService('ReferenceResolver', references.ReferenceResolver())
+    tagService = tags.TagService()
+    action.manager.registerActionService(tagService)
+    core.registerService('TagService', tagService)
     window = MainWindow()
     gtk.main()
 

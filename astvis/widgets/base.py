@@ -33,17 +33,15 @@ class BaseWidget(object):
         model, iRow = self.widget.get_selection().get_selected()
         if iRow==None:
             return None
-        return model[iRow][1] # actual object is by convention stored at index 1
+        if isinstance(model, gtkx.PythonTreeModel):
+            obj = model.getObject(iRow)
+        else:
+            obj = model[iRow][1] # actual object is by convention stored at index 1
+        return obj
 
     def _popupMenu(self, widget, time=0):
         _model, iRow = self.widget.get_selection().get_selected()
-        if iRow is not None:
-            if isinstance(_model, gtkx.PythonTreeModel):
-                obj = _model.getObject(iRow)
-                self.contextMenu.popup(None, None, None, 3, time)
-            else:
-                obj = _model[iRow][1]
-                self.contextMenu.popup(None, None, None, 3, time)
+        self.contextMenu.popup(None, None, None, 3, time)
 
     def __buttonPress(self, widget, event):
         if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:
@@ -52,12 +50,19 @@ class BaseWidget(object):
             
     def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
-        if iRow!=None:
-            if isinstance(model, gtkx.PythonTreeModel):
-                obj = model.getObject(iRow)
-            else:
-                obj = model[iRow][1]
+        parent, childName, obj = _extractObjectInfo(model, iRow)
+        self.actionGroup.updateActions(obj, parent=parent, childName=childName)
+
+def _extractObjectInfo(model, iRow):
+    childName = None
+    obj = None
+    parent = None
+    if iRow!=None:
+        if isinstance(model, gtkx.PythonTreeModel):
+            obj = model.getObject(iRow)
+            childName = model.getChildName(iRow)
+            parent = model.getParent(iRow)
         else:
-            obj = None
-        self.actionGroup.updateActions(obj)
+            obj = model[iRow][1]
+    return parent, childName, obj
 
