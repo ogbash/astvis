@@ -4,10 +4,11 @@ import logging
 LOG = logging.getLogger("projecttree")
 from astvis.common import FINE, FINER, FINEST
 
-from astvis.project import Project, readASTModel
+from astvis.project import Project, readASTModel, TagTypeList, TagType
 from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
 from astvis.widgets.base import BaseWidget
+from astvis.widgets.tags import TagTypeDialog
 from astvis import gtkx
 
 import gtk
@@ -66,6 +67,14 @@ class ProjectTree(BaseWidget):
             self._handleProjectDialog(obj)
         elif isinstance(obj, ast.ASTModel):
             action.manager.activate('show-ast', obj, self)
+        elif isinstance(obj, TagType):
+            self._handleTagTypeDialog(obj)
+
+    def _handleTagTypeDialog(self, tagType):
+        dialog = TagTypeDialog(tagType)
+        res = dialog.run()
+        if res > 0:
+            pass
             
     def _handleProjectDialog(self, project):
         dialog = ProjectDialog(project)

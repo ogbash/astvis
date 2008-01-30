@@ -28,7 +28,7 @@ import math
 import pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
-from astvis.project import Project
+from astvis.project import Project, ProjectService
 from astvis import widgets
 from astvis.misc import console
 from astvis.model import ast
@@ -304,6 +304,7 @@ if __name__ == "__main__":
     tagService = tags.TagService()
     action.manager.registerActionService(tagService)
     core.registerService('TagService', tagService)
+    action.manager.registerActionService(ProjectService())
     window = MainWindow()
     gtk.main()
 

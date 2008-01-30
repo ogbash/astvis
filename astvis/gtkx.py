@@ -113,8 +113,11 @@ class _ObjectAdapter(_Adapter):
     @classmethod
     def childChanged(clazz, obj, event_, args, dargs, model):
         propName, action, new, old = args
-        childIndex = clazz._getChildIndex(obj, childName=propName)
-        index = clazz.getIndex(obj, childIndex)
+        try:
+            childIndex = clazz._getChildIndex(obj, childName=propName)
+            index = clazz.getIndex(obj, childIndex)
+        except KeyError, e:
+            return None, None
 
         objData = model._getData(obj)
         clazz._fixChildrenIndices(objData, model)
@@ -195,6 +198,8 @@ class PythonTreeModel(gtk.GenericTreeModel):
             # update child            
             adapter = _getAdapter(obj)
             resultingAction, index = adapter.childChanged(obj, event_, args, dargs, self)
+            if resultingAction is None:
+                return
             if obj is self._root:
                 path = (index,)
             else:

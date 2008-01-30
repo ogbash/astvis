@@ -6,7 +6,7 @@ from common import FINE, FINER, FINEST
 
 import gtk
 import xmlmap
-from astvis import event, gtkx
+from astvis import event, gtkx, action
 from model import ast, basic
 from astvis.misc.list import ObservableList
 
@@ -26,17 +26,20 @@ def readASTModel(filename):
     return astModel
 
 class TagType(object):
-    def _setName(self, name):
-        self._name = name
-
     __gtkmodel__ = gtkx.GtkModel()
 
+    def _setName(self, name): self._name = name
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
     __gtkmodel__.appendAttribute('name')
 
+    def _setColor(self, color): self._color = color
+    color = property(lambda self: self._color, _setColor)
+    color = event.Property(color,'color')
+
     def __init__(self, name):
         self._name = name
+        self._color = gtk.gdk.Color(0,0xffff,0)
 
 class TagTypeList(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()
@@ -116,4 +119,9 @@ class Project(object):
         self._diagrams.append(diagram)
         event.manager.notifyObservers(self._diagrams, event.PROPERTY_CHANGED,
                                       (None,event.PC_ADDED,diagram,None), {'index':len(self._diagrams)-1})
+
+class ProjectService(object):
+    @action.Action('new-tag-type', 'New tag', targetClass=TagTypeList)
+    def newTagType(self, target, context):
+        target.append(TagType('(unnamed)'))
 
