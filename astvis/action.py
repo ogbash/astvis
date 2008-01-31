@@ -7,7 +7,7 @@ from astvis.common import FINE, FINER, FINEST
 LOG = _logging.getLogger('action')
 
 import gtk
-
+import types
 
 class Action(object):
     "Logical action that is used as a template for the GTK actions."
@@ -42,27 +42,41 @@ class ActionGroup(object):
         self.name = groupName #: group name
         self.context = context #: widget or other action context
         self.contextAdapter = contextAdapter #: function to extract target from context
-        "filter of action to include in this group"
-        self.actionFilters = actionFilters
+        self.actionFilters = actionFilters #: filters for actions to include in this group
         self.gtkgroup = gtk.ActionGroup(groupName) #: corresponding GTK group
         self.gtkactions = {} #: action name -> GTK action
 
     def _filterAcceptsAction(self, action, actionFilter):
         "Check that if all conditions in the filter hold"
-        # check that action required context is satisfied
-        if action.contextClass!=None and not isinstance(self.context, action.contextClass):
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "Context %s for action %s is not satisfied (given %s)" % (action.contextClass, action, self.context.__class__))
-            return False
         # check that action is in a given category
         if actionFilter.has_key('category') and not action.name.startswith(actionFilter['category']):
             if LOG.isEnabledFor(FINEST):
                 LOG.log(FINEST, "%s is not in the category '%s'" % (action, actionFilter['category']))
             return False        
+
+        # check target classes
+        if actionFilter.has_key('actionClasses') and action.targetClass!=None:
+            for targetClass in actionFilter['targetClasses']:
+                if issubclass(action.targetClass, targetClass):
+                    return True
+            else:
+                return False
+
         return True
             
     def acceptsAction(self, action):
-        "Checks if at least one filter for the action holds."
+        "Checks that at least one filter for the action holds."
+
+        # check that action required context is satisfied
+        if action.contextClass!=None:
+            if isinstance(self.context, action.contextClass):
+                if LOG.isEnabledFor(FINEST):
+                    LOG.log(FINEST, "Context %s for action %s is not satisfied (given %s)" 
+                            % (action.contextClass, action, self.context.__class__))
+                return True
+            return False
+
+        # user defined filters
         for actionFilter in self.actionFilters:
             if self._filterAcceptsAction(action, actionFilter):
                 return True
@@ -113,6 +127,9 @@ class ActionGroup(object):
         gtkaction.connect_proxy(widget)
         return True
         
+    def __str__(self):
+        return "ActionGroup{%s}" % self.name
+        
 class ActionManager(object):
 
     def __init__(self):
@@ -141,7 +158,10 @@ class ActionManager(object):
         
     def registerActionService(self, service):
         "Collects actions of action service and "
-        clazz = type(service)
+        if type(service) not in [types.ModuleType]:
+            clazz = type(service)
+        else:
+            clazz = service
         actions = {} #: action -> service method
         
         for attrname in dir(clazz):
@@ -160,7 +180,7 @@ class ActionManager(object):
         "Creates new group and fills it with gtk actions"
         LOG.debug('Creating action group "%s" with context %s', groupName, context)
                 
-        group = ActionGroup(self, groupName, context, contextAdapter, actionFilters)
+        group = ActionGroup(self, groupName, context, contextAdapter, actionFilters=actionFilters)
         for action in self._actions.itervalues():
             if group.acceptsAction(action):            
                 group.addAction(action)
@@ -187,19 +207,35 @@ class ActionManager(object):
 
 manager = ActionManager()
 
-def generateMenu(actionGroup):
-    menu = gtk.Menu()
+def generateMenu(actionGroup, wTree=None, templateMenuName=None):
+    if templateMenuName:
+        menu = wTree.get_widget(templateMenuName)
+    else:
+        menu = gtk.Menu()
+
+    if wTree:
+        connectedActions = connectWidgetTree(actionGroup, wTree)
+    else:
+        connectedActions = set()
+    
+    # add menu items for the actions missing from the menu
+    LOG.log(FINER, "%s (actionGroup=%s): selecting and adding %s", menu, actionGroup, actionGroup.gtkactions)
     for name, gtkaction in actionGroup.gtkactions.iteritems():
+        if name in connectedActions:
+            continue
         menuItem = gtkaction.create_menu_item()
         menu.append(menuItem)
     return menu
 
 def connectWidgetTree(actionGroup, wTree):
     "Scan widget tree and connect widgets to their actions"
+    connectedActions = set()
     for prefix in ['menu-', 'button-']:
         widgets = wTree.get_widget_prefix(prefix)        
         for widget in widgets:
             name = gtk.glade.get_widget_name(widget)
             actionName = name[len(prefix):]
             actionGroup.connectProxy(actionName, widget)
+            connectedActions.add(actionName)
+    return connectedActions
 

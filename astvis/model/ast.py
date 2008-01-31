@@ -9,6 +9,7 @@ ACTIVE_CHANGED = "active"
 
 class ASTModel(object):
     def __init__(self):
+        self.project = None
         self.files = None
         self.basicModel = None
         

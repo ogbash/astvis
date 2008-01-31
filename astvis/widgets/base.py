@@ -12,19 +12,20 @@ class BaseWidget(object):
         self.wTree = gtk.glade.XML(gladeFile, widgetsWindow) #: widget tree
         self.widget = self.wTree.get_widget(widgetName) #: widget that holds basic logic
         self.outerWidget = self.wTree.get_widget(outerWidgetName or widgetName) #: widget that encloses all others (usually scrollbar window or so)
+        self.outerWidget.get_parent().remove(self.outerWidget)
         self.wTree.signal_autoconnect(self)
         "action group"
-        self.actionGroup = action.manager.createActionGroup(actionGroupName or widgetName, context=self, contextAdapter=self.getSelected,
+        self.actionGroup = action.manager.createActionGroup(actionGroupName or widgetName,
+                context=self, contextAdapter=self.getSelected,
                 **kvargs)
 
         # context menu
-        self.outerWidget.get_parent().remove(self.outerWidget)
         if menuName:
             menuwTree = gtk.glade.XML(gladeFile, menuName)
-            self.contextMenu = menuwTree.get_widget(menuName)
-            action.connectWidgetTree(self.actionGroup, menuwTree)
         else:
-            self.contextMenu = action.generateMenu(self.actionGroup)
+            menuwTree = None
+        self.contextMenu = action.generateMenu(self.actionGroup, menuwTree, menuName)
+            
         self.widget.connect("button-press-event", self.__buttonPress)
         self.widget.connect_after("popup-menu", self._popupMenu)
         self.widget.get_selection().connect("changed", self.__selectionChanged)

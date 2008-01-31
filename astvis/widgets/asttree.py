@@ -106,7 +106,8 @@ class AstTree(BaseWidget):
     
     def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
-        BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', actionFilters=[{'category':'show-'}], menuName='object_menu')
+        BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', 
+                actionFilters=[{'targetClasses': (ast.ASTObject)}, {'category':'show-'}], menuName='object_menu')
         self.root = root
         self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  

@@ -87,14 +87,14 @@ class ProjectTree(BaseWidget):
             project.sourceDir = dialog.sourceDir
 
 #    @thread.threaded                
-    def _astFileChanged(self, filename):
-        LOG.debug("Loading %s" % filename)
-        try:
-            astModel = readASTModel(filename)
-        except(Exception), e:
-            LOG.error("Error loading file, %s", e, exc_info=e)
-        else:
-            LOG.info("Loaded %s" % filename)        
+#    def _astFileChanged(self, filename):
+#        LOG.debug("Loading %s" % filename)
+#        try:
+#            astModel = readASTModel(filename)
+#        except(Exception), e:
+#            LOG.error("Error loading file, %s", e, exc_info=e)
+#        else:
+#            LOG.info("Loaded %s" % filename)        
 
 
 class ProjectDialog:
@@ -127,7 +127,8 @@ class ProjectDialog:
             if astFilename:
                 if self.project.astModel is None \
                         or astFilename != self.project.astModel.filename:
-                    self.astModel = readASTModel(astFilename)        
+                    self.astModel = readASTModel(astFilename)
+                    self.astModel.project = self.project
             # get source dir name
             self.sourceDir = self.sourcedirChooserbutton.get_filename()
         
@@ -136,9 +137,4 @@ class ProjectDialog:
         
     def destroy(self):
         return self.widget.destroy()
-        
-    def _on_astfile_chooserbutton(self, obj):
-        #self.sidebarNotebook.set_current_page(self.sidebarNotebook.page_num(self.taskProgressbars))
-        #self._astFileChanged(obj.get_filename())
-        pass
 

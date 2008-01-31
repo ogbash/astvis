@@ -114,7 +114,7 @@ class MainWindow(object):
         else:
             context.drop_finish(False, timestamp)
     
-    @Action('project-new', label='New project', icon='gtk-new')
+    @Action('project-new', label='New project', contextClass=widgets.ProjectTree, icon='gtk-new')
     def _newProject(self, target, context):
         self._addProject(Project())
 
@@ -146,7 +146,7 @@ class MainWindow(object):
         finally:
             dialog.destroy()
 
-    @Action('project-open', label='Open project')
+    @Action('project-open', label='Open project', contextClass=widgets.ProjectTree, )
     def _openProject(self, widget, context):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
@@ -305,6 +305,7 @@ if __name__ == "__main__":
     action.manager.registerActionService(tagService)
     core.registerService('TagService', tagService)
     action.manager.registerActionService(ProjectService())
+    action.manager.registerActionService(widgets)
     window = MainWindow()
     gtk.main()
 
