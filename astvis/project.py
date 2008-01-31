@@ -111,9 +111,9 @@ class Project(object):
         self.sourceDir = None
         self._astModel = None #: ast model
         self._basicModel = None #: basic model
-        self._diagrams = []
-        self._tagTypes = TagTypeList(self)
-        self._tags = {}
+        self._diagrams = [] #: diagrams
+        self._tagTypes = TagTypeList(self) #: tag types
+        self._tags = {} #: object -> set<tagType>()
 
     def addDiagram(self, diagram):
         self._diagrams.append(diagram)

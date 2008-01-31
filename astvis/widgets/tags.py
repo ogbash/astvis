@@ -46,30 +46,50 @@ class TagDialog:
         self.widget = wTree.get_widget('tag_dialog')
         
         tagView = wTree.get_widget('tag_list')
-        
-        project = obj.model.project
+
         column = gtk.TreeViewColumn()
         cell = gtk.CellRendererToggle()
         column.pack_start(cell, False)
-        column.add_attribute(cell, "value", 1)
+        cell.connect('toggled', self.__toggled)        
+        column.add_attribute(cell, "active", 1)
         tagView.append_column(column)
 
         column = gtk.TreeViewColumn("Tag")
         cell = gtk.CellRendererText()
         column.pack_start(cell, True)
-        column.add_attribute(cell, "text", 0)
+        column.add_attribute(cell, "text", 2)
         tagView.append_column(column)
         
-        tagModel = gtk.ListStore(str,bool)
+        tagModel = gtk.ListStore(object,bool,str)
         tagView.set_model(tagModel)
         self.tagModel = tagModel
-        tagModel.append(('aa',False))
+
+        self.project = obj.model.project
+        for tagType in self.project.tagTypes:
+            if self.project.tags.has_key(obj) and tagType in self.project.tags[obj]:
+                active = True
+            else:
+                active = False
+            tagModel.append((tagType,active,tagType.name))
+
+    def __toggled(self, toggle, path):
+        active = toggle.get_active()
+        self.tagModel[path][1] = not active
 
     def run(self):
         res = self.widget.run()
         if res > 0:
-            pass
+            tags = self.project.tags.get(self.obj, set())
+            for tagType,active,name in self.tagModel:
+                if not active and tagType in tags:
+                    tags.remove(tagType)
+                elif active and not tagType in tags:
+                    tags.add(tagType)
+            if len(tags)>0:
+                self.project.tags[self.obj] = tags
+            elif self.project.tags.has_key(self.obj):
+                del self.project.tags[self.obj]
             
-        self.widget.destroy()            
+        self.widget.destroy()
         return res
 
