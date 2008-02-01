@@ -8,7 +8,7 @@ from astvis.common import FINE, FINER, FINEST
 
 from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
-from astvis import event, project
+from astvis import event, project, gtkx
 from astvis.action import Action
 from astvis.widgets.base import BaseWidget
 import gtk
@@ -143,6 +143,8 @@ class AstTree(BaseWidget):
                 
         event.manager.subscribeClass(self._objectChanged, ast.ASTObject)                
         event.manager.subscribeClass(self._objectChanged, project.Project)
+        event.manager.subscribeClass(self._tagChanged, project.TagDict)
+        event.manager.subscribeClass(self._tagTypeChanged, project.TagType)
         
         self.regenerateSidebarTree()
         
@@ -206,6 +208,17 @@ class AstTree(BaseWidget):
                 # generate sidebar tree
                 self.regenerateSidebarTree()
         
+    def _tagChanged(self, tagDict, _event, args, dargs):
+        obj = dargs['key']
+        if tagDict.project==self.astModel.project:
+            iter_ = self._findInTree(obj)
+            path = self.model.get_path(iter_)
+            self.model.row_changed(path, iter_)
+
+    def _tagTypeChanged(self, tagType, _event, args, dargs):
+        def changed(path, iter_):
+            self.model.row_changed(path, iter_)
+        gtkx.foreach_visible(self.view, self.model, changed)
 
     def selectObject(self, obj):
         iObject = self._findInTree(obj)

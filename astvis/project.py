@@ -61,9 +61,9 @@ class TagTypeList(ObservableList):
         return "<TagTypeList size=%s, project=%s>" % (len(self), self.project)
         
 class TagDict(ObservableDict):
-
-    def __init__(self):
+    def __init__(self, project):
         dict.__init__(self)
+        self.project = project
 
 class Project(object):
 
@@ -115,7 +115,7 @@ class Project(object):
         self._basicModel = None #: basic model
         self._diagrams = [] #: diagrams
         self._tagTypes = TagTypeList(self) #: tag types
-        self._tags = TagDict() #: object -> set<tagType>()
+        self._tags = TagDict(self) #: object -> set<tagType>()
 
     def addDiagram(self, diagram):
         self._diagrams.append(diagram)

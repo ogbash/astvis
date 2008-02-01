@@ -410,7 +410,42 @@ def connectTreeView(treeView, pythonTreeModel):
     treeView.append_column(column)
 
     treeView.set_model(pythonTreeModel)
+
+def foreach_visible(treeView, treeModel, fun):
+    range_ = treeView.get_visible_range()
+    if range_==None:
+        return
+    
+    def iterParentNext(prevIter):
+        iter_ = None
+        while iter_==None: # climb up the tree until there is a next element
+            parentIter = treeModel.iter_parent(prevIter)
+            if parentIter==None:
+                # root is empty, i.e. we've reached last element in the tree
+                return None
+            prevIter = parentIter
+            iter_ = treeModel.iter_next(prevIter)
+        return iter_
+    
+    first, last = range_
+
+    path = first    
+    while path<=last:
+        iter_ = treeModel.get_iter(path)
+        fun(path, iter_)
         
+        if treeView.row_expanded(path):
+            iter_ = treeModel.iter_children(iter_)
+            path = treeModel.get_path(iter_)
+        else:
+            prevIter = iter_
+            iter_ = treeModel.iter_next(prevIter)
+            if iter_==None:
+                iter_=iterParentNext(prevIter)
+                if iter_==None:
+                    break
+            path = treeModel.get_path(iter_)
+
 if __name__=='__main__':
     l = [1,2,5]
     la = _getAdapter(l)
