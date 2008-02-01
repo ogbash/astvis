@@ -3,6 +3,8 @@
 import gaphas
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
+from astvis.misc.list import ObservableList
+import gtkx
 
 # ItemFactory is excesive?
 class ItemFactory:
@@ -73,3 +75,21 @@ class Diagram(object):
     def getCanvas(self):
         return self._canvas
 
+class DiagramList(ObservableList):
+    __gtkmodel__ = gtkx.GtkModel()
+
+    name = "Diagrams"
+    __gtkmodel__.appendAttribute('name')    
+
+    def __init__(self, project):
+        list.__init__(self)
+        self.project = project
+
+    def __hash__(self,obj):
+        return object.__hash__(self,obj)
+
+    def __eq__(self, obj):
+        return self is obj
+        
+    def __str__(self):
+        return "<DiagramList size=%s, project=%s>" % (len(self), self.project)

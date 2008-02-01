@@ -8,14 +8,24 @@ import diagram
 import event
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 from astvis import core
+from astvis import gtkx
 
 import gaphas
 
 class CallDiagram(diagram.Diagram):
 
-    def __init__(self, project = None):
-        self.project = project
+    __gtkmodel__ = gtkx.GtkModel()
+
+    def _setName(self, name): self._name = name
+    name = property(lambda self: self._name, _setName)
+    name = event.Property(name,'name')
+    __gtkmodel__.appendAttribute('name')
+
+
+    def __init__(self, name, project):
         diagram.Diagram.__init__(self, CallDiagram.ItemFactory())
+        self.project = project
+        self._name = name
         event.manager.subscribeClass(self._notify, ast.ASTObject)
 
     class ItemFactory(diagram.ItemFactory):

@@ -9,7 +9,7 @@ from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
 from astvis.widgets.base import BaseWidget
 from astvis.widgets.tags import TagTypeDialog
-from astvis import gtkx
+from astvis import gtkx, diagram
 
 import gtk
 
@@ -67,6 +67,8 @@ class ProjectTree(BaseWidget):
             self._handleProjectDialog(obj)
         elif isinstance(obj, ast.ASTModel):
             action.manager.activate('show-ast', obj, self)
+        elif isinstance(obj, diagram.Diagram):
+            action.manager.activate('show-diagram', obj, self)
         elif isinstance(obj, TagType):
             self._handleTagTypeDialog(obj)
 

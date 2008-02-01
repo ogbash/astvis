@@ -9,6 +9,8 @@ import xmlmap
 from astvis import event, gtkx, action
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
+from astvis.diagram import DiagramList
+from astvis.calldiagram import CallDiagram
 
 def readASTModel(filename):
     """load xml file
@@ -113,17 +115,16 @@ class Project(object):
         self.sourceDir = None
         self._astModel = None #: ast model
         self._basicModel = None #: basic model
-        self._diagrams = [] #: diagrams
+        self._diagrams = DiagramList(self) #: diagrams
         self._tagTypes = TagTypeList(self) #: tag types
         self._tags = TagDict(self) #: object -> set<tagType>()
-
-    def addDiagram(self, diagram):
-        self._diagrams.append(diagram)
-        event.manager.notifyObservers(self._diagrams, event.PROPERTY_CHANGED,
-                                      (None,event.PC_ADDED,diagram,None), {'index':len(self._diagrams)-1})
 
 class ProjectService(object):
     @action.Action('new-tag-type', 'New tag', targetClass=TagTypeList)
     def newTagType(self, target, context):
         target.append(TagType('(unnamed)'))
 
+    @action.Action('new-diagram', 'New diagram', targetClass=DiagramList)
+    def newDiagram(self, diagrams, context):
+        diagram = CallDiagram('(call diagram)', diagrams.project)
+        diagrams.append(diagram)

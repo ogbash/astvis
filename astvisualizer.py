@@ -29,10 +29,9 @@ import pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project, ProjectService
-from astvis import widgets
+from astvis import widgets, diagram
 from astvis.misc import console
 from astvis.model import ast
-from astvis.calldiagram import CallDiagram
 from astvis.action import Action
 from astvis import action
 import astvis.widgets.task
@@ -52,22 +51,11 @@ class MainWindow(object):
         self.globalActionGroup = action.manager.createActionGroup('global', self)
         action.connectWidgetTree(self.globalActionGroup, self.wTree)
         
+        self.notebook = self.wTree.get_widget('notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
         self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
-
-        #self.view = gaphas.view.GtkView()
-        #outer = self.wTree.get_widget("canvas_view_outer")
-        #self.view.show()
-        #outer.add(self.view)
-        #outer.set_hadjustment(self.view.hadjustment)
-        #outer.set_vadjustment(self.view.vadjustment)
-        #self.view.connect("key-press-event", self.keyPress, None)
-        #self.view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
-        #        [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
-        #        gtk.gdk.ACTION_COPY)
-        #self.view.connect("drag-data-received", self._data_recv)
 
         tool = gaphas.tool.ToolChain()
         tool.append(gaphas.tool.HoverTool())
@@ -85,10 +73,6 @@ class MainWindow(object):
         self.notebook = self.wTree.get_widget("notebook")
 
         self.wTree.signal_autoconnect(self)
-
-        #diagram = CallDiagram(project)
-        #project.addDiagram(diagram)
-        #self.view.canvas = diagram.getCanvas()
         
         self.consoleWindow = gtk.Window()
         pyconsole = console.GTKInterpreterConsole()
@@ -96,18 +80,19 @@ class MainWindow(object):
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
         
-    def _data_recv(self, widget, context, x, y, data, info, timestamp):
+    def _data_recv(self, widget, context, x, y, data, info, timestamp, obj):
         LOG.debug("GTK DnD data_recv with info=%d"%info)
         if info==INFO_OBJECT_PATH.number:
+            diagram = obj
             clazz, path = pickle.loads(data.data)
             if clazz==ast.ProgramUnit or clazz==ast.Subprogram:
                 # get canvas coordinates
-                m = cairo.Matrix(*self.view.matrix)
+                m = cairo.Matrix(*widget.matrix)
                 m.invert()
                 cx, cy = m.transform_point(x,y)
                 # add item
-                obj = self.project.astModel.getObjectByPath(path)
-                item = self.diagram.add(obj, cx,cy)
+                obj = diagram.project.astModel.getObjectByPath(path)
+                item = diagram.add(obj, cx,cy)
                 context.drop_finish(True, timestamp)
             else:
                 context.drop_finish(False, timestamp)                
@@ -186,6 +171,24 @@ class MainWindow(object):
         backCallTree = widgets.BackCallTree(self, context)
         self.addView(backCallTree, backCallTree.outerWidget, 'back')
 
+    @Action('show-diagram', 'Show diagram', targetClass=diagram.Diagram)
+    def openDiagram(self, diagram, context):
+        if self.views.has_key(diagram):
+            return
+        view = gaphas.view.GtkView()
+        view.canvas = diagram.getCanvas()
+        view.show()
+        #outer.set_hadjustment(view.hadjustment)
+        #outer.set_vadjustment(view.vadjustment)
+        view.connect("key-press-event", self.keyPress, diagram)
+        view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
+                [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
+                gtk.gdk.ACTION_COPY)
+        view.connect("drag-data-received", self._data_recv, diagram)
+        self.views[diagram] = view
+        self.notebook.append_page(view, gtk.Label('diagram'))
+
+        
     def openObjectList(self):
         lst = widgets.ObjectList()
         _model, iRow = self.astTree.view.get_selection().get_selected()
@@ -196,22 +199,23 @@ class MainWindow(object):
         self.sidebarNotebook.append_page(lst, gtk.Label('refs(%s)'%obj))        
 
 
-    def keyPress(self, widget, event, data):
-        if widget is self.view:
+    def keyPress(self, widget, event, diagram):
+        if isinstance(widget, gaphas.view.GtkView):
+            view = widget
             if event.keyval==ord("+"):
-                self.view.zoom(1.2)
+                view.zoom(1.2)
             elif event.keyval==ord("-"):
-                self.view.zoom(1/1.2)
+                view.zoom(1/1.2)
             elif event.keyval==ord("."):
-                item = self.view.focused_item
+                item = view.focused_item
                 if item and item.object:
                     self.astTree.selectObject(item.object)
             elif event.keyval==ord("d"):
-                item = self.view.focused_item
+                item = view.focused_item
                 if item and hasattr(item, "object"):
-                    self.diagram.remove(item.object)
+                    diagram.remove(item.object)
             elif event.keyval==ord("x"):
-                item = self.view.focused_item
+                item = view.focused_item
                 if item and item.object:
                     item.object.setActive(not item.object.getActive())
 

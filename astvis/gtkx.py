@@ -243,12 +243,12 @@ class PythonTreeModel(gtk.GenericTreeModel):
         if propName is None:
             propName = attrName
             
-        # @todo: get some attributes from parent (e.g. name for list)
+        # get property value
         if hasattr(obj, propName):
             return getattr(obj, propName)
         elif attrName=='name' and objData.parentData!=None:
             parent = objData.parentData.object
-            if hasattr(parent, '__gtkmodel__'):
+            if hasattr(parent, '__gtkmodel__') and len(parent.__gtkmodel__._children)>objData.childIndex:
                 childName, propName = parent.__gtkmodel__._children[objData.childIndex]
                 return childName
             
