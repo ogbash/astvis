@@ -124,6 +124,12 @@ class AstTree(BaseWidget):
         column.add_attribute(cell, "foreground-gdk", 3)
         self.view.append_column(column)
 
+        column = gtk.TreeViewColumn("Tags")
+        cell = TagCellRenderer()
+        column.pack_start(cell, False)
+        column.set_cell_data_func(cell, cell.setCellData)
+        self.view.append_column(column)
+
         self.view.connect("key-press-event", self._keyPress, None)
         self.view.connect("button-press-event", self._buttonPress)
         self.view.get_selection().connect("changed", self._selectionChanged, None)        
@@ -382,4 +388,30 @@ class FilterDialog:
         else:
             filterName = model[iRow][0]
             self._showFilterRules(self.filters[filterName])
+
+class TagCellRenderer(gtk.GenericCellRenderer):
+    def on_get_size(self, widget, cell_area):
+        tags = self.project.tags.get(self.obj, None)
+        if tags==None:
+            return 0,0,0,0
+        return 0,0,10*len(tags),5
+        
+    def on_render(self, window, widget, background_area, cell_area, expose_area, flags):
+        tags = self.project.tags.get(self.obj, None)
+
+        if tags==None:
+            return
+
+        gc = window.new_gc()
+        gc.set_fill(gtk.gdk.SOLID)
+        x,y,w,h = cell_area.x, cell_area.y, cell_area.width, cell_area.height
+
+        for i,tag in enumerate(tags):
+            color = tag.color
+            gc.set_foreground(gc.get_colormap().alloc_color(color))
+            window.draw_rectangle(gc, True, x+10*i,y,10,h)
+
+    def setCellData(self, column, cell, model, iter_):
+        self.obj = model[iter_][1]
+        self.project = self.obj.model.project
 

@@ -116,7 +116,9 @@ class _ObjectAdapter(_Adapter):
         try:
             childIndex = clazz._getChildIndex(obj, childName=propName)
             index = clazz.getIndex(obj, childIndex)
-        except KeyError, e:
+        except (KeyError, AttributeError), e:
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, 'Error getting index',exc_info=e)
             return None, None
 
         objData = model._getData(obj)

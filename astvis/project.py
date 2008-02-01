@@ -8,7 +8,7 @@ import gtk
 import xmlmap
 from astvis import event, gtkx, action
 from model import ast, basic
-from astvis.misc.list import ObservableList
+from astvis.misc.list import ObservableList, ObservableDict
 
 def readASTModel(filename):
     """load xml file
@@ -59,14 +59,13 @@ class TagTypeList(ObservableList):
         
     def __str__(self):
         return "<TagTypeList size=%s, project=%s>" % (len(self), self.project)
+        
+class TagDict(ObservableDict):
+
+    def __init__(self):
+        dict.__init__(self)
 
 class Project(object):
-    def _setName(self, name):
-        self._name = name
-    def _setASTModel(self, astModel):
-        self._astModel = astModel
-    def _setBasicModel(self, basicModel):
-        self._basicModel = basicModel
 
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
@@ -81,16 +80,19 @@ class Project(object):
     __thumbnail__ = gtk.gdk.pixbuf_new_from_file_at_size('data/thumbnails/project.png', 16, 16)
     __gtkmodel__.appendAttribute('__thumbnail__')
 
+    def _setName(self, name): self._name = name
     name = property(lambda self: self._name, _setName)
     name = event.Property(name,'name')
     __gtkmodel__.appendAttribute('name')
 
     "AST model"
+    def _setASTModel(self, astModel): self._astModel = astModel
     astModel = property(lambda self: self._astModel, _setASTModel)
     astModel = event.Property(astModel,'astModel')
     __gtkmodel__.appendChild('astModel')
 
     "Basic model"
+    def _setBasicModel(self, basicModel): self._basicModel = basicModel
     model = property(lambda self: self._basicModel, _setBasicModel)
     model = event.Property(model,'basicModel')
     __gtkmodel__.appendChild('basicModel', 'model')
@@ -113,7 +115,7 @@ class Project(object):
         self._basicModel = None #: basic model
         self._diagrams = [] #: diagrams
         self._tagTypes = TagTypeList(self) #: tag types
-        self._tags = {} #: object -> set<tagType>()
+        self._tags = TagDict() #: object -> set<tagType>()
 
     def addDiagram(self, diagram):
         self._diagrams.append(diagram)
