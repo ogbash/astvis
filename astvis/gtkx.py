@@ -216,6 +216,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
             if resultingAction is event.PC_ADDED:
                 iter_ = self.get_iter(path)
                 self.row_inserted(path, iter_)
+                self.row_has_child_toggled(path, iter_)
                 if LOG.isEnabledFor(FINE):
                     LOG.log(FINE, "Row inserted: path=%s, iter=%s", path, iter_)
             elif resultingAction is event.PC_REMOVED:
@@ -302,8 +303,14 @@ class PythonTreeModel(gtk.GenericTreeModel):
     def on_get_iter(self, path):
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "on_get_iter(path=%s)", path)
-        objData = None
-        for index in path:
+        try:
+            objData = self._getChildData(None, path[0])
+        except IndexError, e:
+            # strange behaviour from GenericTreeModel, it calls this method with (0,)
+            #  even when tree is empty, so we have to handle this case
+            if path[0]==0: return None
+            else: raise
+        for index in path[1:]:
             objData = self._getChildData(objData, index)
         return objData
         

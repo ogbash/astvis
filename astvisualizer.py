@@ -34,12 +34,13 @@ from astvis.misc import console
 from astvis.model import ast
 from astvis.action import Action
 from astvis import action
+from astvis.misc.list import ObservableList
 import astvis.widgets.task
 
 class MainWindow(object):
     
     def __init__(self):
-        self.projects = []
+        self.projects = ObservableList()
         self.files = {} #: opened files (model.File -> gtk.TextView)
         self.views = {} #: opened views (models -> widgets)
         
@@ -65,7 +66,6 @@ class MainWindow(object):
         #self.view.tool = tool
 
         # project tree
-        self._addProject(Project())
         self.projectTree = widgets.ProjectTree(self.projects)
         leftPanel = self.wTree.get_widget('left_panel_top')
         leftPanel.pack_start(self.projectTree.outerWidget)
@@ -106,15 +106,12 @@ class MainWindow(object):
     def _addProject(self, project):
         LOG.debug("Adding %s" % project)
         self.projects.append(project)
-        event.manager.notifyObservers(self.projects, event.PROPERTY_CHANGED, 
-                (None, event.PC_ADDED, project, None), {'index':len(self.projects)-1})
+        #event.manager.notifyObservers(self.projects, event.PROPERTY_CHANGED, 
+        #        (None, event.PC_ADDED, project, None), {'index':len(self.projects)-1})
             
     @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
     def _saveProject(self, project, context):
-        "@todo: recognise selected project with the help of actions"
-        # for now hack, get the selected item
-        model, iRow = self.projectTree.view.get_selection().get_selected()
-        project = model[iRow][1]
+        "Save project with all trees and diagrams to disk."
 
         wTree = gtk.glade.XML("astvisualizer.glade", 'saveproject_dialog')
         dialog = wTree.get_widget('saveproject_dialog')
@@ -125,8 +122,11 @@ class MainWindow(object):
                 filename = dialog.get_filename()
                 import pickle
                 file_ = open(filename, 'w')
-                pickle.dump(project, file_)
-                file_.close()
+                try:
+                    LOG.debug("Pickling %s", project)
+                    pickle.dump(project, file_)
+                finally:
+                    file_.close()
                 project.filename = filename
         finally:
             dialog.destroy()
@@ -300,6 +300,13 @@ class MainWindow(object):
     def view_mpi_tags(self, widget):
         OPTIONS["view MPI tags"] = not OPTIONS["view MPI tags"]
         self.view.queue_draw_refresh()
+
+    @Action('show-object-browser', 'Browse objects')
+    def openBrowser(self, target, context):
+        from astvis.misc.browser import Browser
+        if target==None:
+            target=self.projects
+        self._objectBrowser = Browser('browser', target)
 
 if __name__ == "__main__":
     from astvis.services import references, tags
