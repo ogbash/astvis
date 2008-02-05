@@ -16,7 +16,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.elements = [] # (tagname, attrs, obj)
         self.objects = []
         self.callback = None
-        self.pathList = self._parsePath(path)
+        self.pathList = self._parsePath(path) #: holds XML path of the root element
         LOG.debug("pathList = %s" % self.pathList)
         
     def loadFile(self, filename):
