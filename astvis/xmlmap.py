@@ -9,11 +9,25 @@ import operator
 import event
 import os.path
 
+class Adapter:
+    @staticmethod
+    def getClassForChild(parent, tagName, tagAttrs):
+        pass
+
+    @staticmethod
+    def getClassForTag(name, attrs):
+        pass
+
+    @staticmethod
+    def getObject(name, attrs):
+        "Get "
+        pass
+
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
         self.model = model
         self.classes = classes
-        self.elements = [] # (tagname, attrs, obj)
+        self.elements = [] #: [(tagname, attrs, obj, adapter)]
         self.objects = []
         self.callback = None
         self.pathList = self._parsePath(path) #: holds XML path of the root element
