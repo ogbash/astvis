@@ -22,11 +22,11 @@ class Adapter:
         pass
 
     @staticmethod
-    def getObject(tagName, attrs):
+    def getObject(klass, tagName, attrs):
         pass
 
 class XMLTag(object):
-    "This is helper class to define how xml tags are mapped to python objects."
+    "Helper class to define how xml tags are mapped to python objects."
     def __init__(self, name, attrs={}):
         self.name = name
         self.attrs = attrs
@@ -35,13 +35,37 @@ class XMLTag(object):
         "Tag is more narrow if it has the same name and attributes as another tag but can add more of its own attributes."
         if self.name!=tag.name:
             return False
-        for attrName, attrValue in tag.attrs.iteritems():
+        for attrName, attrValue in tag.attrs.items():
             if not self.attrs.has_key(attrName) or self.attrs[attrName]!=attrValue:
                 return False
         return True
 
     def __eq__(self, tag):
         return self.name==tag.name and self.attrs==tag.attrs
+        
+class XMLAttribute(object):
+    "Helper class to mapping of XML attributes to object properties"
+    def __init__(self, attrName, propertyName):
+        self.attrName = attrName
+        self.propertyName = propertyName
+
+class ObjectAdapter(Adapter):
+    @staticmethod
+    def getObject(klass, tagName, attrs, model): # TODO: get rid of model
+        obj = klass(model)
+        
+        # first setup attribute-property map
+        attributes = {}
+        for attr in klass._xmlAttributes:
+            attributes[attr.attrName] = attr
+        # then set properties from tag attributes
+        for attrName, attrValue in attrs.items():
+            if attributes.has_key(attrName):
+                propertyName = attributes[attrName].propertyName
+                if LOG.isEnabledFor(FINER):
+                    LOG.log(FINER, "Setting property '%s' to attr value '%s'" % (propertyName, attrValue))
+                # set property
+                setattr(obj, propertyName, attrValue)
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
@@ -79,7 +103,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
     def startElement(self, name, attrs):
         # get class from parent
-        parent, parentAdapter = self.elements and self.elements[-1][2,3] or None,None
+        parent, parentAdapter = self.elements and self.elements[-1][2:4] or None,None
         if parentAdapter!=None:
             klass1 = parentAdapter.getClassForChild(parent, name, attrs)
         else:
@@ -91,35 +115,19 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         # classes conflict?
         if klass1 and klass2 and klass1 is not klass2:
             raise Exception("Parent and tag name define different classes: %s and %s", klass1, klass2)
-        if not klass1 and not klass2:
-            raise Exception("No class defined for tag name '%s'", name)
         klass = klass1 or klass2
 
-        # get adapter by class and object from adapter
-        adapter = getAdapter(klass)
-        obj = adapter.getObject(name, attrs)
-
-        for clazz in self.classes:
-            if self._tagMatches(name, attrs, clazz._xmlTags):
-                LOG.log(FINER, "Found tag '%s'" % name)
-                obj = clazz(self.model)
-                for propEval, attrName in clazz._xmlAttributes.iteritems():
-                    if attrs.has_key(attrName):
-                        if LOG.isEnabledFor(FINER):
-                            LOG.log(FINER, "Setting property '%s' to attr value '%s'" % (propEval, attrs[attrName]))
-                        self._setProperty(obj, propEval, attrs[attrName])                            
-                    else:
-                        if LOG.isEnabledFor(FINEST):
-                            LOG.log(FINEST, "No tag attribute '%s' set" % attrName)
-                            
-                self._findAndSetParent(name, obj)
-                if hasattr(obj, '_xmlPreProcess'):
-                    obj._xmlPreProcess(name, attrs)
-                break
+        if klass is not None:
+            # get adapter by class and object from adapter
+            adapter = getAdapter(klass)
+            obj = adapter.getObject(klass, name, attrs, self.model)
         else:
+            adapter = None
             obj = None
+                            
+        ##self._findAndSetParent(name, obj)
         
-        self.elements.append((name, attrs, obj))
+        self.elements.append((name, attrs, obj, adapter))
 
         # notify about progress
         newProgress = float(self._file.tell())
@@ -127,16 +135,15 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             event.manager.notifyObservers(self, event.TASK_PROGRESSED, (newProgress/self._fileSize,))
             self._fileProgress = newProgress
 
-    def getClassForTag(tagName, attrs):
-        pass
-
-    def _tagMatches(self, name, attrs, _xmlTags):
-        for tagName, attrPredicate in _xmlTags:
-            if name==tagName:
-                if not attrPredicate or attrPredicate(attrs):
-                    return True
+    def getClassForTag(self, tagName, attrs):
+        tag = XMLTag(tagName, attrs)
+        for clazz in self.classes:
+            for templateTag in clazz._xmlTags:
+                if templateTag<tag: # if tag has all attributes required by template tag
+                    LOG.log(FINER, "Found tag '%s'" % templateTag)
+                    return clazz
         else:
-            return False
+            return None
 
     def endElement(self, name):
         del self.elements[-1]
@@ -191,7 +198,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
         parentIndex = len(self.elements)-1
         while parentIndex >= 0:
-            parentName, parentAttrs, parentObj = self.elements[parentIndex]
+            parentName, parentAttrs, parentObj, adapter = self.elements[parentIndex]
             if parentObj!=None:
                 if LOG.isEnabledFor(FINER):
                     LOG.log(FINER, "Found parent %s for '%s'" % (parentObj, origChildName))
@@ -202,25 +209,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Not found parent for '%s'" % (origChildName))
         return (parentName, parentAttrs, parentObj), childName    
-
-    def _setProperty(self, parentObj, propEval, obj):
-        if isinstance(propEval, str):
-            prop = getattr(parentObj, propEval)
-            if isinstance(prop, list):
-                # property is list, append to the end
-                prop.append(obj)
-                if LOG.isEnabledFor(FINE):
-                    LOG.log(FINE, "Added child %s to %s" %(obj, parentObj))
-            else:
-                # set property
-                setattr(parentObj, propEval, obj)
-                if LOG.isEnabledFor(FINE):
-                    LOG.log(FINE, "Set child %s to %s" %(obj, parentObj))
-        else:
-            # set property with parent specified function
-            propEval(parentObj, obj)
-            if LOG.isEnabledFor(FINE):
-                LOG.log(FINE, "Set (with eval) child %s to %s" %(obj, parentObj))    
 
     def _match(self, pathList):
         pathIndex = len(pathList)-1

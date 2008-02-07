@@ -24,7 +24,7 @@ def readASTModel(filename):
         LOG.debug('Finished loading AST file %s' % filename)
     except Exception, e:
         LOG.debug('Failed loading AST file %s' % filename)
-        raise e
+        raise
     return astModel
 
 class TagType(object):
