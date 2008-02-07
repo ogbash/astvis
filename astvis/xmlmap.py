@@ -9,26 +9,46 @@ import operator
 import event
 import os.path
 
+__all__ = ('XMLLoader','XMLTag')
+
+def getAdapter(klass):
+    if isinstance(klass, list):
+        return ListAdapter
+    return ObjectAdapter
+
 class Adapter:
     @staticmethod
     def getClassForChild(parent, tagName, tagAttrs):
         pass
 
     @staticmethod
-    def getClassForTag(name, attrs):
+    def getObject(tagName, attrs):
         pass
 
-    @staticmethod
-    def getObject(name, attrs):
-        "Get "
-        pass
+class XMLTag(object):
+    "This is helper class to define how xml tags are mapped to python objects."
+    def __init__(self, name, attrs={}):
+        self.name = name
+        self.attrs = attrs
+
+    def __lt__(self, tag):
+        "Tag is more narrow if it has the same name and attributes as another tag but can add more of its own attributes."
+        if self.name!=tag.name:
+            return False
+        for attrName, attrValue in tag.attrs.iteritems():
+            if not self.attrs.has_key(attrName) or self.attrs[attrName]!=attrValue:
+                return False
+        return True
+
+    def __eq__(self, tag):
+        return self.name==tag.name and self.attrs==tag.attrs
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
         self.model = model
         self.classes = classes
         self.elements = [] #: [(tagname, attrs, obj, adapter)]
-        self.objects = []
+        self.objects = [] #: top level objects to return
         self.callback = None
         self.pathList = self._parsePath(path) #: holds XML path of the root element
         LOG.debug("pathList = %s" % self.pathList)
@@ -58,6 +78,27 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         return pathList
         
     def startElement(self, name, attrs):
+        # get class from parent
+        parent, parentAdapter = self.elements and self.elements[-1][2,3] or None,None
+        if parentAdapter!=None:
+            klass1 = parentAdapter.getClassForChild(parent, name, attrs)
+        else:
+            klass1 = None
+
+        # get class by tag
+        klass2 = self.getClassForTag(name, attrs)
+
+        # classes conflict?
+        if klass1 and klass2 and klass1 is not klass2:
+            raise Exception("Parent and tag name define different classes: %s and %s", klass1, klass2)
+        if not klass1 and not klass2:
+            raise Exception("No class defined for tag name '%s'", name)
+        klass = klass1 or klass2
+
+        # get adapter by class and object from adapter
+        adapter = getAdapter(klass)
+        obj = adapter.getObject(name, attrs)
+
         for clazz in self.classes:
             if self._tagMatches(name, attrs, clazz._xmlTags):
                 LOG.log(FINER, "Found tag '%s'" % name)
@@ -80,10 +121,14 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
         self.elements.append((name, attrs, obj))
 
+        # notify about progress
         newProgress = float(self._file.tell())
         if newProgress - self._fileProgress > 0.05:
             event.manager.notifyObservers(self, event.TASK_PROGRESSED, (newProgress/self._fileSize,))
             self._fileProgress = newProgress
+
+    def getClassForTag(tagName, attrs):
+        pass
 
     def _tagMatches(self, name, attrs, _xmlTags):
         for tagName, attrPredicate in _xmlTags:

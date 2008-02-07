@@ -3,6 +3,7 @@
 """AST model  classes for the application."""
 
 from astvis.common import OPTIONS
+from astvis.xmlmap import XMLTag
 import itertools
 
 ACTIVE_CHANGED = "active"
@@ -128,7 +129,7 @@ class ASTObject(object):
         callback(self)
 
 class File(ASTObject):
-    _xmlTags = [("file",None)]
+    _xmlTags = [XMLTag('file')]
     _xmlAttributes = {"name": "name"}
     _xmlChildren = {"units": ("module", "program") }
     _xmlChildren.update(ASTObject._xmlChildren)
