@@ -290,7 +290,7 @@ class Declaration(ASTObject):
 
 class Type(ASTObject):
     _xmlTags = [XMLTag('type')]
-    _xmlAttributes = {}
+    _xmlAttributes = []
     _xmlChildren = {'name': ('name',)}
     def _xmlContent(self, childName, value):
         if childName=='name':
@@ -307,7 +307,7 @@ class Type(ASTObject):
 
 class Entity(ASTObject):
     _xmlTags = [XMLTag('entity')]
-    _xmlAttributes = {}
+    _xmlAttributes = []
     _xmlChildren = {'name': ('name',)}
     def _xmlContent(self, childName, value):
         if childName=='name':
@@ -426,7 +426,7 @@ class Use(ASTObject):
         
 class Location(object):
     _xmlTags = [XMLTag("location")]
-    _xmlAttributes = {}
+    _xmlAttributes = []
     _xmlChildren = {'begin': ("begin",),
             'end': ("end",)}
             
@@ -445,9 +445,8 @@ class Point(object):
     def _setColumn(self, column):
         self.column = int(column)
     
-    _xmlTags = [('begin',None), ('end',None)]
-    _xmlAttributes = {_setLine: 'line',
-            _setColumn: 'column'}
+    _xmlTags = [XMLTag('begin'), XMLTag('end')]
+    _xmlAttributes = [XMLAttribute('line','line',int), XMLAttribute('column','column',int)]
     _xmlChildren = {}
 
     def __init__(self, model):

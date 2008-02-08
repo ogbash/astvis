@@ -22,7 +22,7 @@ class Adapter:
         pass
 
     @staticmethod
-    def getObject(klass, tagName, attrs):
+    def getObject(klass, tagName, attrs, model):
         pass
 
 class XMLTag(object):
@@ -43,11 +43,15 @@ class XMLTag(object):
     def __eq__(self, tag):
         return self.name==tag.name and self.attrs==tag.attrs
         
+    def __str__(self):
+        return "XMLTag{name=%s,attrs=...}" % self.name
+        
 class XMLAttribute(object):
     "Helper class to mapping of XML attributes to object properties"
-    def __init__(self, attrName, propertyName):
+    def __init__(self, attrName, propertyName, klass=None):
         self.attrName = attrName
         self.propertyName = propertyName
+        self.klass = klass
 
 class ObjectAdapter(Adapter):
     @staticmethod
@@ -61,11 +65,16 @@ class ObjectAdapter(Adapter):
         # then set properties from tag attributes
         for attrName, attrValue in attrs.items():
             if attributes.has_key(attrName):
-                propertyName = attributes[attrName].propertyName
+                attr = attributes[attrName]
+                propertyName = attr.propertyName
+                if attr.klass!=None:
+                    attrValue = attr.klass(attrValue)
                 if LOG.isEnabledFor(FINER):
-                    LOG.log(FINER, "Setting property '%s' to attr value '%s'" % (propertyName, attrValue))
+                    LOG.log(FINER, "Setting property '%s' to attr value %s" % (propertyName, attrValue))
                 # set property
                 setattr(obj, propertyName, attrValue)
+                
+        return obj
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
@@ -74,8 +83,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.elements = [] #: [(tagname, attrs, obj, adapter)]
         self.objects = [] #: top level objects to return
         self.callback = None
-        self.pathList = self._parsePath(path) #: holds XML path of the root element
-        LOG.debug("pathList = %s" % self.pathList)
+        self.rootPathList = self._parsePath(path) #: holds XML path of the root element
+        LOG.debug("rootPathList = %s" % self.rootPathList)
         
     def loadFile(self, filename):
         LOG.debug("loadFile started")
@@ -99,6 +108,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         pathList = path.split("/")
         if len(pathList)>1 and not pathList[-1]:
             del pathList[-1] # remove empty element in case there was trailing /
+        if len(pathList)>1 and not pathList[0]:
+            del pathList[0] # remove empty element in case there was root /
         return pathList
         
     def startElement(self, name, attrs):
@@ -119,6 +130,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
         if klass is not None:
             # get adapter by class and object from adapter
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, 'Found class %s for tag %s', klass, name)
             adapter = getAdapter(klass)
             obj = adapter.getObject(klass, name, attrs, self.model)
         else:
@@ -126,6 +139,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             obj = None
                             
         ##self._findAndSetParent(name, obj)
+        if obj!=None:
+            pathList = [e[0] for e in self.elements]
+            if len(pathList)==len(self.rootPathList) and \
+                     pathList==self.rootPathList:
+                LOG.log(FINER, "Root object found at %s: %s", pathList, obj)
+                self.objects.append(obj)
         
         self.elements.append((name, attrs, obj, adapter))
 
@@ -137,10 +156,14 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def getClassForTag(self, tagName, attrs):
         tag = XMLTag(tagName, attrs)
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Finding class for %s", tag)
         for clazz in self.classes:
             for templateTag in clazz._xmlTags:
-                if templateTag<tag: # if tag has all attributes required by template tag
-                    LOG.log(FINER, "Found tag '%s'" % templateTag)
+                if LOG.isEnabledFor(FINEST):
+                    LOG.log(FINEST, "Trying template tag %s>tag: %s", templateTag, templateTag>tag)
+                if templateTag>tag: # if tag has all attributes required by template tag
+                    LOG.log(FINER, "Found tag '%s'", templateTag)
                     return clazz
         else:
             return None
@@ -156,12 +179,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         if parentObj!=None:
             if parentObj!=None and hasattr(parentObj.__class__, '_xmlContent'):
                 parentObj.__class__._xmlContent(parentObj, childName, content)
-                if LOG.isEnabledFor(FINE):
-                    LOG.log(FINE, "Set content of %s" % parentObj)
+                if LOG.isEnabledFor(FINER):
+                    LOG.log(FINER, "Set content of %s" % parentObj)
     
     def _findAndSetParent(self, name, obj):
         # find where to add element
-        if obj!=None and self._match(self.pathList):
+        if obj!=None and self._match(self.rootPathList):
             # top level
             if LOG.isEnabledFor(FINE):
                 LOG.log(FINE, 'Added top level %s' % obj)
