@@ -150,6 +150,7 @@ class _ObjectAdapter(_Adapter):
 
     @classmethod
     def _fixChildrenIndices(clazz, objData, model):
+        LOG.log(FINEST, "Fixing indices %s", objData)
         for i, (child, childIndex) in enumerate(clazz.iterChildren(objData.object)):
             data = model._getData(child)
             if data is None:
@@ -160,7 +161,7 @@ class _ObjectAdapter(_Adapter):
             elif data.index!=i:
                 if LOG.isEnabledFor(FINEST):
                     LOG.log(FINEST, "Fixing index %d -> %d", data.index, i)
-                    data.index = i
+                data.index = i
 
 
 class PythonTreeModel(gtk.GenericTreeModel):
@@ -180,6 +181,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
             raise e
     
     def __objectChanged(self, obj, event_, args, dargs):
+
         if event_==event.PROPERTY_CHANGED:
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "Property changed obj=%s, args=%s, dargs=%s", obj, args, dargs)
@@ -257,9 +259,9 @@ class PythonTreeModel(gtk.GenericTreeModel):
         
     def _getData(self, obj):
         hObj = makeHashable(obj)
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "_getData(obj=%s){hObj=%s}", obj, hObj)
         data = self._data.get(hObj, None)
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "_getData(obj=%s){hObj=%s}=%s", obj, hObj, data)
         return data
 
     def _setData(self, obj, objData):
@@ -308,7 +310,8 @@ class PythonTreeModel(gtk.GenericTreeModel):
         except IndexError, e:
             # strange behaviour from GenericTreeModel, it calls this method with (0,)
             #  even when tree is empty, so we have to handle this case
-            if path[0]==0: return None
+            LOG.debug(e, exc_info=e)
+            if len(path)==1 and path[0]==0: return None
             else: raise
         for index in path[1:]:
             objData = self._getChildData(objData, index)
@@ -341,7 +344,8 @@ class PythonTreeModel(gtk.GenericTreeModel):
         index = rowref.index
 
         try:
-            return self._getChildData(parentData, index+1)
+            childData = self._getChildData(parentData, index+1)
+            return childData
         except IndexError, e:
             return None
             
