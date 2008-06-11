@@ -19,10 +19,17 @@ def getAdapter(klass):
 class Adapter:
     @staticmethod
     def getClassForChild(parent, tagName, tagAttrs):
+        "Identify class for the XML tag"
         pass
 
     @staticmethod
     def getObject(klass, tagName, attrs, model):
+        "Get object from XML tag"
+        pass
+
+    @staticmethod
+    def addChild(parent, tagName, tagAttrs, child):
+        "Add child object to parent object"
         pass
 
 class XMLTag(object):
@@ -48,33 +55,70 @@ class XMLTag(object):
         
 class XMLAttribute(object):
     "Helper class to mapping of XML attributes to object properties"
-    def __init__(self, attrName, propertyName, klass=None):
-        self.attrName = attrName
-        self.propertyName = propertyName
+    def __init__(self, name):
+        self.name = name
+
+class ObjectProperty(object):
+    "Class defines property name and type."
+    def __init__(self, name, klass=None):
+        self.name = name
         self.klass = klass
 
 class ObjectAdapter(Adapter):
+    "Maps python objects into XML and back."
+
+    klassAttributeMap = {} #: class -> (attrName -> attribute)
+
     @staticmethod
     def getObject(klass, tagName, attrs, model): # TODO: get rid of model
         obj = klass(model)
         
-        # first setup attribute-property map
-        attributes = {}
-        for attr in klass._xmlAttributes:
-            attributes[attr.attrName] = attr
-        # then set properties from tag attributes
+        # if not available, setup attribute map
+        if not ObjectAdapter.klassAttributeMap.has_key(klass):
+            klassAttributes = {} # attrName -> attribute
+            for attr,prop in klass._xmlAttributes:
+                klassAttributes[attr.name] = attr, prop
+            ObjectAdapter.klassAttributeMap[klass] = klassAttributes
+
+        # set properties from tag attributes
+        klassAttributes = ObjectAdapter.klassAttributeMap[klass]
         for attrName, attrValue in attrs.items():
-            if attributes.has_key(attrName):
-                attr = attributes[attrName]
-                propertyName = attr.propertyName
-                if attr.klass!=None:
-                    attrValue = attr.klass(attrValue)
+            if klassAttributes.has_key(attrName):
+                attr, prop = klassAttributes[attrName]
+                propertyName = prop.name
+                if prop.klass!=None:
+                    attrValue = prop.klass(attrValue)
                 if LOG.isEnabledFor(FINER):
                     LOG.log(FINER, "Setting property '%s' to attr value %s" % (propertyName, attrValue))
                 # set property
                 setattr(obj, propertyName, attrValue)
                 
         return obj
+
+    @staticmethod
+    def getClassForChild(parent, tagName, tagAttrs):
+        childTag = XMLTag(tagName, tagAttrs)
+        children = parent._xmlChildren
+        for tag,prop in children:
+            if childTag<tag: # satisfies name and all attr conditions
+                return prop.klass
+
+    @staticmethod
+    def addChild(parent, tagName, tagAttrs, child):
+        childTag = XMLTag(tagName, tagAttrs)
+        children = parent._xmlChildren
+        for tag,prop in children:
+            if childTag<tag: # satisfies name and all attr conditions
+                setattr(parent, prop.name, child)
+                break
+        else:
+            LOG.warn('No property found for the %s in %s', child, parent)
+        
+
+class ListAdapter(Adapter):
+    @staticmethod
+    def addChild(parent, tagName, tagAttrs, child):
+        parent.append(child)
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
@@ -114,7 +158,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
     def startElement(self, name, attrs):
         # get class from parent
-        parent, parentAdapter = self.elements and self.elements[-1][2:4] or None,None
+        parent = None
+        parentAdapter = None
+        if self.elements:
+            parent = self.elements[-1][2]
+            parentAdapter = self.elements[-1][3]
+
         if parentAdapter!=None:
             klass1 = parentAdapter.getClassForChild(parent, name, attrs)
         else:
@@ -125,9 +174,10 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
         # classes conflict?
         if klass1 and klass2 and klass1 is not klass2:
-            raise Exception("Parent and tag name define different classes: %s and %s", klass1, klass2)
+            raise Exception("Parent and tag name define different classes: %s and %s" % (klass1, klass2))
         klass = klass1 or klass2
 
+        # create object
         if klass is not None:
             # get adapter by class and object from adapter
             if LOG.isEnabledFor(FINEST):
@@ -137,8 +187,14 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         else:
             adapter = None
             obj = None
-                            
-        ##self._findAndSetParent(name, obj)
+        
+        # add object to parent
+        if parentAdapter!=None:
+            parentAdapter.addChild(parent, name, attrs, obj)
+        elif self.elements:
+            LOG.warn('No adapter for parent %s', parent)
+
+        # add to root objects if path is as required for the root
         if obj!=None:
             pathList = [e[0] for e in self.elements]
             if len(pathList)==len(self.rootPathList) and \
@@ -146,6 +202,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                 LOG.log(FINER, "Root object found at %s: %s", pathList, obj)
                 self.objects.append(obj)
         
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, 'Adding to elements: %s', (name, attrs, obj, adapter))
         self.elements.append((name, attrs, obj, adapter))
 
         # notify about progress
@@ -174,65 +232,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def characters(self, content):
         if not content.strip():
             return
-        
-        (parentName, parentAttrs, parentObj), childName = self._findParent('__content__(%d chars)' % len(content))
-        if parentObj!=None:
-            if parentObj!=None and hasattr(parentObj.__class__, '_xmlContent'):
-                parentObj.__class__._xmlContent(parentObj, childName, content)
-                if LOG.isEnabledFor(FINER):
-                    LOG.log(FINER, "Set content of %s" % parentObj)
     
-    def _findAndSetParent(self, name, obj):
-        # find where to add element
-        if obj!=None and self._match(self.rootPathList):
-            # top level
-            if LOG.isEnabledFor(FINE):
-                LOG.log(FINE, 'Added top level %s' % obj)
-            self.objects.append(obj)
-        elif obj!=None:
-            # find "any" parent element that requires this element
-            
-            # first, find any non empty parent, set childName
-            (parentName, parentAttrs, parentObj), childName = self._findParent(name)
-                    
-            if parentObj!=None:
-                # iterate all "desired" properties of the parent, TODO can be made more effective
-                for propEval, childNames in parentObj.__class__._xmlChildren.iteritems():
-                    if LOG.isEnabledFor(FINEST):
-                        LOG.log(FINEST, "Testing tagName '%s' in required childNames %s" %(childName, repr(childNames)))
-                    # is it (child) tag name that parentObj requires?
-                    if childName in childNames:
-                        self._setProperty(parentObj, propEval, obj)
-                        obj.parent = parentObj
-                        break # parent found
-                else:
-                    if LOG.isEnabledFor(FINE):
-                        LOG.log(FINE, "Ignore %s, because parent %s does no require it" %(obj, parentObj))
-            else:
-                if LOG.isEnabledFor(FINE):
-                    LOG.log(FINE, "Ignore %s, because no parent %s" % (obj, parentName))
-
-        if obj!=None and self.callback:
-            self.callback(obj)
-    
-
-    def _findParent(self, childName):
-        origChildName = childName
-        
-        parentIndex = len(self.elements)-1
-        while parentIndex >= 0:
-            parentName, parentAttrs, parentObj, adapter = self.elements[parentIndex]
-            if parentObj!=None:
-                if LOG.isEnabledFor(FINER):
-                    LOG.log(FINER, "Found parent %s for '%s'" % (parentObj, origChildName))
-                break
-            childName = parentName
-            parentIndex = parentIndex-1
-        else:
-            if LOG.isEnabledFor(FINER):
-                LOG.log(FINER, "Not found parent for '%s'" % (origChildName))
-        return (parentName, parentAttrs, parentObj), childName    
-
     def _match(self, pathList):
         pathIndex = len(pathList)-1
         index = len(self.elements)-1
