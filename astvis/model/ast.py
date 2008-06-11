@@ -150,22 +150,24 @@ class File(ASTObject):
         return "<File %s>" % self.name
 
 class Code(ASTObject):
-    _xmlChildren = []#[(XMLTag('subroutine'), ObjectProperty('subprograms', list)),
-            #(XMLTag('function'), ObjectProperty('subroutine')),
-            #(XMLTag('block', {'type': 'declarations'}), ObjectProperty('declarationBlock')),
-            #(XMLTag('block', {'type': 'statements'}), ObjectProperty('statementBlock')),
-            #(XMLTag('use'), ObjectProperty('uses', list))]    
-    #_xmlChildren.extend(ASTObject._xmlChildren)
+    _xmlChildren = [[(None, PythonObject(list, ref='subprograms')),
+                     (XMLTag('subroutine'), None)],
+                    [(None, PythonObject(list, ref='subprograms')),
+                     (XMLTag('function'), None)],
+                    [(XMLTag('block', {'type': 'declarations'}), PythonObject(None,ref='declarationBlock'))],
+                    [(XMLTag('block', {'type': 'executions'}), PythonObject(None,ref='statementBlock'))],
+                    [(None, PythonObject(list, ref='uses')),
+                     (XMLTag('use'), None)]
+                    ]
+    _xmlChildren.extend(ASTObject._xmlChildren)
 
 class ProgramUnit(Code):
 
     _xmlTags = [XMLTag("module"), XMLTag("program")]
-    _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name'))]
-    _xmlChildren =  [] #list(Code._xmlChildren)
+    _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name')),
+                      (XMLAttribute('tag',special=True), PythonObject(ref='type'))]
+    _xmlChildren =  list(Code._xmlChildren)
     
-    def _xmlPreProcess(self, name, attrs):
-        self.type = name
-
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
         self.parent = parent
@@ -193,7 +195,7 @@ class Subprogram(ASTObject):
 
     _xmlTags = [XMLTag("subroutine"), XMLTag("function")]
     _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name'))]
-    _xmlChildren = [] #list(Code._xmlChildren)
+    _xmlChildren = list(Code._xmlChildren)
     
     def __init__(self, model, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
