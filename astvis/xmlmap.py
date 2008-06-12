@@ -61,10 +61,6 @@ class PythonObject(object):
 
 # Adapters
 class Adapter:
-    def getClassForChild(self, parent, tagName, tagAttrs):
-        "Identify class for the XML tag"
-        pass
-
     def createObject(self, klass, tag, model):
         "Get object from XML tag"
         return klass()
@@ -114,6 +110,13 @@ classAdapters[list] = ListAdapter()
 
 def getAdapter(klass):
     return classAdapters.get(klass)
+
+
+def _tagMatches(xmlObject, tag):
+    "If tag (from file) matches xmlObject (from a chain)"
+    return isinstance(xmlObject, XMLTag) and \
+           xmlObject.name==tag.name and \
+           tag<xmlObject
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
@@ -182,14 +185,14 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         return pathList
 
 
-    def startElement(self, name, attrs):
+    def startElement(self, name, attrs):            
         newMatchedChains = []
         tag = XMLTag(name, attrs)
         # find matched chains from the root
         chains = self._rootTags.get(name, [])
         for chain in chains:
             xmlObject, pythonObject = chain[0]
-            if isinstance(xmlObject, XMLTag) and tag<xmlObject:
+            if _tagMatches(xmlObject, tag):
                 newMatchedChains.append((chain, 1))
             
         # find chains that still match
@@ -198,7 +201,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                 chain, index = ichain
                 while index<len(chain):
                     xmlObject, pythonObject = chain[index]
-                    if xmlObject!=None and xmlObject.name==name:
+                    if _tagMatches(xmlObject, tag):
                         newMatchedChains.append((chain, index+1))
                         break
                     index=index+1
@@ -213,6 +216,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self._matchedChains.append(newMatchedChains)
         self._elements.append((name,attrs,obj))
 
+        # notify about progress
+        newProgress = float(self._file.tell())
+        if newProgress - self._fileProgress > 0.05:
+            event.manager.notifyObservers(self, event.TASK_PROGRESSED, (newProgress/self._fileSize,))
+            self._fileProgress = newProgress
+
 
     def _extractObject(self, ichains, tag):
         newiChains = []
@@ -221,11 +230,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         for ichain in ichains:
             chain, index = ichain
             if len(chain)==index:
-                if tag<chain[-1][0]: # tag match
-                    matchedChains.append(chain)
-                else:
-                    if LOG.isEnabledFor(FINEST):
-                        LOG.log(FINEST, "%s !< %s", tag, chain[-1][0])
+                matchedChains.append(chain)
             else:
                 newiChains.append(ichain)
 
@@ -290,57 +295,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             LOG.log(FINER, "Subobject for %s found: %s", parent, child)
         adapter.addChild(parent, child, childObject)
         
-    def __startElement(self, name, attrs):
-        # get class from parent
-        parent = None
-        parentAdapter = None
-        if self.elements:
-            parent = self.elements[-1][2]
-            parentAdapter = self.elements[-1][3]
-
-        if parentAdapter!=None:
-            klass1 = parentAdapter.getClassForChild(parent, name, attrs)
-        else:
-            klass1 = None
-
-        # get class by tag
-        klass2 = self.getClassForTag(name, attrs)
-
-        # classes conflict?
-        if klass1 and klass2 and klass1 is not klass2:
-            raise Exception("Parent and tag name define different classes: %s and %s" % (klass1, klass2))
-        klass = klass1 or klass2
-
-        # create object
-        if klass is not None:
-            # get adapter by class and object from adapter
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, 'Found class %s for tag %s', klass, name)
-            adapter = getAdapter(klass)
-            obj = adapter.getObject(klass, name, attrs, self.model)
-        else:
-            adapter = None
-            obj = None
-        
-        # add object to parent
-        if parentAdapter!=None:
-            parentAdapter.addChild(parent, name, attrs, obj)
-        elif self.elements:
-            LOG.warn('No adapter for parent %s', parent)
-
-        # add to root objects if path is as required for the root
-            
-        pass # isAtRoot
-        
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, 'Adding to elements: %s', (name, attrs, obj, adapter))
-        self.elements.append((name, attrs, obj, adapter))
-
-        # notify about progress
-        newProgress = float(self._file.tell())
-        if newProgress - self._fileProgress > 0.05:
-            event.manager.notifyObservers(self, event.TASK_PROGRESSED, (newProgress/self._fileSize,))
-            self._fileProgress = newProgress
 
     def _isAtRoot(self):
         pathList = [e[0] for e in self._elements]
