@@ -8,18 +8,20 @@ import xml.sax
 import operator
 import event
 import os.path
+from copy import deepcopy, copy
 
 __all__ = ('XMLLoader','XMLTag')
 
 class XMLTag(object):
     "Helper class to define how xml tags are mapped to python objects."
-    def __init__(self, name, attrs={}):
+    def __init__(self, name=None, attrs={}, priority=1):
         self.name = name
         self.attrs = dict(attrs)
+        self.priority = priority
 
     def __lt__(self, tag):
         "Tag is more narrow (smaller) if it has the same name and attributes as another tag but can have more of its own attributes."
-        if self.name!=tag.name:
+        if tag.name!=None and self.name!=tag.name:
             return False
         for attrName, attrValue in tag.attrs.items():
             if not self.attrs.has_key(attrName) or self.attrs[attrName]!=attrValue:
@@ -34,6 +36,17 @@ class XMLTag(object):
 
     def __repr__(self):
         return "XMLTag{name=%s,attrs=%s}" % (self.name, self.attrs)
+
+    def __iadd__(self, tag):
+        if tag is None:
+            return self
+        if self.name==None:
+            self.name = tag.name
+        attrs = dict(tag.attrs)
+        attrs.update(self.attrs)
+        self.attrs = attrs
+
+        return self
         
 class XMLAttribute(object):
     "Helper class to mapping of XML attributes to object properties"
@@ -47,7 +60,9 @@ class PythonObject(object):
         self.ref = ref
 
     def __iadd__(self, other):
-        if not self.klass:
+        if other is None:
+            return self
+        if self.klass==None:
             self.klass = other.klass
         if not self.ref:
             self.ref = other.ref
@@ -59,7 +74,48 @@ class PythonObject(object):
     def __repr__(self):
         return "PythonObject{klass=%s,ref=%s}" % (self.klass, self.ref)
 
+# Chain
+
+class Chain(list):
+    def __init__(self, *args, **kvargs):
+        if kvargs.has_key('priority'):
+            self.priority = kvargs['priority']
+            del kvargs['priority']
+        else:
+            self.priority = 1
+        list.__init__(self,*args,**kvargs)
+
+    def __iadd__(self, chain):
+        
+        for i in xrange(len(chain)):    
+            if i>=len(self):
+                # just add the rest
+                rest = chain[:len(chain)-i]
+                self[0:0] = deepcopy(rest)
+                break
+            
+            # add objects
+            xmlO, pO = chain[len(chain)-i-1]
+            iSelf = len(self)-i-1
+            xmlOSelf, pOSelf = self[iSelf]
+            
+            if xmlOSelf is None: xmlOSelf = XMLTag()
+            xmlOSelf += xmlO
+                
+            if pOSelf is None: pOSelf = PythonObject()
+            pOSelf += pO
+                
+            self[iSelf] = (xmlOSelf, pOSelf)
+
+        return self
+
+    def __str__(self):
+        return "Chain%s"%list.__str__(self)
+
 # Adapters
+
+classAdapters = {} #: class -> adapter
+
 class Adapter:
     def createObject(self, klass, tag, model):
         "Get object from XML tag"
@@ -68,6 +124,24 @@ class Adapter:
     def addChild(self, parent, child, pythonObject):
         "Add child object to parent object"
         pass
+
+class ValueAdapter(Adapter):
+    def createObject(self, klass, tag, value):
+        "Get object from XML tag"
+        if klass is None:
+            return str(value)
+        return klass(value)
+
+    def addChild(self, parent, child, pythonObject):
+        "Add child object to parent object"
+        pass
+valueAdapter = ValueAdapter()
+
+# getAdapter
+def getAdapter(klass):
+    if klass in (None, int, float):
+        return valueAdapter
+    return classAdapters.get(klass)
 
 class ObjectAdapter(Adapter):
     "Maps python objects into XML and back."
@@ -83,9 +157,12 @@ class ObjectAdapter(Adapter):
         obj = klass(model)
         
         for xmlAttribute, pythonObject in self._attributes:
+            adapter = getAdapter(pythonObject.klass)
+            
             if not xmlAttribute.special:
                 if tag.attrs.has_key(xmlAttribute.name):
-                    setattr(obj, pythonObject.ref, tag.attrs[xmlAttribute.name])
+                    value = adapter.createObject(pythonObject.klass, xmlAttribute, tag.attrs[xmlAttribute.name])
+                    setattr(obj, pythonObject.ref, value)
             else:
                 if xmlAttribute.name=='tag':                    
                     setattr(obj, pythonObject.ref, tag.name)
@@ -95,6 +172,9 @@ class ObjectAdapter(Adapter):
 
     def addChild(self, parent, child, pythonObject):
         "Add child to parent, where pythonObject is child descr."
+        if not pythonObject.ref:
+            LOG.warn("No reference for %s to setattr to parent %s", child, parent)
+            return
         setattr(parent, pythonObject.ref, child)
 
 class ListAdapter(Adapter):
@@ -102,20 +182,13 @@ class ListAdapter(Adapter):
         self.klass = list
     
     def addChild(self, parent, child, ref):
-        parent.append(child)
-
-classAdapters = {} #: class -> adapter
-
+        parent.append(child)        
 classAdapters[list] = ListAdapter()
-
-def getAdapter(klass):
-    return classAdapters.get(klass)
 
 
 def _tagMatches(xmlObject, tag):
     "If tag (from file) matches xmlObject (from a chain)"
     return isinstance(xmlObject, XMLTag) and \
-           xmlObject.name==tag.name and \
            tag<xmlObject
 
 class XMLLoader(xml.sax.handler.ContentHandler):
@@ -149,12 +222,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def _scanClass(self, klass):
         for tag in klass._xmlTags:
-            chain = [(tag, PythonObject(klass))]
+            chain = Chain([(tag, PythonObject(klass))], priority=tag.priority)
             self._chains.append(chain)
         
         for chain in klass._xmlChildren:
             for tag in klass._xmlTags:
-                chainWithParent = [(tag, None)]
+                chainWithParent = Chain([(tag, None)])
                 chainWithParent.extend(chain)
                 self._chains.append(chainWithParent)
 
@@ -185,7 +258,9 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         return pathList
 
 
-    def startElement(self, name, attrs):            
+    def startElement(self, name, attrs):
+        if LOG.isEnabledFor(FINER):
+            LOG.log(FINER, "Processing tag '%s'", name)
         newMatchedChains = []
         tag = XMLTag(name, attrs)
         # find matched chains from the root
@@ -234,37 +309,31 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             else:
                 newiChains.append(ichain)
 
+        if len(matchedChains)==0:
+            return None, newiChains
+
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Matched chains: %s", matchedChains)
+
         # create object
-        matchedPObj = PythonObject()
-        matchedTag = None
-        matchedChain=None
+        matchedChain = Chain(priority=0)
 
         for chain in matchedChains:
-            xmlObject, pythonObject = chain[-1]
-            if pythonObject:
-                if matchedTag is None:
-                    matchedTag = xmlObject
-                    matchedPObj += pythonObject
-                    matchedChain = chain
-                else:
-                    # pick more specific tag (with more attributes defined)
-                    if xmlObject<matchedTag:
-                        tag = xmlObject
-                        oldPObj = matchedPObj
-                        matchedPObj = PythonObject()
-                        matchedPObj += pythonObject
-                        matchedPObj += oldPObj
-                        matchedChain = chain            
+            matchedChain += chain
 
-        if matchedPObj.klass:
-            klass = matchedPObj.klass
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Matched chain: %s", matchedChain)
+        
+        if matchedChain[-1][1] is None:
+            LOG.debug("No class defined for class %s in chain %s", tag.name, matchedChain)
+            return None, newiChains
+        
+        klass = matchedChain[-1][1].klass
+        if klass:
             adapter = getAdapter(klass)
-            obj = adapter.createObject(matchedPObj.klass, tag, self.model)
+            obj = adapter.createObject(klass, tag, self.model)
             # add to parent
-            for chain in matchedChains:
-                if len(chain)>1: # simplified parent search for now, generally should combine the chains
-                    self._addToParent(obj, chain)
-                    break 
+            self._addToParent(obj, matchedChain)
         else:
             obj = None
         return obj, newiChains
@@ -282,15 +351,25 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             index = index-1
 
         parent = self._elements[eindex][2]
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Most recent parent is %s", parent)
         
         # move forward and ask for subobjects (to find parent)
         for i in xrange(index, len(chain)-2):
             tag, obj = chain[i+1]
+            if obj is None:
+                continue
             parent = getattr(parent, obj.ref)
 
         # add child to parent
+        if parent is None:
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "No parent found for %s", child)
+            return
+        
         adapter = getAdapter(parent.__class__)
         childTag, childObject = chain[-1]
+
         if LOG.isEnabledFor(FINER):
             LOG.log(FINER, "Subobject for %s found: %s", parent, child)
         adapter.addChild(parent, child, childObject)
