@@ -299,11 +299,11 @@ class Type(ASTObject):
     _xmlAttributes = []
     _xmlChildren =  [[(XMLTag('name'), PythonObject(ref='name'))]
                      ]
-    def _xmlContent(self, childName, value):
-        if childName=='name':
-            self.name = value.strip()
-        elif childName=='kind':
-            self.kind = value.strip()
+    #def _xmlContent(self, childName, value):
+    #    if childName=='name':
+    #        self.name = value.strip()
+    #    elif childName=='kind':
+    #        self.kind = value.strip()
         
     def __init__(self, model):
         self.name = '<unknown type>'
@@ -317,9 +317,9 @@ class Entity(ASTObject):
     _xmlAttributes = []
     _xmlChildren =  [[(XMLTag('name'), PythonObject(ref='name'))]
                      ]
-    def _xmlContent(self, childName, value):
-        if childName=='name':
-            self.name = value.strip()
+    #def _xmlContent(self, childName, value):
+    #    if childName=='name':
+    #        self.name = value.strip()
         
     def __init__(self, model):
         ASTObject.__init__(self, model)
@@ -386,13 +386,11 @@ class Operator(Expression):
         return "(%s)"%self.type
 
 class Constant(Expression):
-    def _setContent(self, childName, value):
-        self.value = value.strip()
 
     _xmlTags = [XMLTag("constant")]
     _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
     _xmlChildren = []
-    _xmlContent = _setContent
+    _xmlContent = PythonObject(ref='value')
 
     def __init__(self, model, parent = None):
         Expression.__init__(self, model)

@@ -121,9 +121,13 @@ class Adapter:
         "Get object from XML tag"
         return klass()
 
+    def setContent(self, obj, content):
+        return obj
+
     def addChild(self, parent, child, pythonObject):
         "Add child object to parent object"
         pass
+
 
 class ValueAdapter(Adapter):
     def createObject(self, klass, tag, value):
@@ -153,6 +157,10 @@ class ObjectAdapter(Adapter):
         for xmlObject, pythonObject in klass._xmlAttributes:
             self._attributes.append((xmlObject, pythonObject))
 
+        if hasattr(klass,'_xmlContent') and klass._xmlContent:
+            pythonObject = klass._xmlContent
+            self._content = pythonObject
+            
     def createObject(self, klass, tag, model):
         obj = klass(model)
         
@@ -207,6 +215,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             if not classAdapters.has_key(klass):
                 self._scanClass(klass)
                 classAdapters[klass] = ObjectAdapter(klass)
+
+        LOG.debug("Number of chains: %d", len(self._chains))
             
         # add tag chain map (for faster access)
         self._rootTags = {}
@@ -217,6 +227,9 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             if not self._rootTags.has_key(xmlObject.name):
                 self._rootTags[xmlObject.name]=[]
             self._rootTags[xmlObject.name].append(chain)
+
+        LOG.log(FINE, "Lengths of chains: %s",
+                map(lambda e: (e[0],len(e[1])), self._rootTags.items()))
 
         self._matchedChains = []
 
@@ -339,7 +352,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         return obj, newiChains
 
     def _addToParent(self, child, chain):
-        # find the most recent object
+        # find the most recent object with tag
         index=len(chain)-2
         eindex=len(self._elements)-1
         while(index>=0):
@@ -354,25 +367,30 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Most recent parent is %s", parent)
         
-        # move forward and ask for subobjects (to find parent)
+        # move forward and ask for subobjects (to find direct parent)
+        directParent = parent
         for i in xrange(index, len(chain)-2):
             tag, obj = chain[i+1]
             if obj is None:
                 continue
-            parent = getattr(parent, obj.ref)
+            directParent = getattr(directParent, obj.ref)
 
         # add child to parent
-        if parent is None:
+        if directParent is None:
             if LOG.isEnabledFor(FINER):
                 LOG.log(FINER, "No parent found for %s", child)
             return
         
-        adapter = getAdapter(parent.__class__)
+        adapter = getAdapter(directParent.__class__)
         childTag, childObject = chain[-1]
 
         if LOG.isEnabledFor(FINER):
-            LOG.log(FINER, "Subobject for %s found: %s", parent, child)
-        adapter.addChild(parent, child, childObject)
+            LOG.log(FINER, "Subobject for %s found: %s", directParent, child)
+        adapter.addChild(directParent, child, childObject)
+
+        # quick hack for parent
+        if hasattr(child, 'parent'):
+            child.parent = parent
         
 
     def _isAtRoot(self):
@@ -405,8 +423,13 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         del self.elements[-1]
 
     def characters(self, content):
-        if not content.strip():
+        c=content.strip():
+        if not c:
             return
+
+        if self._elements[-1][2]==None:
+            return
+        
     
     def _match(self, pathList):
         pathIndex = len(pathList)-1

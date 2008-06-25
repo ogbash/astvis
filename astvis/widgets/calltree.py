@@ -122,7 +122,7 @@ class CallTree(BaseWidget):
         green = gtk.gdk.color_parse("darkgreen")
         
         data = factory.getRow(obj)
-        data[3] = self.root.diagram.hasObject(obj) and green or black
+        data[3] = black # self.root.diagram.hasObject(obj) and green or black
         iObj = self.model.append(None, data)
         
         resolver = core.getService('ASTTreeWalker')
@@ -143,7 +143,7 @@ class CallTree(BaseWidget):
             if callee is not None:
                 callObj = callee.astObject
                 data = factory.getRow(callObj)
-                color = self.root.diagram.hasObject(callObj) and green or black
+                color = black #self.root.diagram.hasObject(callObj) and green or black
                 data[3] = color
             else:
                 data = (ref.name, None, None, black)
