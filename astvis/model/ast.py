@@ -3,7 +3,7 @@
 """AST model  classes for the application."""
 
 from astvis.common import OPTIONS
-from astvis.xmlmap import XMLTag, XMLAttribute, PythonObject, Chain
+from astvis.xmlmap import XMLTag, XMLAttribute, PythonObject, Chain, Link
 import itertools
 
 ACTIVE_CHANGED = "active"
@@ -11,7 +11,7 @@ ACTIVE_CHANGED = "active"
 class ASTModel(object):
     def __init__(self):
         self.project = None
-        self.files = None
+        self.files = []
         self.basicModel = None
         
     def itertree(self, callback):
@@ -389,8 +389,7 @@ class Constant(Expression):
 
     _xmlTags = [XMLTag("constant")]
     _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
-    _xmlChildren = []
-    _xmlContent = PythonObject(ref='value')
+    _xmlChildren = [[(XMLTag('__content__'), PythonObject(str,ref='value'))]]
 
     def __init__(self, model, parent = None):
         Expression.__init__(self, model)
@@ -399,12 +398,12 @@ class Constant(Expression):
         self.value = None
 
     def __str__(self):
-        return self.value or '<constant>'
+        return self.value!=None and str(self.value) or '<constant>'
 
 class Reference(Expression):
     _xmlTags = [XMLTag("reference")]
-    _xmlAttributes = [(XMLAttribute('name'), PythonObject(ref='name'))]
-    _xmlChildren =  [[(XMLTag('base'), None), (XMLTag(), PythonObject(ref='base'))]
+    _xmlAttributes = [(XMLAttribute('name'), PythonObject(str,ref='name'))]
+    _xmlChildren =  [[(XMLTag('base'), None), (XMLTag(), PythonObject(str,ref='base'))]
                      ]
 
     def __init__(self, model, parent = None):
@@ -425,7 +424,7 @@ class Reference(Expression):
 
 class Use(ASTObject):
     _xmlTags = [XMLTag('use')]
-    _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name'))]
+    _xmlAttributes = [(XMLAttribute('id'), PythonObject(str,ref='name'))]
     _xmlChildren = []
 
     def __init__(self, model, parent = None):

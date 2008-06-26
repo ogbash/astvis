@@ -42,8 +42,13 @@ class XMLTag(object):
             return self
         if self.name==None:
             self.name = tag.name
-        attrs = dict(tag.attrs)
-        attrs.update(self.attrs)
+        if self.priority>=tag.priority:
+            attrs = dict(tag.attrs)
+            attrs.update(self.attrs)
+        else:
+            attrs = dict(self.attrs)
+            attrs.update(tag.attrs)
+            
         self.attrs = attrs
 
         return self
@@ -55,17 +60,23 @@ class XMLAttribute(object):
         self.special = special
 
 class PythonObject(object):
-    def __init__(self, klass=None, ref=None):
+    def __init__(self, klass=None, ref=None, priority=1):
         self.klass = klass
         self.ref = ref
+        self.priority = priority
 
     def __iadd__(self, other):
         if other is None:
             return self
-        if self.klass==None:
+        
+        if self.klass==None or \
+               other.klass!=None and self.priority<other.priority:
             self.klass = other.klass
-        if not self.ref:
+        
+        if not self.ref or \
+               other.ref and self.priority<other.priority:
             self.ref = other.ref
+            
         return self
 
     def __str__(self):
@@ -75,6 +86,29 @@ class PythonObject(object):
         return "PythonObject{klass=%s,ref=%s}" % (self.klass, self.ref)
 
 # Chain
+
+class Link:
+    def __init__(self, xml=None, obj=None):
+        self.xml = xml
+        self.obj = obj
+
+    def __iadd__(self, link):            
+        if self.xml is None:
+            self.xml = link.xml
+        else:
+            self.xml += link.xml
+                
+        if self.obj is None:
+            self.obj = link.obj
+        else:
+            self.obj += link.obj
+        return self
+        
+    def __str__(self):
+        return "Link(%s,%s)" % (self.xml, self.obj)
+
+    def __repr__(self):
+        return "Link(%s,%s)" % (self.xml, self.obj)
 
 class Chain(list):
     def __init__(self, *args, **kvargs):
@@ -95,19 +129,22 @@ class Chain(list):
                 break
             
             # add objects
-            xmlO, pO = chain[len(chain)-i-1]
             iSelf = len(self)-i-1
-            xmlOSelf, pOSelf = self[iSelf]
-            
-            if xmlOSelf is None: xmlOSelf = XMLTag()
-            xmlOSelf += xmlO
+            link = Link()
+            if self.priority >= chain.priority:
+                link += self[iSelf]
+                link += chain[len(chain)-i-1]
+            else:
+                link += chain[len(chain)-i-1]
+                link += self[iSelf]
                 
-            if pOSelf is None: pOSelf = PythonObject()
-            pOSelf += pO
-                
-            self[iSelf] = (xmlOSelf, pOSelf)
+            self[iSelf] = link                
 
         return self
+
+    def __getslice__(self, i, j):
+        item = list.__getslice__(self, i, j)
+        return Chain(item, priority=self.priority)
 
     def __str__(self):
         return "Chain%s"%list.__str__(self)
@@ -121,9 +158,6 @@ class Adapter:
         "Get object from XML tag"
         return klass()
 
-    def setContent(self, obj, content):
-        return obj
-
     def addChild(self, parent, child, pythonObject):
         "Add child object to parent object"
         pass
@@ -133,8 +167,11 @@ class ValueAdapter(Adapter):
     def createObject(self, klass, tag, value):
         "Get object from XML tag"
         if klass is None:
-            return str(value)
-        return klass(value)
+            klass = str
+        if value is not None:
+            return klass(value)
+        else:
+            return klass()
 
     def addChild(self, parent, child, pythonObject):
         "Add child object to parent object"
@@ -143,7 +180,7 @@ valueAdapter = ValueAdapter()
 
 # getAdapter
 def getAdapter(klass):
-    if klass in (None, int, float):
+    if klass in (None, int, float, str):
         return valueAdapter
     return classAdapters.get(klass)
 
@@ -156,10 +193,6 @@ class ObjectAdapter(Adapter):
         
         for xmlObject, pythonObject in klass._xmlAttributes:
             self._attributes.append((xmlObject, pythonObject))
-
-        if hasattr(klass,'_xmlContent') and klass._xmlContent:
-            pythonObject = klass._xmlContent
-            self._content = pythonObject
             
     def createObject(self, klass, tag, model):
         obj = klass(model)
@@ -181,7 +214,7 @@ class ObjectAdapter(Adapter):
     def addChild(self, parent, child, pythonObject):
         "Add child to parent, where pythonObject is child descr."
         if not pythonObject.ref:
-            LOG.warn("No reference for %s to setattr to parent %s", child, parent)
+            LOG.warn("No reference for %s in %s: pythonObject=%s", child, parent, pythonObject)
             return
         setattr(parent, pythonObject.ref, child)
 
@@ -221,7 +254,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         # add tag chain map (for faster access)
         self._rootTags = {}
         for chain in self._chains:
-            xmlObject, pythonObject = chain[0]
+            xmlObject, pythonObject = chain[0].xml, chain[0].obj
             if not isinstance(xmlObject, XMLTag):
                 continue
             if not self._rootTags.has_key(xmlObject.name):
@@ -232,16 +265,18 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                 map(lambda e: (e[0],len(e[1])), self._rootTags.items()))
 
         self._matchedChains = []
+        self._matchedChain = []
+        self._matchedChainIndices = [0]
 
     def _scanClass(self, klass):
         for tag in klass._xmlTags:
-            chain = Chain([(tag, PythonObject(klass))], priority=tag.priority)
+            chain = Chain([Link(tag, PythonObject(klass))], priority=tag.priority)
             self._chains.append(chain)
         
         for chain in klass._xmlChildren:
             for tag in klass._xmlTags:
-                chainWithParent = Chain([(tag, None)])
-                chainWithParent.extend(chain)
+                chainWithParent = Chain([Link(tag, None)])
+                chainWithParent.extend(map(lambda e: Link(*e), chain))
                 self._chains.append(chainWithParent)
 
     def loadFile(self, filename):
@@ -279,30 +314,25 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         # find matched chains from the root
         chains = self._rootTags.get(name, [])
         for chain in chains:
-            xmlObject, pythonObject = chain[0]
-            if _tagMatches(xmlObject, tag):
-                newMatchedChains.append((chain, 1))
-            
-        # find chains that still match
-        if len(self._matchedChains)>0:
-            for ichain in self._matchedChains[-1]:
-                chain, index = ichain
-                while index<len(chain):
-                    xmlObject, pythonObject = chain[index]
-                    if _tagMatches(xmlObject, tag):
-                        newMatchedChains.append((chain, index+1))
-                        break
-                    index=index+1
-                
+            newMatchedChains.append((chain, 0))
+
+        if len(self._matchedChains) > 0:
+            newMatchedChains.extend(self._matchedChains[-1])
+      
         # create new python object
-        obj, newMatchedChains = self._extractObject(newMatchedChains, tag)
+        stillMatchedChains, newExtChain = self._extractCompletedChains(newMatchedChains, tag)
+
+        self._matchedChain.extend(newExtChain)
+        self._matchedChainIndices.append(len(self._matchedChain))
+
+        obj = self._extractObject(tag)
         if obj!=None and self._isAtRoot():
             LOG.log(FINER, "Root object found: %s", obj)
             self.objects.append(obj)
 
         # new values
-        self._matchedChains.append(newMatchedChains)
-        self._elements.append((name,attrs,obj))
+        self._elements.append((tag,obj))
+        self._matchedChains.append(stillMatchedChains)
 
         # notify about progress
         newProgress = float(self._file.tell())
@@ -311,66 +341,93 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self._fileProgress = newProgress
 
 
-    def _extractObject(self, ichains, tag):
+    def _matchTagInChain(self, chain, index, tag):
+        # find next tag to match
+        while index<len(chain) and chain[index].xml is None:
+            index = index+1
+
+        # if the tag matches
+        if index<len(chain):
+            xmlObject, pythonObject = chain[index].xml, chain[index].obj
+            if _tagMatches(xmlObject, tag):
+                return index
+
+        return None
+
+
+    def _extractCompletedChains(self, ichains, tag):
         newiChains = []
         matchedChains = []
 
+        # find chains that match
+        newChain = Chain()
         for ichain in ichains:
             chain, index = ichain
-            if len(chain)==index:
-                matchedChains.append(chain)
-            else:
-                newiChains.append(ichain)
+            mIndex = self._matchTagInChain(chain, index, tag)
+            if mIndex is not None:
+                newChain += chain[index:mIndex+1]
 
-        if len(matchedChains)==0:
-            return None, newiChains
+                # sort chains
+                if len(chain)==mIndex: # end of chain
+                    matchedChains.append(chain)
+                else:
+                    newiChains.append((chain,mIndex+1))
 
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "Matched chains: %s", matchedChains)
+        return newiChains, newChain
 
-        # create object
-        matchedChain = Chain(priority=0)
-
-        for chain in matchedChains:
-            matchedChain += chain
-
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "Matched chain: %s", matchedChain)
+    def _extractObject(self, tag):
+        matchedChain = self._matchedChain
+        startIndex, endIndex = self._matchedChainIndices[-2:]
         
-        if matchedChain[-1][1] is None:
-            LOG.debug("No class defined for class %s in chain %s", tag.name, matchedChain)
-            return None, newiChains
+        if LOG.isEnabledFor(FINER):
+            LOG.log(FINER, "Extracting object for %s, indices %d, %d", tag, startIndex, endIndex)
+
+        if endIndex-startIndex==0:
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "No match for %s in %s", tag.name, matchedChain)
+            return None
         
-        klass = matchedChain[-1][1].klass
+        if matchedChain[-1].obj is None:
+            LOG.log(FINER, "No python object defined for class %s in chain %s", tag.name, matchedChain)
+            return None
+        
+        klass = matchedChain[-1].obj.klass
         if klass:
             adapter = getAdapter(klass)
             obj = adapter.createObject(klass, tag, self.model)
             # add to parent
             self._addToParent(obj, matchedChain)
         else:
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "No class defined for %s", matchedChain[-1])
             obj = None
-        return obj, newiChains
+        return obj
 
     def _addToParent(self, child, chain):
         # find the most recent object with tag
-        index=len(chain)-2
-        eindex=len(self._elements)-1
-        while(index>=0):
-            tag = chain[index][0]
-            if tag is not None:
-                if self._elements[eindex][2]!=None:
-                    break
-                eindex = eindex-1 
-            index = index-1
 
-        parent = self._elements[eindex][2]
+        index=len(self._elements)-1
+        while(index>0):
+            start, end = self._matchedChainIndices[index:index+2]
+            if end-start>0:
+                tag = chain[end-1].xml
+                if tag is not None:
+                    if self._elements[index][1]!=None:
+                        break
+            index = index-1
+        else:
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "Most recent parent not found")
+            return
+
+        parent = self._elements[index][1]
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Most recent parent is %s", parent)
         
         # move forward and ask for subobjects (to find direct parent)
         directParent = parent
-        for i in xrange(index, len(chain)-2):
-            tag, obj = chain[i+1]
+        for i in xrange(end-1, len(chain)-2):
+            tag, obj = chain[i+1].xml, chain[i+1].obj
             if obj is None:
                 continue
             directParent = getattr(directParent, obj.ref)
@@ -382,10 +439,10 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             return
         
         adapter = getAdapter(directParent.__class__)
-        childTag, childObject = chain[-1]
+        childTag, childObject = chain[-1].xml, chain[-1].obj
 
         if LOG.isEnabledFor(FINER):
-            LOG.log(FINER, "Subobject for %s found: %s", directParent, child)
+            LOG.log(FINER, "Subobject for %s found: %s applied with %s", directParent, child, childObject)
         adapter.addChild(directParent, child, childObject)
 
         # quick hack for parent
@@ -394,7 +451,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         
 
     def _isAtRoot(self):
-        pathList = [e[0] for e in self._elements]
+        pathList = [e[0].name for e in self._elements]
         if len(pathList)==len(self.rootPathList) and \
                pathList==self.rootPathList:
             return True
@@ -418,17 +475,32 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endElement(self, name):
         del self._matchedChains[-1]
         del self._elements[-1]
+        startIndex, endIndex = self._matchedChainIndices[-2:]
+        del self._matchedChain[startIndex:]
+        del self._matchedChainIndices[-1]
 
     def __endElement(self, name):
         del self.elements[-1]
 
     def characters(self, content):
-        c=content.strip():
+        c=content.strip()
         if not c:
             return
 
-        if self._elements[-1][2]==None:
-            return
+        newMatchedChains = []
+
+        tag = XMLTag('__content__')
+        if len(self._matchedChains)>0:
+            for ichain in self._matchedChains[-1]:
+                chain, index = ichain
+                mIndex = self._matchTagInChain(chain, index, tag)
+                if mIndex is not None:
+                    newMatchedChains.append((chain,mIndex+1))
+                    
+        # create new python object
+        obj = self._extractObject(tag)
+        if obj!=None:
+            print '---%s' % obj
         
     
     def _match(self, pathList):
