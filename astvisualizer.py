@@ -219,14 +219,14 @@ class MainWindow(object):
                 if item and item.object:
                     item.object.setActive(not item.object.getActive())
 
-    def showFile(self, _file, location = None):
-        if not self.files.has_key(_file):
+    def showFile(self, project, fileName, location = None):
+        if not self.files.has_key(fileName):
             import os.path
-            fl = file(os.path.join(self.project.sourceDir or '', _file.name))
+            fl = file(os.path.join(project.sourceDir or '', fileName.name))
             view = self._openFile(fl)
-            self.files[_file] = view
+            self.files[fileName] = view
         else:
-            view = self.files[_file]
+            view = self.files[fileName]
         
         # find view index in notebook and open it
         children = self.notebook.get_children()
@@ -234,14 +234,21 @@ class MainWindow(object):
             if child==view or child.child==view:
                 self.notebook.set_current_page(i)
                 buf = view.get_buffer()
+
+                iBegin=None
+                iEnd=None
                 if location is not None:
-                    iBegin = buf.get_iter_at_line_offset(location.begin.line-1, location.begin.column)
-                    iEnd = buf.get_iter_at_line_offset(location.end.line-1, location.end.column)
+                    if location.begin.line>0:
+                        iBegin = buf.get_iter_at_line_offset(location.begin.line-1, location.begin.column)
+                        iEnd = buf.get_iter_at_line_offset(location.end.line-1, location.end.column)
                 else:
                     iBegin = buf.get_iter_at_line(0)
                     iEnd = buf.get_iter_at_line(0)
-                view.scroll_to_iter(iBegin, 0, True, 0., 0.)
-                buf.select_range(iBegin, iEnd)
+
+                if iBegin is not None:
+                    view.scroll_to_iter(iBegin, 0, True, 0., 0.)
+                    if iEnd is not None:
+                        buf.select_range(iBegin, iEnd)
                     
     def _openFile(self, fl):
         import os.path

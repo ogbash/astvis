@@ -202,7 +202,7 @@ class AstTree(BaseWidget):
             diagram, = args
             iObject = self._findInTree(obj)
             self.model[iObject][3] = gtk.gdk.color_parse("black")
-        elif _event==event.PROPERTY_CHANGED and obj==self.project:
+        elif _event==event.PROPERTY_CHANGED and obj==self.astTree.project:
             propertyName = args[0]
             if propertyName == 'astModel':
                 # generate sidebar tree
@@ -236,10 +236,10 @@ class AstTree(BaseWidget):
             _model, iRow = self.view.get_selection().get_selected()
             obj = _model[iRow][1]
             if isinstance(obj, ast.File):
-                self.root.showFile(obj)
+                self.root.showFile(self.astModel.project, obj)
                 return True
             if hasattr(obj, 'location'):
-                self.root.showFile(obj.getFile(), obj.location)
+                self.root.showFile(self.astModel.project, obj.getFile(), obj.location)
                 return True        
         return False
      
