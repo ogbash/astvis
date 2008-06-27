@@ -214,7 +214,7 @@ class ObjectAdapter(Adapter):
     def addChild(self, parent, child, pythonObject):
         "Add child to parent, where pythonObject is child descr."
         if not pythonObject.ref:
-            LOG.warn("No reference for %s in %s: pythonObject=%s", child, parent, pythonObject)
+            LOG.debug("No reference for %s in %s: pythonObject=%s", child, parent, pythonObject)
             return
         setattr(parent, pythonObject.ref, child)
 
@@ -290,6 +290,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             LOG.debug("File %s opened" % self._file)
             event.manager.notifyObservers(self, event.TASK_STARTED, \
                     ('Loading AST %s' % os.path.basename(filename),))
+            #import cProfile
+            #xmlTree =cProfile.run(xml.sax.parse(self._file, self))
             xmlTree = xml.sax.parse(self._file, self)
         finally:
             self._file.close()
@@ -483,8 +485,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         del self.elements[-1]
 
     def characters(self, content):
-        c=content.strip()
-        if not c:
+        content=content.strip()
+        if not content:
             return
 
         newMatchedChains = []
@@ -500,7 +502,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         # create new python object
         obj = self._extractObject(tag)
         if obj!=None:
-            print '---%s' % obj
+            print '---%s---%s' % (content, obj)
         
     
     def _match(self, pathList):
