@@ -33,3 +33,28 @@ class Thread(threading.Thread):
             LOG.info("End running %s in thread" % self.func)
             _threads.remove(self)
 
+
+class Actor(object):
+
+    def __init__(self, obj):
+        self._obj = obj
+        self._condition = threading.Condition()
+        self._messages = []
+        self._thread = threading.Thread(self.__run)
+        
+
+    def __run(self):
+        while True:
+            self._condition.acquire()
+            while len(self._messages)==0:
+                self._condition.wait()
+            message = self._messages[0]
+            del self._messages[0]
+            self._condition.release()
+
+            try:
+                self.__call(message)
+            except Exception, e:
+                LOG.error(e, exc_info)
+
+            

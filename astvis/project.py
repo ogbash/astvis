@@ -18,8 +18,8 @@ def readASTModel(filename):
     LOG.debug('Loading AST file %s' % filename)
     try:
         astModel = ast.ASTModel()
-        loader = xmlmap.XMLLoader(astModel, Project.classes, "/ASTCollection")
         astModel.filename = filename
+        loader = xmlmap.XMLLoader(astModel, Project.classes, "/ASTCollection")
         astModel.files = loader.loadFile(filename)
         LOG.debug('Finished loading AST file %s' % filename)
     except Exception, e:
