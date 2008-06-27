@@ -214,7 +214,8 @@ class ObjectAdapter(Adapter):
     def addChild(self, parent, child, pythonObject):
         "Add child to parent, where pythonObject is child descr."
         if not pythonObject.ref:
-            LOG.debug("No reference for %s in %s: pythonObject=%s", child, parent, pythonObject)
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "No reference for %s in %s: pythonObject=%s", child, parent, pythonObject)
             return
         setattr(parent, pythonObject.ref, child)
 
@@ -327,7 +328,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self._matchedChain.extend(newExtChain)
         self._matchedChainIndices.append(len(self._matchedChain))
 
-        obj = self._extractObject(tag)
+        obj = self._extractObject(tag, self.model)
         if obj!=None and self._isAtRoot():
             LOG.log(FINER, "Root object found: %s", obj)
             self.objects.append(obj)
@@ -344,6 +345,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
 
     def _matchTagInChain(self, chain, index, tag):
+        """Returns the index of the next matching tag in the chain
+        starting from the given index"""
         # find next tag to match
         while index<len(chain) and chain[index].xml is None:
             index = index+1
@@ -358,6 +361,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
 
     def _extractCompletedChains(self, ichains, tag):
+        """Finds new link(s) that match the given tag
+        from the chain continuations."""
         newiChains = []
         matchedChains = []
 
@@ -377,17 +382,24 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
         return newiChains, newChain
 
-    def _extractObject(self, tag):
+    def _extractObject(self, tag, content):
+        """Extract object from the last matching link group."""
+        
         matchedChain = self._matchedChain
         startIndex, endIndex = self._matchedChainIndices[-2:]
-        
-        if LOG.isEnabledFor(FINER):
-            LOG.log(FINER, "Extracting object for %s, indices %d, %d", tag, startIndex, endIndex)
-
         if endIndex-startIndex==0:
             if LOG.isEnabledFor(FINER):
-                LOG.log(FINER, "No match for %s in %s", tag.name, matchedChain)
+                LOG.log(FINER, "Can't extract object, last matching tag group is empty")
             return None
+
+        matchedTag = matchedChain[-1].xml
+        if not tag<matchedTag:
+            if LOG.isEnabledFor(FINER):
+                LOG.log(FINER, "Can't extract object, given %s does not correspond to the matched %s", tag, matchedTag)
+            return None
+
+        if LOG.isEnabledFor(FINER):
+            LOG.log(FINER, "Extracting object for %s, indices %d, %d", tag, startIndex, endIndex)
         
         if matchedChain[-1].obj is None:
             LOG.log(FINER, "No python object defined for class %s in chain %s", tag.name, matchedChain)
@@ -396,7 +408,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         klass = matchedChain[-1].obj.klass
         if klass:
             adapter = getAdapter(klass)
-            obj = adapter.createObject(klass, tag, self.model)
+            obj = adapter.createObject(klass, tag, content)
             # add to parent
             self._addToParent(obj, matchedChain)
         else:
@@ -459,21 +471,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             return True
         return False
 
-
-    def getClassForTag(self, tagName, attrs):
-        tag = XMLTag(tagName, attrs)
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "Finding class for %s", tag)
-        for clazz in self.classes:
-            for templateTag in clazz._xmlTags:
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "Trying template tag %s>tag: %s", templateTag, templateTag>tag)
-                if templateTag>tag: # if tag has all attributes required by template tag
-                    LOG.log(FINER, "Found tag '%s'", templateTag)
-                    return clazz
-        else:
-            return None
-
     def endElement(self, name):
         del self._matchedChains[-1]
         del self._elements[-1]
@@ -481,48 +478,28 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         del self._matchedChain[startIndex:]
         del self._matchedChainIndices[-1]
 
-    def __endElement(self, name):
-        del self.elements[-1]
-
     def characters(self, content):
         content=content.strip()
         if not content:
             return
 
-        newMatchedChains = []
-
         tag = XMLTag('__content__')
-        if len(self._matchedChains)>0:
-            for ichain in self._matchedChains[-1]:
-                chain, index = ichain
-                mIndex = self._matchTagInChain(chain, index, tag)
-                if mIndex is not None:
-                    newMatchedChains.append((chain,mIndex+1))
+
+        if len(self._matchedChains) == 0:
+            return
+        
+        stillMatchedChains, newExtChain = self._extractCompletedChains(self._matchedChains[-1], tag)
                     
         # create new python object
-        obj = self._extractObject(tag)
-        if obj!=None:
-            print '---%s---%s' % (content, obj)
+        self._matchedChain.extend(newExtChain)
+        self._matchedChainIndices.append(len(self._matchedChain))
+
+        obj = self._extractObject(tag, content)
+        if obj!=None and LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "Found tag content '%s'", content[:40])
+
+        startIndex, endIndex = self._matchedChainIndices[-2:]
+        del self._matchedChain[startIndex:]
+        del self._matchedChainIndices[-1]
         
-    
-    def _match(self, pathList):
-        pathIndex = len(pathList)-1
-        index = len(self.elements)-1
-        if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "_match: Testing, pathList=%s, self.elements=%s" % (pathList, self.elements))
-        while index>=0 and pathIndex>=0:
-            if pathList[pathIndex] != self.elements[index][0]: # i.e. element name
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "_match: False, %s != %s" % (pathList[pathIndex], self.elements[index][0]))
-                break
-            index = index-1
-            pathIndex = pathIndex-1
-        else:
-            if pathIndex<0 or \
-                    pathIndex==0 and not pathList[pathIndex] and index<0: # match up to the root
-                return True
-            else:
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "_match: False, pathIndex=%d, index=%d" % (pathIndex, index))
-        return False
 
