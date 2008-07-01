@@ -68,6 +68,8 @@ class TagDict(ObservableDict):
         self.project = project
 
 class Project(object):
+    _xmlTags = [XMLTag('project')]
+    _xmlChildren = [[(XMLTag('name'), PythonObject(list, ref='name')),
 
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
