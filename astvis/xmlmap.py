@@ -233,24 +233,39 @@ def _tagMatches(xmlObject, tag):
     return isinstance(xmlObject, XMLTag) and \
            tag<xmlObject
 
-class XMLLoader(xml.sax.handler.ContentHandler):
-    def __init__(self, model, classes, path="/"):
-        self.model = model
-        self.classes = classes
-        self._elements = [] #: [(tagname, attrs, obj, adapter)]
-        self.objects = [] #: top level objects to return
-        self.callback = None
-        self.rootPathList = self._parsePath(path) #: holds XML path of the root element
-        LOG.debug("rootPathList = %s" % self.rootPathList)
+class _XMLBasic:
 
+    def __init__(self, classes):
+        self.classes = classes
         self._chains = []
-        self._attributes = {} #: klass -> [(xmlO, pO)]
         for klass in classes:
             if not classAdapters.has_key(klass):
                 self._scanClass(klass)
                 classAdapters[klass] = ObjectAdapter(klass)
 
         LOG.debug("Number of chains: %d", len(self._chains))
+
+    def _scanClass(self, klass):
+        for tag in klass._xmlTags:
+            chain = Chain([Link(tag, PythonObject(klass))], priority=tag.priority)
+            self._chains.append(chain)
+        
+        for chain in klass._xmlChildren:
+            for tag in klass._xmlTags:
+                chainWithParent = Chain([Link(tag, None)])
+                chainWithParent.extend(map(lambda e: Link(*e), chain))
+                self._chains.append(chainWithParent)
+
+class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
+    def __init__(self, model, classes, path="/"):
+        _XMLBasic.__init__(self, classes)
+        
+        self.model = model
+        self._elements = [] #: [(tagname, attrs, obj, adapter)]
+        self.objects = [] #: top level objects to return
+        self.callback = None
+        self.rootPathList = self._parsePath(path) #: holds XML path of the root element
+        LOG.debug("rootPathList = %s" % self.rootPathList)
             
         # add tag chain map (for faster access)
         self._rootTags = {}
@@ -268,17 +283,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self._matchedChains = []
         self._matchedChain = []
         self._matchedChainIndices = [0]
-
-    def _scanClass(self, klass):
-        for tag in klass._xmlTags:
-            chain = Chain([Link(tag, PythonObject(klass))], priority=tag.priority)
-            self._chains.append(chain)
-        
-        for chain in klass._xmlChildren:
-            for tag in klass._xmlTags:
-                chainWithParent = Chain([Link(tag, None)])
-                chainWithParent.extend(map(lambda e: Link(*e), chain))
-                self._chains.append(chainWithParent)
 
     def loadFile(self, filename):
         LOG.debug("loadFile started")
@@ -503,3 +507,29 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         del self._matchedChainIndices[-1]
         
 
+class XMLWriter(_XMLBasic):
+    def __init__(self, classes, objects):
+        _XMLBasic.__init__(self, classes)
+        
+        self.objects = objects
+        self._rootClasses = {}
+
+    def saveFile(self, filename):
+        self._file = open(filename, 'w')
+        try:
+            import xml.sax.saxutils
+            from xml.sax.xmlreader import AttributesImpl as Attrs
+            self._gen=xml.sax.saxutils.XMLGenerator(self._file, 'utf-8')
+            self._gen.startDocument()
+            self._gen.startElement('ASTCollection', Attrs({}))
+            
+            for obj in self.objects:
+                self.processObject(obj)
+                
+            self._gen.endElement('ASTCollection')
+            self._gen.endDocument()
+        finally:
+            self._file.close()
+
+    def processObject(self, obj, ref=None):
+        pass

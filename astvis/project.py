@@ -6,6 +6,7 @@ from common import FINE, FINER, FINEST
 
 import gtk
 import xmlmap
+from xmlmap import XMLTag, PythonObject
 from astvis import event, gtkx, action
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
@@ -69,7 +70,7 @@ class TagDict(ObservableDict):
 
 class Project(object):
     _xmlTags = [XMLTag('project')]
-    _xmlChildren = [[(XMLTag('name'), PythonObject(list, ref='name')),
+    _xmlChildren = [[(XMLTag('name'), PythonObject(list, ref='name'))]]
 
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
