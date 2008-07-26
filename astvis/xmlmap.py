@@ -252,7 +252,7 @@ class _XMLBasic:
         
         for chain in klass._xmlChildren:
             for tag in klass._xmlTags:
-                chainWithParent = Chain([Link(tag, None)])
+                chainWithParent = Chain([Link(tag, PythonObject(klass))])
                 chainWithParent.extend(map(lambda e: Link(*e), chain))
                 self._chains.append(chainWithParent)
 
@@ -507,6 +507,7 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
         del self._matchedChainIndices[-1]
         
 
+from xml.sax.xmlreader import AttributesImpl as Attrs
 class XMLWriter(_XMLBasic):
     def __init__(self, classes, objects):
         _XMLBasic.__init__(self, classes)
@@ -514,11 +515,22 @@ class XMLWriter(_XMLBasic):
         self.objects = objects
         self._rootClasses = {}
 
+        for chain in self._chains:
+            if chain[0].obj==None:
+                LOG.warn("No python object defined for chain: %s", chain)
+                continue
+            obj = chain[0].obj
+            if obj.klass==None:
+                LOG.warn("No objec class defined for chain: %s", chain)
+                continue
+            if not obj.klass in self._rootClasses:
+                self._rootClasses[obj.klass] = []
+            self._rootClasses[obj.klass].append(chain)
+
     def saveFile(self, filename):
         self._file = open(filename, 'w')
         try:
             import xml.sax.saxutils
-            from xml.sax.xmlreader import AttributesImpl as Attrs
             self._gen=xml.sax.saxutils.XMLGenerator(self._file, 'utf-8')
             self._gen.startDocument()
             self._gen.startElement('ASTCollection', Attrs({}))
@@ -532,4 +544,13 @@ class XMLWriter(_XMLBasic):
             self._file.close()
 
     def processObject(self, obj, ref=None):
-        pass
+        
+        
+        name = 'class'
+        content = str(obj.__class__)
+        self._gen.startElement(name, Attrs({}))
+        self._gen.characters(content)
+        self._gen.endElement(name)
+
+        
+
