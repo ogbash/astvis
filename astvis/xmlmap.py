@@ -162,6 +162,9 @@ class Adapter:
         "Add child object to parent object"
         pass
 
+    def getChildren(self, obj):
+        "Get list of name, ref tuples of the object children"
+        return []
 
 class ValueAdapter(Adapter):
     def createObject(self, klass, tag, value):
@@ -219,12 +222,21 @@ class ObjectAdapter(Adapter):
             return
         setattr(parent, pythonObject.ref, child)
 
+    def getChildren(self, obj):
+        names = filter(lambda x: not x.startswith('__'), dir(obj)) # properties and refs
+        return map(lambda x: (getattr(obj, x),x), names)
+
 class ListAdapter(Adapter):
     def __init__(self):
         self.klass = list
     
     def addChild(self, parent, child, ref):
-        parent.append(child)        
+        parent.append(child)
+
+    def getChildren(self, obj):
+        return map(lambda x: (x,None), obj) # ref=None
+
+# @todo: move class adapters to thread local or similar
 classAdapters[list] = ListAdapter()
 
 
@@ -232,6 +244,11 @@ def _tagMatches(xmlObject, tag):
     "If tag (from file) matches xmlObject (from a chain)"
     return isinstance(xmlObject, XMLTag) and \
            tag<xmlObject
+
+def _objectMatches(pythonObject, obj):
+    "If obj matches pythonObject (from a chain)"
+    return isinstance(pythonObject, PythonObject) and \
+           obj<pythonObject
 
 class _XMLBasic:
 
@@ -256,6 +273,28 @@ class _XMLBasic:
                 chainWithParent.extend(map(lambda e: Link(*e), chain))
                 self._chains.append(chainWithParent)
 
+    def _extractCompletedChains(self, ichains, template, matchMethod):
+        """Finds new link(s) that match the given template (tag or object)
+        from the chain continuations."""
+        newiChains = []
+        matchedChains = []
+
+        # find chains that match
+        newChain = Chain()
+        for ichain in ichains:
+            chain, index = ichain
+            mIndex = matchMethod(chain, index, template)
+            if mIndex is not None:
+                newChain += chain[index:mIndex+1]
+
+                # sort chains
+                if len(chain)==mIndex: # end of chain
+                    matchedChains.append(chain)
+                else:
+                    newiChains.append((chain,mIndex+1))
+
+        return newiChains, newChain
+
 class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
     def __init__(self, model, classes, path="/"):
         _XMLBasic.__init__(self, classes)
@@ -267,6 +306,10 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
         self.rootPathList = self._parsePath(path) #: holds XML path of the root element
         LOG.debug("rootPathList = %s" % self.rootPathList)
             
+        self._matchedChains = []
+        self._matchedChain = []
+        self._matchedChainIndices = [0]
+
         # add tag chain map (for faster access)
         self._rootTags = {}
         for chain in self._chains:
@@ -279,10 +322,6 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
 
         LOG.log(FINE, "Lengths of chains: %s",
                 map(lambda e: (e[0],len(e[1])), self._rootTags.items()))
-
-        self._matchedChains = []
-        self._matchedChain = []
-        self._matchedChainIndices = [0]
 
     def loadFile(self, filename):
         LOG.debug("loadFile started")
@@ -316,30 +355,30 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
     def startElement(self, name, attrs):
         if LOG.isEnabledFor(FINER):
             LOG.log(FINER, "Processing tag '%s'", name)
-        newMatchedChains = []
         tag = XMLTag(name, attrs)
+
         # find matched chains from the root
+        newMatchedChains = []
         chains = self._rootTags.get(name, [])
         for chain in chains:
             newMatchedChains.append((chain, 0))
-
         if len(self._matchedChains) > 0:
             newMatchedChains.extend(self._matchedChains[-1])
       
-        # create new python object
-        stillMatchedChains, newExtChain = self._extractCompletedChains(newMatchedChains, tag)
+        stillMatchedChains, newExtChain = self._extractCompletedChains(newMatchedChains, tag, self._matchTagInChain)
 
+        # new values
         self._matchedChain.extend(newExtChain)
         self._matchedChainIndices.append(len(self._matchedChain))
+        self._matchedChains.append(stillMatchedChains)
 
+        # create new python object
         obj = self._extractObject(tag, self.model)
         if obj!=None and self._isAtRoot():
             LOG.log(FINER, "Root object found: %s", obj)
             self.objects.append(obj)
 
-        # new values
         self._elements.append((tag,obj))
-        self._matchedChains.append(stillMatchedChains)
 
         # notify about progress
         newProgress = float(self._file.tell())
@@ -362,29 +401,6 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
                 return index
 
         return None
-
-
-    def _extractCompletedChains(self, ichains, tag):
-        """Finds new link(s) that match the given tag
-        from the chain continuations."""
-        newiChains = []
-        matchedChains = []
-
-        # find chains that match
-        newChain = Chain()
-        for ichain in ichains:
-            chain, index = ichain
-            mIndex = self._matchTagInChain(chain, index, tag)
-            if mIndex is not None:
-                newChain += chain[index:mIndex+1]
-
-                # sort chains
-                if len(chain)==mIndex: # end of chain
-                    matchedChains.append(chain)
-                else:
-                    newiChains.append((chain,mIndex+1))
-
-        return newiChains, newChain
 
     def _extractObject(self, tag, content):
         """Extract object from the last matching link group."""
@@ -492,7 +508,7 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
         if len(self._matchedChains) == 0:
             return
         
-        stillMatchedChains, newExtChain = self._extractCompletedChains(self._matchedChains[-1], tag)
+        stillMatchedChains, newExtChain = self._extractCompletedChains(self._matchedChains[-1], tag, self._matchTagInChain)
                     
         # create new python object
         self._matchedChain.extend(newExtChain)
@@ -505,8 +521,9 @@ class XMLLoader(_XMLBasic, xml.sax.handler.ContentHandler):
         startIndex, endIndex = self._matchedChainIndices[-2:]
         del self._matchedChain[startIndex:]
         del self._matchedChainIndices[-1]
-        
 
+# --------------
+# XML Writer
 from xml.sax.xmlreader import AttributesImpl as Attrs
 class XMLWriter(_XMLBasic):
     def __init__(self, classes, objects):
@@ -515,6 +532,11 @@ class XMLWriter(_XMLBasic):
         self.objects = objects
         self._rootClasses = {}
 
+        self._matchedChains = []
+        self._matchedChain = []
+        self._matchedChainIndices = [0]
+
+        #
         for chain in self._chains:
             if chain[0].obj==None:
                 LOG.warn("No python object defined for chain: %s", chain)
@@ -544,13 +566,64 @@ class XMLWriter(_XMLBasic):
             self._file.close()
 
     def processObject(self, obj, ref=None):
-        
-        
-        name = 'class'
-        content = str(obj.__class__)
-        self._gen.startElement(name, Attrs({}))
-        self._gen.characters(content)
-        self._gen.endElement(name)
 
+        if LOG.isEnabledFor(FINER):
+            LOG.log(FINER, "Processing (ref=%s) %s", ref, obj)
+
+        klass = obj.__class__
+        adapter = getAdapter(klass)
+        if adapter is None:
+            return
+        pObj = PythonObject(klass, ref=ref)
+
+        # find matched chains from the root
+        newMatchedChains = []
+        ##chains = self._rootTags.get(name, [])
+        for chain in self._chains:
+            newMatchedChains.append((chain, 0))
+        if len(self._matchedChains) > 0:
+            newMatchedChains.extend(self._matchedChains[-1])
+      
+        stillMatchedChains, newExtChain = self._extractCompletedChains(newMatchedChains, pObj, self._matchObjectInChain)
+
+        if len(newExtChain)==0:
+            return
+
+        # new values
+        self._matchedChain.extend(newExtChain)
+        self._matchedChainIndices.append(len(self._matchedChain))
+        self._matchedChains.append(stillMatchedChains)
+
+        # generate tag
+        #self._gen.startElement(name, Attrs({}))
+        #self._gen.characters(content)
+        LOG.debug('generate, %s', newExtChain)
+
+        # generate children
+        for child, ref in adapter.getChildren(obj):
+            self.processObject(child, ref)
         
+        # end
+        #self._gen.endElement(name)
+        
+        del self._matchedChains[-1]
+        startIndex, endIndex = self._matchedChainIndices[-2:]
+        del self._matchedChain[startIndex:]
+        del self._matchedChainIndices[-1]
+
+
+    def _matchObjectInChain(self, chain, index, obj):
+        """Returns the index of the next matching tag in the chain
+        starting from the given index"""
+        # find next tag to match
+        while index<len(chain) and chain[index].obj is None:
+            index = index+1
+
+        # if the tag matches
+        if index<len(chain):
+            xmlObject, pythonObject = chain[index].xml, chain[index].obj
+            if _objectMatches(pythonObject, obj):
+                return index
+
+        return None
 
