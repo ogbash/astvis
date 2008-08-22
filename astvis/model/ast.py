@@ -21,7 +21,7 @@ class ASTModel(object):
     def getScope(self, astObj):
         if isinstance(astObj, (Subprogram, ProgramUnit)):
             return astObj
-        return astObj.parent and self.getScope(astObj.parent) or None
+        return astObj.parent!=None and self.getScope(astObj.parent) or None
 
     def getStatement(self, astObj):
         if isinstance(astObj, Statement):
@@ -162,6 +162,12 @@ class Code(ASTObject):
                     ]
     _xmlChildren.extend(ASTObject._xmlChildren)
 
+    def addBlock(self, block, attrs):
+        if attrs['type']=='declarations':
+            self.declarationBlock=block
+        elif attrs['type']=='executions':
+            self.statementBlock=block
+
 class ProgramUnit(Code):
 
     _xmlTags = [XMLTag("module"), XMLTag("program")]
@@ -192,7 +198,7 @@ class ProgramUnit(Code):
     def __str__(self):
         return "<%s %s>" % (self.type or 'ProgramUnit', self.name)
 
-class Subprogram(ASTObject):
+class Subprogram(Code):
 
     _xmlTags = [XMLTag("subroutine"), XMLTag("function")]
     _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name'))]
@@ -261,6 +267,9 @@ class Statement(ASTObject):
         self.type = "<unknown>"
         self.blocks = []
         self.name = None
+
+    def addBlock(self, block, attrs):
+        self.blocks.append(block)
         
     def __str__(self):
         return "<%s>"%(self.type or 'statement')
@@ -351,6 +360,7 @@ class TypeDeclaration(Declaration):
 class Expression(ASTObject):
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
+        self.parent = parent
 
 class Call(Expression):
     _xmlTags = [XMLTag("call")]
@@ -361,6 +371,9 @@ class Call(Expression):
     def __init__(self, model, parent = None):
         Expression.__init__(self, model, parent)
         self.name = '<unknown call>'
+
+    def __str__(self):
+        return "<callexpr>{name=%s}" % self.name
         
 class Operator(Expression):
     _xmlTags = [XMLTag("operator")]

@@ -5,8 +5,7 @@ LOG=logging.getLogger('project')
 from common import FINE, FINER, FINEST
 
 import gtk
-import xmlmap
-from xmlmap import XMLTag, PythonObject
+import xmltool
 from astvis import event, gtkx, action
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
@@ -20,7 +19,7 @@ def readASTModel(filename):
     try:
         astModel = ast.ASTModel()
         astModel.filename = filename
-        loader = xmlmap.XMLLoader(astModel, Project.classes, "/ASTCollection")
+        loader = xmltool.XMLLoader(astModel)
         astModel.files = loader.loadFile(filename)
         LOG.debug('Finished loading AST file %s' % filename)
     except Exception, e:
@@ -69,9 +68,6 @@ class TagDict(ObservableDict):
         self.project = project
 
 class Project(object):
-    _xmlTags = [XMLTag('project')]
-    _xmlChildren = [[(XMLTag('name'), PythonObject(list, ref='name'))]]
-
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
     classes.extend([ast.Block, ast.Use,
