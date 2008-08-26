@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+import logging
+LOG=logging.getLogger(__name__)
+from common import FINE, FINER, FINEST
+
 from model import ast, basic
 from model.ast import ACTIVE_CHANGED
 from common import *
@@ -12,6 +16,42 @@ from astvis import gtkx
 
 import gaphas
 
+class DisconnectHandle(object):
+
+    def __init__(self, canvas, items, handle):
+        self.canvas = canvas
+        self.items = items
+        self.handle = handle
+
+    def __call__(self):
+        self.handle_disconnect()
+
+    def handle_disconnect(self):
+        canvas = self.canvas
+        items = self.items
+        handle = self.handle
+        try:
+            canvas.solver.remove_constraint(handle.connection_data)
+        except KeyError:
+            print 'constraint was already removed for', items, handle
+            pass # constraint was alreasy removed
+        handle.connection_data = None
+        handle.connected_to = None
+        # Remove disconnect handler:
+        handle.disconnect = None
+
+
+class ItemFactory(diagram.ItemFactory):
+    def getDiagramItem(self, obj):
+        if isinstance(obj, ast.ProgramUnit):
+            item = RectangleItem(obj.name)
+            item.object = obj
+            return item
+        elif isinstance(obj, ast.Subprogram):
+            item= SubprogramItem(obj)
+            item.object = obj
+            return item
+
 class CallDiagram(diagram.Diagram):
 
     __gtkmodel__ = gtkx.GtkModel()
@@ -23,55 +63,31 @@ class CallDiagram(diagram.Diagram):
 
 
     def __init__(self, name, project):
-        diagram.Diagram.__init__(self, CallDiagram.ItemFactory())
+        diagram.Diagram.__init__(self, ItemFactory())
         self.project = project
         self._name = name
-        event.manager.subscribeClass(self._notify, ast.ASTObject)
-
-    class ItemFactory(diagram.ItemFactory):
-        def getDiagramItem(self, obj):
-            if isinstance(obj, ast.ProgramUnit):
-                item = RectangleItem(obj.name)
-                item.object = obj
-                return item
-            elif isinstance(obj, ast.Subprogram):
-                item= SubprogramItem(obj)
-                item.object = obj
-                return item
+        event.manager.subscribeClass(self._notify, ast.ASTObject)        
                 
     def _connectItems(self, items, connector):
+        LOG.debug('connect %s', items)
         handles = connector.handles()[-1], connector.handles()[0] # tail --> head
-        constraints = [None, None]
-        
-        constraints[0] = MorphConstraint(
-                gaphas.canvas.CanvasProjection(handles[0], connector), items[0],
-                gaphas.canvas.CanvasProjection(items[1].center, items[1]))
-        def disconnect0():
-            self._canvas.solver.remove_constraint(constraints[0])
-            handles[0]._connect_constraint = None
-            handles[0].connected_to = None            
-            handles[0].disconnect = None                
-        handles[0]._connect_constraint = constraints[0]
-        handles[0].connected_to = items[0]
-        handles[0].disconnect = disconnect0
-        self._canvas.solver.add_constraint(constraints[0])
 
-        constraints[1] = MorphConstraint(gaphas.canvas.CanvasProjection(handles[1], connector), items[1],
-                gaphas.canvas.CanvasProjection(items[0].center, items[0]))
-        def disconnect1():
-            self._canvas.solver.remove_constraint(constraints[1])
-            handles[1]._connect_constraint = None
-            handles[1].connected_to = None            
-            handles[1].disconnect = None                
-        handles[1]._connect_constraint = constraints[1]
-        handles[1].connected_to = items[1]
-        handles[1].disconnect = disconnect1
-        self._canvas.solver.add_constraint(constraints[1])
+        for i in xrange(2):
+            constraint = MorphConstraint(
+                gaphas.canvas.CanvasProjection(handles[i], connector), items[i],
+                gaphas.canvas.CanvasProjection(items[1-i].center, items[1-i]))
+            handles[i].connection_data = constraint
+            handles[i].connected_to = items[i]
+            handles[i].disconnect = DisconnectHandle(self._canvas, items, handles[i])
+            
+            self._canvas.solver.add_constraint(constraint)
         
     def _notify(self, obj, event, args, dargs):
         """Notified when objects are added to or removed from diagram.
-        
+
         @todo: reimplement calle[er]Names with ReferenceResolver"""
+        
+        LOG.debug('%s', obj)
         if event==ADDED_TO_DIAGRAM and args[0]==self:
             # add container connector
             if self.hasObject(obj.parent):
@@ -95,7 +111,11 @@ class CallDiagram(diagram.Diagram):
             for refObj in refObjs:
                 caller = refObj
                 if caller and self.hasObject(caller):
-                    self.addConnector(CallConnector(caller, obj, self))            
+                    self.addConnector(CallConnector(caller, obj, self))
+                    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        event.manager.subscribeClass(self._notify, ast.ASTObject)        
 
 def _draw_head(context):
     cr = context.cairo
@@ -127,7 +147,7 @@ class SubprogramItem(EllipseItem):
             cr.restore()
         super(SubprogramItem, self).draw(context)
 
-    def _objectChanged(self, event, args, dargs):
+    def _objectChanged(self, obj, event, args, dargs):
         if event==ACTIVE_CHANGED:
             self.color = self.object.getActive() and (0,0,0,1) or (.6,.6,.6,1)
             self.canvas.request_update(self)
@@ -162,6 +182,11 @@ class ContainerConnector(diagram.Connector, event.Observer):
                 return
             self._diagram.removeConnector(self)
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        event.manager.subscribe(self, self._parent)
+        event.manager.subscribe(self, self._child)        
+
 class CallConnector(diagram.Connector, event.Observer):
     "Calls relation for modules, subprograms"
     
@@ -193,3 +218,7 @@ class CallConnector(diagram.Connector, event.Observer):
             #event.manager.unsubscribe(self, self._callee)
 
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        event.manager.subscribe(self, self._caller)
+        event.manager.subscribe(self, self._callee)        

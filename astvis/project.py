@@ -43,6 +43,15 @@ class TagType(object):
         self._name = name
         self._color = gtk.gdk.Color(0,0xffff,0)
 
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        d['_color'] = d['_color'].to_string()
+        return d
+
+    def __setstate__(self, d):
+        self.__dict__ = dict(d)
+        self.__dict__['_color'] = gtk.gdk.color_parse(d['_color'])
+
 class TagTypeList(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()
 

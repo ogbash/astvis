@@ -202,7 +202,7 @@ class AstTree(BaseWidget):
             diagram, = args
             iObject = self._findInTree(obj)
             self.model[iObject][3] = gtk.gdk.color_parse("black")
-        elif _event==event.PROPERTY_CHANGED and obj==self.astTree.project:
+        elif _event==event.PROPERTY_CHANGED and obj==self.astModel.project:
             propertyName = args[0]
             if propertyName == 'astModel':
                 # generate sidebar tree

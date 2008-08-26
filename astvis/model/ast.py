@@ -297,7 +297,7 @@ class Assignment(Statement):
         return children
 
     def __str__(self):
-        return "<assignment>"
+        return "<%s = >" % self.target
 
 
 class Declaration(ASTObject):
