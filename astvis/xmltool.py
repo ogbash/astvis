@@ -2,7 +2,7 @@
 
 import xml.sax
 from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
-    Operator, Reference, Constant, Call, Use
+    Operator, Reference, Constant, Call, Use, Location, Point
 
 class XMLLoader(xml.sax.handler.ContentHandler):
     def __init__(self, astModel):
@@ -153,7 +153,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         pass
 
     def startLocation(self, attrs):
-        self.location = {}
+        self.location = Location(self.astModel)
         if len(self.statements)>0:
             self.statements[-1].location = self.location
         elif len(self.contexts)>0:
@@ -164,11 +164,15 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def startBegin(self, attrs):
         if attrs.has_key('line'):
-            self.location['begin'] = int(attrs['line'])
+            self.location.begin = Point(self.astModel)
+            self.location.begin.line = int(attrs['line'])
+            self.location.begin.column = int(attrs['column'])
 
     def startEnd(self, attrs):
         if attrs.has_key('line'):
-            self.location['end'] = int(attrs['line'])
+            self.location.end = Point(self.astModel)
+            self.location.end.line = int(attrs['line'])
+            self.location.end.column = int(attrs['column'])
 
     def startExpression(self, name, attrs):
         parent = len(self.expressions)>0 and self.expressions[-1] \

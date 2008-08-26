@@ -74,7 +74,8 @@ class CallDiagram(diagram.Diagram):
 
         for i in xrange(2):
             constraint = MorphConstraint(
-                gaphas.canvas.CanvasProjection(handles[i], connector), items[i],
+                gaphas.canvas.CanvasProjection(handles[i], connector),
+                items[i],
                 gaphas.canvas.CanvasProjection(items[1-i].center, items[1-i]))
             handles[i].connection_data = constraint
             handles[i].connected_to = items[i]

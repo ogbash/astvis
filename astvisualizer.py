@@ -231,7 +231,8 @@ class MainWindow(object):
         # find view index in notebook and open it
         children = self.notebook.get_children()
         for i, child in enumerate(children):
-            if child==view or child.child==view:
+            if child==view or \
+                   isinstance(child,gtk.ScrolledWindow) and child.child==view:
                 self.notebook.set_current_page(i)
                 buf = view.get_buffer()
 
