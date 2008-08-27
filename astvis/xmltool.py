@@ -154,7 +154,9 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def startLocation(self, attrs):
         self.location = Location(self.astModel)
-        if len(self.statements)>0:
+        if len(self.expressions)>0:
+            self.expressions[-1].location = self.location
+        elif len(self.statements)>0:
             self.statements[-1].location = self.location
         elif len(self.contexts)>0:
             self.contexts[-1].location = self.location
