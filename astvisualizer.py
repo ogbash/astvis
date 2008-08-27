@@ -22,6 +22,7 @@ import gtk, gobject
 gtk.gdk.threads_init()
 import gtk.glade
 import cairo
+import pango
 import gaphas
 import gaphas.examples
 import math
@@ -255,6 +256,8 @@ class MainWindow(object):
         import os.path
         view = gtk.TextView()
         view.set_editable(False)
+        font = pango.FontDescription("Courier 12")
+        view.modify_font(font)
         view.get_buffer().set_text(unicode(fl.read(), 'iso8859-15'))
         window = gtk.ScrolledWindow()
         window.add(view)
