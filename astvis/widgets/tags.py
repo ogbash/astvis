@@ -79,16 +79,12 @@ class TagDialog:
     def run(self):
         res = self.widget.run()
         if res > 0:
-            tags = self.project.tags.get(self.obj, set())
+            tags = set()
             for tagType,active,name in self.tagModel:
-                if not active and tagType in tags:
-                    tags.remove(tagType)
-                elif active and not tagType in tags:
+                if active:
                     tags.add(tagType)
-            if len(tags)>0:
-                self.project.tags[self.obj] = tags
-            elif self.project.tags.has_key(self.obj):
-                del self.project.tags[self.obj]
+            
+            self.project.tags[self.obj] = tags
             
         self.widget.destroy()
         return res

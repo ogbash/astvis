@@ -75,6 +75,56 @@ class TagDict(ObservableDict):
     def __init__(self, project):
         dict.__init__(self)
         self.project = project
+        self._subTags = {}
+
+    def __setitem__(self, obj, tags):
+        oldTags = self.get(obj, set())
+        ObservableDict.__setitem__(self, obj, tags)
+        
+        # track added and removed tags
+        if hasattr(obj, 'parent'):
+            parent = obj.parent
+            added = tags.difference(oldTags)
+            added = added.difference(self._subTags.get(obj,{}).keys())
+            removed = oldTags.difference(tags)
+            removed = removed.difference(self._subTags.get(obj,{}).keys())
+            self._modifySubTags(parent, obj, added, removed)
+
+    def _modifySubTags(self, obj, child, added, removed):
+        subTags = self._subTags.get(obj, {})
+
+        for tag in added.copy():
+            if not subTags.has_key(tag):
+                subTags[tag] = set()
+            # add object as a child that contains the tag
+            if not child in subTags[tag]:
+                if subTags[tag]:
+                    added.remove(tag)
+                subTags[tag].add(child)
+            else:
+                added.remove(tag)
+            
+        for tag in removed.copy():
+            if subTags.has_key(tag):
+                # remove object as containing the tag
+                if child in subTags[tag]:
+                    subTags[tag].remove(child)
+                    if not subTags[tag]: # subtags empty
+                        del subTags[tag]
+                        if tag in self.get(obj, set()): # but tag is present
+                            removed.remove(tag)
+                    else:
+                        removed.remove(tag)
+
+        self._subTags[obj] = subTags
+
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                (None,event.PC_CHANGED,None,None), dargs={'key':obj})
+
+        if added or removed:
+            if hasattr(obj,'parent') and obj.parent!=None:
+                self._modifySubTags(obj.parent, obj, added, removed)
+        
 
 class Project(object):
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]

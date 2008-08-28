@@ -404,25 +404,36 @@ class FilterDialog:
 
 class TagCellRenderer(gtk.GenericCellRenderer):
     def on_get_size(self, widget, cell_area):
-        tags = self.project.tags.get(self.obj, None)
-        if tags==None:
+        tags = self.project.tags.get(self.obj, set())
+        subTags = self.project.tags._subTags.get(self.obj, set())
+        if not tags and not subTags:
             return 0,0,0,0
-        return 0,0,10*len(tags),5
+        return 0,0,10*(len(tags)+len(subTags)),5
         
     def on_render(self, window, widget, background_area, cell_area, expose_area, flags):
-        tags = self.project.tags.get(self.obj, None)
+        tags = self.project.tags.get(self.obj, set())
+        subTags = self.project.tags._subTags.get(self.obj, set())
 
-        if tags==None:
+        if not tags and not subTags:
             return
 
         gc = window.new_gc()
+        
         gc.set_fill(gtk.gdk.SOLID)
         x,y,w,h = cell_area.x, cell_area.y, cell_area.width, cell_area.height
+        #window.clear_area(*tuple(expose_area))
 
         for i,tag in enumerate(tags):
             color = tag.color
             gc.set_foreground(gc.get_colormap().alloc_color(color))
             window.draw_rectangle(gc, True, x+10*i,y,10,h)
+
+        n = len(tags)
+        #gc.set_fill(gtk.gdk.TILED)
+        for i,tag in enumerate(subTags):
+            color = tag.color
+            gc.set_foreground(gc.get_colormap().alloc_color(color))
+            window.draw_rectangle(gc, False, x+10*(n+i),y,10,h)
 
     def setCellData(self, column, cell, model, iter_):
         self.obj = model[iter_][1]
