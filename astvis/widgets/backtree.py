@@ -89,7 +89,7 @@ class BackCallTree(BaseWidget):
         iObj = self.model.append(iParent, data)
         
         resolver = core.getService('ReferenceResolver')
-        references = resolver.getReferringObjects(obj)
+        references = resolver.getReferringObjects(obj).keys()
 
         LOG.log(FINER, "Number of referring objects for %s: %d", obj, len(references))
         for ref in references:

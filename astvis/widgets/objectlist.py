@@ -24,7 +24,7 @@ class ObjectList(gtk.ScrolledWindow):
     def showObject(self, obj):
         self.model.clear()
         resolver = core.getService('ReferenceResolver')
-        refs = resolver.getReferringObjects(obj)
+        refs = resolver.getReferringObjects(obj).keys()
         for ref in refs:
             print ref
             self.model.append((str(ref),))

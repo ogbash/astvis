@@ -197,6 +197,7 @@ class ProgramUnit(Code):
         
     def __str__(self):
         return "<%s %s>" % (self.type or 'ProgramUnit', self.name)
+    __repr__=__str__
 
 class Subprogram(Code):
 
@@ -226,6 +227,7 @@ class Subprogram(Code):
         
     def __str__(self):
         return "<Subprogram %s>" % self.name
+    __repr__=__str__
 
 class Block(ASTObject):
     _xmlTags = [XMLTag("block")]
@@ -374,6 +376,7 @@ class Call(Expression):
 
     def __str__(self):
         return "<callexpr>{name=%s}" % self.name
+    __repr__=__str__
         
 class Operator(Expression):
     _xmlTags = [XMLTag("operator")]

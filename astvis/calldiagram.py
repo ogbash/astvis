@@ -108,7 +108,7 @@ class CallDiagram(diagram.Diagram):
                     self.addConnector(CallConnector(obj, callee, self))            
 
             basicObj = obj.model.basicModel.getObjectByASTObject(obj)
-            refObjs = resolver.getReferringObjects(basicObj)
+            refObjs = resolver.getReferringObjects(basicObj).keys()
             for refObj in refObjs:
                 caller = refObj
                 if caller and self.hasObject(caller):

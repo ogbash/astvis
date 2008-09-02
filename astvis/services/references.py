@@ -25,7 +25,7 @@ class ReferenceResolver(object):
             cache = self._collectReferences(model)
             self._caches[model] = cache
         cache = self._caches[model]
-        return cache.backReferences.get(obj, ())
+        return cache.backReferences.get(obj, {})
 
     def _collectReferences(self, astModel):
         cache = ReferenceResolver._ReferenceCache(astModel)
@@ -54,16 +54,18 @@ class ReferenceResolver(object):
                 scope = self.model.getObjectByASTObject(astScope)
                 referencedObj = self.model.getObjectByName(astObj.name.lower(), scope)
                 if referencedObj is not None:
-                    self._addReference(astScope, referencedObj)
+                    self._addReference(astObj, astScope, referencedObj)
                 
-        def _addReference(self, astScope, referencedObj):
+        def _addReference(self, astObj, astScope, referencedObj):
             if not self.references.has_key(astScope):
                 self.references[astScope] = set()
             self.references[astScope].add(referencedObj)
 
             if not self.backReferences.has_key(referencedObj):
-                self.backReferences[referencedObj] = set()
-            self.backReferences[referencedObj].add(astScope)
+                self.backReferences[referencedObj] = {}
+            if not self.backReferences[referencedObj].has_key(astScope):
+                self.backReferences[referencedObj][astScope] = set()
+            self.backReferences[referencedObj][astScope].add(astObj)
             
 class ASTTreeWalker(object):
     def __init__(self):
@@ -79,6 +81,7 @@ class ASTTreeWalker(object):
                 references.append(child)
             elif isinstance(child, ast.Call):
                 references.append(child)
+        
         if isinstance(astObj, (ast.ProgramUnit, ast.Subprogram)): # skip subprograms
             if astObj.declarationBlock is not None:
                 astObj.declarationBlock.itertree(add)

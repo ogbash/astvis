@@ -6,7 +6,7 @@ from common import FINE, FINER, FINEST
 
 import gtk
 import xmltool
-from astvis import event, gtkx, action
+from astvis import event, gtkx, action, core
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
 from astvis.diagram import DiagramList
@@ -76,6 +76,8 @@ class TagDict(ObservableDict):
         dict.__init__(self)
         self.project = project
         self._subTags = {}
+        self._callTags = {} # obj -> (tag -> caller)
+        self._callSubTags = {}
 
     def __setitem__(self, obj, tags):
         oldTags = self.get(obj, set())
@@ -83,48 +85,132 @@ class TagDict(ObservableDict):
         
         # track added and removed tags
         if hasattr(obj, 'parent'):
-            parent = obj.parent
             added = tags.difference(oldTags)
             added = added.difference(self._subTags.get(obj,{}).keys())
             removed = oldTags.difference(tags)
             removed = removed.difference(self._subTags.get(obj,{}).keys())
-            self._modifySubTags(parent, obj, added, removed)
+            self._modifySubTags(obj, None, added, removed, isSource=True)
 
-    def _modifySubTags(self, obj, child, added, removed):
-        subTags = self._subTags.get(obj, {})
+    def _modifySubTags(self, obj, child, added, removed, isSource=False):
 
-        for tag in added.copy():
-            if not subTags.has_key(tag):
-                subTags[tag] = set()
-            # add object as a child that contains the tag
-            if not child in subTags[tag]:
-                if subTags[tag]:
+        if not isSource:
+            # handle subtags
+            subTags = self._subTags.get(obj, {})
+
+            # added and removed contain tags that were changed in child
+
+            for tag in added.copy():
+                if not subTags.has_key(tag):
+                    subTags[tag] = set()
+                # add object as a child that contains the tag
+                if not child in subTags[tag]:
+                    if subTags[tag]:
+                        added.remove(tag)
+                    subTags[tag].add(child)
+                else:
                     added.remove(tag)
-                subTags[tag].add(child)
-            else:
-                added.remove(tag)
-            
-        for tag in removed.copy():
-            if subTags.has_key(tag):
-                # remove object as containing the tag
-                if child in subTags[tag]:
-                    subTags[tag].remove(child)
-                    if not subTags[tag]: # subtags empty
-                        del subTags[tag]
-                        if tag in self.get(obj, set()): # but tag is present
+
+            for tag in removed.copy():
+                if subTags.has_key(tag):
+                    # remove object as containing the tag
+                    if child in subTags[tag]:
+                        subTags[tag].remove(child)
+                        if not subTags[tag]: # subtags empty
+                            del subTags[tag]
+                            if tag in self.get(obj, set()): # but tag is present
+                                removed.remove(tag)
+                        else:
                             removed.remove(tag)
-                    else:
-                        removed.remove(tag)
 
-        self._subTags[obj] = subTags
+            # now added and removed contain tags that were changed in obj (ie parent)
+            #  and subTags are new obj sub-tags
+            self._subTags[obj] = subTags
 
+        # if it is callable follow call tags
+        if isinstance(obj,ast.Subprogram):
+            service = core.getService('ReferenceResolver')
+
+            basicObj = obj.model.basicModel.getObjectByASTObject(obj)
+            callers = service.getReferringObjects(basicObj)
+
+            for caller,stmts in callers.items():
+                for stmt in stmts:
+                    self._modifyCallTags(stmt, obj, added, removed, isSource=True)
+
+        # notify widgets
         event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
                 (None,event.PC_CHANGED,None,None), dargs={'key':obj})
 
+        # handle parent
         if added or removed:
             if hasattr(obj,'parent') and obj.parent!=None:
                 self._modifySubTags(obj.parent, obj, added, removed)
-        
+
+
+    def _modifyCallTags(self, obj, child, added, removed, isSource=False):
+
+        tags = self._callTags.get(obj, {})
+
+        if isSource:
+            # handle call tags
+            
+            for tag in added.copy():
+                if not tags.has_key(tag):
+                    tags[tag] = set()
+                if tags[tag]:
+                    added.remove(tag)
+                tags[tag].add(child)
+
+            for tag in removed.copy():
+                if tags.has_key(tag):
+                    # remove object as containing the tag
+                    if child in tags[tag]:
+                        tags[tag].remove(child)
+                        if not tags[tag]: # subtags empty
+                            del tags[tag]
+                        else:
+                            removed.remove(tag)
+            self._callTags[obj] = tags
+
+        else:
+            # handle call subtags
+            subTags = self._callSubTags.get(obj, {})
+            
+            for tag in added.copy():
+                if not subTags.has_key(tag):
+                    subTags[tag] = set()
+                # add object as a child that contains the tag
+                if not child in subTags[tag]:
+                    if subTags[tag]:
+                        added.remove(tag)
+                    subTags[tag].add(child)
+                else:
+                    added.remove(tag)
+
+            for tag in removed.copy():
+                if subTags.has_key(tag):
+                    # remove object as containing the tag
+                    if child in subTags[tag]:
+                        subTags[tag].remove(child)
+                        if not subTags[tag]: # subtags empty
+                            del subTags[tag]
+                            if tag in tags.get(obj, set()): # but tag is present
+                                removed.remove(tag)
+                        else:
+                            removed.remove(tag)
+
+            # now added and removed contain tags that were changed in obj (ie parent)
+            #  and subTags are new obj sub-tags
+            self._callSubTags[obj] = subTags
+
+        # notify widgets
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                (None,event.PC_CHANGED,None,None), dargs={'key':obj})
+
+        # handle parent
+        if added or removed:
+            if hasattr(obj,'parent') and obj.parent!=None:
+                self._modifyCallTags(obj.parent, obj, added, removed)
 
 class Project(object):
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]

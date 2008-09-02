@@ -403,18 +403,35 @@ class FilterDialog:
             self._showFilterRules(self.filters[filterName])
 
 class TagCellRenderer(gtk.GenericCellRenderer):
+
+    def __init__(self, *args, **kvargs):
+        gtk.GenericCellRenderer.__init__(self, *args, **kvargs)
+        self._pixmaps = {}
+        
+    def _getPixmap(self, name, window):
+        if not self._pixmaps.has_key(name):
+            create_xpm = gtk.gdk.pixmap_create_from_xpm
+            self._pixmaps[name] = create_xpm(window, None, 'data/thumbnails/%s' % name)
+
+        return self._pixmaps[name][1]
+        
+    
     def on_get_size(self, widget, cell_area):
         tags = self.project.tags.get(self.obj, set())
         subTags = self.project.tags._subTags.get(self.obj, set())
-        if not tags and not subTags:
+        callTags = self.project.tags._callTags.get(self.obj, set())
+        callSubTags = self.project.tags._callSubTags.get(self.obj, set())
+        if not tags and not subTags and not callTags and not callSubTags:
             return 0,0,0,0
-        return 0,0,10*(len(tags)+len(subTags)),5
+        return 0,0,16*(len(tags)+len(subTags)+len(callTags)+len(callSubTags)),5
         
     def on_render(self, window, widget, background_area, cell_area, expose_area, flags):
         tags = self.project.tags.get(self.obj, set())
         subTags = self.project.tags._subTags.get(self.obj, set())
+        callTags = self.project.tags._callTags.get(self.obj, set())
+        callSubTags = self.project.tags._callSubTags.get(self.obj, set())
 
-        if not tags and not subTags:
+        if not tags and not subTags and not callTags and not callSubTags:
             return
 
         gc = window.new_gc()
@@ -426,14 +443,32 @@ class TagCellRenderer(gtk.GenericCellRenderer):
         for i,tag in enumerate(tags):
             color = tag.color
             gc.set_foreground(gc.get_colormap().alloc_color(color))
-            window.draw_rectangle(gc, True, x+10*i,y,10,h)
+            window.draw_rectangle(gc, True, x+16*i,y,15,h)
 
         n = len(tags)
         #gc.set_fill(gtk.gdk.TILED)
         for i,tag in enumerate(subTags):
             color = tag.color
             gc.set_foreground(gc.get_colormap().alloc_color(color))
-            window.draw_rectangle(gc, False, x+10*(n+i),y,10,h)
+            window.draw_rectangle(gc, False, x+16*(n+i),y,15,h)
+
+        # draw call tags
+        gc.set_rgb_fg_color(gtk.gdk.Color())
+        n = len(tags) + len(subTags)
+        for i,tag in enumerate(callTags):
+            color = tag.color
+            gc.set_foreground(gc.get_colormap().alloc_color(color))
+            gc.set_clip_mask(self._getPixmap('call_arrow.xpm', window=window))
+            gc.set_clip_origin(x+16*(n+i),y)
+            window.draw_rectangle(gc, True, x+16*(n+i),y,15,h)
+
+        n = len(tags) + len(subTags) + len(callTags)
+        for i,tag in enumerate(callSubTags):
+            color = tag.color
+            gc.set_foreground(gc.get_colormap().alloc_color(color))
+            gc.set_clip_mask(self._getPixmap('call_arrow_hollow.xpm', window=window))
+            gc.set_clip_origin(x+16*(n+i),y)
+            window.draw_rectangle(gc, True, x+16*(n+i),y,15,h)
 
     def setCellData(self, column, cell, model, iter_):
         self.obj = model[iter_][1]
