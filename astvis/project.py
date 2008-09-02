@@ -137,7 +137,7 @@ class TagDict(ObservableDict):
 
             for caller,stmts in callers.items():
                 for stmt in stmts:
-                    self._modifyCallTags(stmt, obj, added, removed, isSource=True)
+                    self._modifyCallTags(stmt, obj, added.copy(), removed.copy(), isSource=True)
 
         # notify widgets
         event.manager.notifyObservers(self, event.PROPERTY_CHANGED,

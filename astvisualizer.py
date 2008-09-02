@@ -26,7 +26,7 @@ import pango
 import gaphas
 import gaphas.examples
 import math
-import pickle
+import cPickle as pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project, ProjectService
@@ -113,6 +113,7 @@ class MainWindow(object):
     @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
     def _saveProject(self, project, context):
         "Save project with all trees and diagrams to disk."
+        import gaphas.picklers
 
         wTree = gtk.glade.XML("astvisualizer.glade", 'saveproject_dialog')
         dialog = wTree.get_widget('saveproject_dialog')
