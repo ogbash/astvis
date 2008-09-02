@@ -10,6 +10,7 @@ from astvis import event, gtkx, action, core
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
 from astvis.diagram import DiagramList
+from astvis.widgets.tags import TaggedObjectsList
 from astvis.calldiagram import CallDiagram
 
 def readASTModel(filename):
@@ -39,7 +40,8 @@ class TagType(object):
     color = property(lambda self: self._color, _setColor)
     color = event.Property(color,'color')
 
-    def __init__(self, name):
+    def __init__(self, project, name):
+        self.project = project
         self._name = name
         self._color = gtk.gdk.Color(0,0xffff,0)
 
@@ -265,10 +267,21 @@ class Project(object):
 
 class ProjectService(object):
     @action.Action('new-tag-type', 'New tag', targetClass=TagTypeList)
-    def newTagType(self, target, context):
-        target.append(TagType('(unnamed)'))
+    def newTagType(self, tagList, context):
+        tagList.append(TagType(tagList.project, '(unnamed)'))
 
     @action.Action('new-diagram', 'New diagram', targetClass=DiagramList)
     def newDiagram(self, diagrams, context):
         diagram = CallDiagram('(call diagram)', diagrams.project)
         diagrams.append(diagram)
+
+    @action.Action('show-tagged-objects', 'Show objects', targetClass=TagType)
+    def showTaggedObjects(self, tag, context):
+        objs = []
+        for obj,tags in tag.project.tags.items():
+            if tag in tags:
+                objs.append(obj)
+        
+        dialog = TaggedObjectsList(tag, objs, root=context.root)
+        dialog.run()
+        

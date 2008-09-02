@@ -14,10 +14,11 @@ from astvis import gtkx, diagram
 import gtk
 
 class ProjectTree(BaseWidget):
-    def __init__(self, projects):
+    def __init__(self, projects, root):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer')
         self.view = self.widget
         self.projects = projects
+        self.root = root
 
         self.model = gtkx.PythonTreeModel(projects)
         
@@ -77,7 +78,7 @@ class ProjectTree(BaseWidget):
         res = dialog.run()
         if res > 0:
             pass
-            
+
     def _handleProjectDialog(self, project):
         dialog = ProjectDialog(project)
         res = dialog.run()

@@ -89,3 +89,74 @@ class TagDialog:
         self.widget.destroy()
         return res
 
+class TaggedObjectsList:
+    
+    def __init__(self, tag, objs, root):
+        self.tag = tag
+        self.objs = objs
+        self.root = root
+    
+        wTree = gtk.glade.XML("astvisualizer.glade", 'taggedobjects_dialog')
+        wTree.signal_autoconnect(self)
+        self.wTree = wTree
+        self.widget = wTree.get_widget('taggedobjects_dialog')
+        
+        objsView = wTree.get_widget('tobjects_list')
+
+        column = gtk.TreeViewColumn("Object")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 1)
+        objsView.append_column(column)
+
+        column = gtk.TreeViewColumn("File")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 2)
+        objsView.append_column(column)
+        
+        column = gtk.TreeViewColumn("Row")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 3)
+        objsView.append_column(column)
+
+        column = gtk.TreeViewColumn("Column")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 4)
+        objsView.append_column(column)
+
+        objsModel = gtk.ListStore(object,str,str,str,str)
+        objsView.set_model(objsModel)
+        self.objsModel = objsModel
+        self.objsView = objsView
+
+        objsView.connect("button-press-event", self._buttonPress)
+
+        for obj in self.objs:
+            filename = obj.getFile().name
+            line = ""
+            column = ""
+            if obj.location!=None:
+                line=str(obj.location.begin.line)
+                column=str(obj.location.begin.column)                    
+                           
+            objsModel.append((obj, str(obj), filename, line, column))
+
+    def run(self):
+        try:
+            res = self.widget.run()
+        finally:
+            self.widget.destroy()
+        
+    def _buttonPress(self, widget, event):
+        if event.type==gtk.gdk._2BUTTON_PRESS:
+            _model, iRow = self.objsView.get_selection().get_selected()
+            obj = _model[iRow][0]
+            astViews = filter(lambda x: x.__class__.__name__=="AstTree", self.root.views.keys())
+            if astViews:
+                astViews[0].selectObject(obj)
+                return True
+        
+        return False

@@ -67,7 +67,7 @@ class MainWindow(object):
         #self.view.tool = tool
 
         # project tree
-        self.projectTree = widgets.ProjectTree(self.projects)
+        self.projectTree = widgets.ProjectTree(self.projects, root=self)
         leftPanel = self.wTree.get_widget('left_panel_top')
         leftPanel.pack_start(self.projectTree.outerWidget)
         
