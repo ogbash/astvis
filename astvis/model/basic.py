@@ -66,6 +66,7 @@ class BasicModel(object):
         return obj
         
     def _fillObject(self, astObj):
+        "Parse data from AST model and initialize this model."
         if isinstance(astObj, ast.TypeDeclaration):
             astScope = self.astModel.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
@@ -105,12 +106,12 @@ class BasicModel(object):
         
         if isinstance(parentAstObj, ast.File):
             # this is global object, ie module/program or global subprogram
-            return self.globalObjects.get(astObj.name)
+            return self.globalObjects.get(astObj.name.lower())
         else:
             parentObj = self.getObjectByASTObject(parentAstObj)
             if parentObj is None:
                 return None
-            return parentObj[astObj.name]
+            return parentObj[astObj.name.lower()]
 
     def getObjectByName(self, name, scope):
         if scope.variables.has_key(name):

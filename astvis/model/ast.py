@@ -359,6 +359,14 @@ class TypeDeclaration(Declaration):
     def getChildren(self):
         return self.entities
 
+class Type(ASTObject):
+    def __init__(self, model):
+        ASTObject.__init__(self, model)
+        self.name = '<none>'
+
+    def __str__(self):
+        return str(self.name)
+
 class Expression(ASTObject):
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
@@ -437,6 +445,15 @@ class Reference(Expression):
 
     def __str__(self):
         return "%s.%s" % ((self.base or ''), self.name)
+
+class Entity(ASTObject):
+    def __init__(self, model):
+        ASTObject.__init__(self, model)
+        self.name = None
+
+    def __str__(self):
+        return "%s" % self.name
+
 
 class Use(ASTObject):
     _xmlTags = [XMLTag('use')]

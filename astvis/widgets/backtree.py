@@ -69,8 +69,11 @@ class BackCallTree(BaseWidget):
         _model, iRow = selection.get_selected()
         if iRow!=None:
             astObj = _model[iRow][1]
-            obj = astObj.model.basicModel.getObjectByASTObject(astObj)            
-            self.showObject(obj)
+            obj = astObj.model.basicModel.getObjectByASTObject(astObj)
+            if not obj is None:
+                self.showObject(obj)
+            else:
+                LOG.debug("No object found for AST object %s", astObj)
 
     def _clearModel(self):
         def free(model, path, iRow):
