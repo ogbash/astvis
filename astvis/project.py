@@ -81,6 +81,9 @@ class TagDict(ObservableDict):
         self._callTags = {} # obj -> (tag -> caller)
         self._callSubTags = {}
 
+    def __str__(self):
+        return "TagDict()"
+
     def __setitem__(self, obj, tags):
         oldTags = self.get(obj, set())
         ObservableDict.__setitem__(self, obj, tags)
@@ -204,6 +207,17 @@ class TagDict(ObservableDict):
             # now added and removed contain tags that were changed in obj (ie parent)
             #  and subTags are new obj sub-tags
             self._callSubTags[obj] = subTags
+
+        # if it is callable follow call tags
+        if isinstance(obj,ast.Subprogram):
+            service = core.getService('ReferenceResolver')
+
+            basicObj = obj.model.basicModel.getObjectByASTObject(obj)
+            callers = service.getReferringObjects(basicObj)
+
+            for caller,stmts in callers.items():
+                for stmt in stmts:
+                    self._modifyCallTags(stmt, obj, added.copy(), removed.copy(), isSource=True)
 
         # notify widgets
         event.manager.notifyObservers(self, event.PROPERTY_CHANGED,

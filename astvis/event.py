@@ -93,8 +93,8 @@ class EventManager:
                     else:
                         observer(obj, event, args, dargs)
                 except(Exception), e:
-                    LOG.warn("Exception during class notify<observer=%s>(obj=%s,event=%s): %s", 
-                            observer, obj, event, e, exc_info=True)
+                    LOG.warn("Exception during class notify<observer=%s>(obj=%s,event=%s,args=%s,dargs=%s): %s", 
+                            observer, obj, event, args, dargs, e, exc_info=True)
 
         # notify object observers
         if hashable(obj):
