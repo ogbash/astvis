@@ -277,7 +277,10 @@ class Statement(ASTObject):
         return "<%s>"%(self.type or 'statement')
 
     def getChildren(self):
-        return self.blocks
+        if hasattr(self, 'arguments'):
+            return self.arguments
+        else:
+            return self.blocks
 
 class Assignment(Statement):
     _xmlTags = [XMLTag("statement", {'type': 'assignment'})]
@@ -381,6 +384,11 @@ class Call(Expression):
     def __init__(self, model, parent = None):
         Expression.__init__(self, model, parent)
         self.name = '<unknown call>'
+        self.arguments = []
+
+    def getChildren(self):
+        "List of element children"
+        return self.arguments
 
     def __str__(self):
         return "<callexpr>{name=%s}" % self.name

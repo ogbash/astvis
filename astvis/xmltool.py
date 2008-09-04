@@ -15,7 +15,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.expressions = []
         self.setters = [] # setters
         self.content = StringIO()
-        
+        self._last = None
         
     def characters(self, content):
         if len(self.expressions)>0 and isinstance(self.expressions[-1], Constant):
@@ -32,21 +32,25 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startProgramUnit(name, attrs)
         elif name in ("subroutine", "function"):
             self.startSubprogram(attrs)
-        elif name in ("block"):
+        elif name in ("block",):
             self.startBlock(attrs)
-        elif name in ("declaration"):
+        elif name in ("declaration",):
             self.startDeclaration(attrs)
-        elif name in ("statement"):
+        elif name in ("statement",):
             self.startStatement(attrs)
-        elif name in ("use"):
+        elif name in ("arguments",):
+            self.startArguments(attrs)
+        elif name in ("argument",):
+            self.startArgument(attrs)
+        elif name in ("use",):
             self.startUse(attrs)
-        elif name in ("type"):
+        elif name in ("type",):
             self.startType(attrs)
-        elif name in ("location"):
+        elif name in ("location",):
             self.startLocation(attrs)
-        elif name in ("begin"):
+        elif name in ("begin",):
             self.startBegin(attrs)
-        elif name in ("end"):
+        elif name in ("end",):
             self.startEnd(attrs)
         elif name in ("target", "value", "base", "left", "right"):
             if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
@@ -67,17 +71,21 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endProgramUnit()
         elif name in ("subroutine", "function"):
             self.endSubprogram()
-        elif name in ("block"):
+        elif name in ("block",):
             self.endBlock()
-        elif name in ("declaration"):
+        elif name in ("declaration",):
             self.endDeclaration()
-        elif name in ("statement"):
+        elif name in ("statement",):
             self.endStatement()
-        elif name in ("use"):
+        elif name in ("arguments",):
+            self.endArguments()
+        elif name in ("argument",):
+            self.endArgument()
+        elif name in ("use",):
             self.endUse()
-        elif name in ("type"):
+        elif name in ("type",):
             self.endType()
-        elif name in ("location"):
+        elif name in ("location",):
             self.endLocation()
         elif name in ("target", "value", "base", "left", "right"):
             if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
@@ -86,7 +94,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                 self.endSetter()
         elif name in ("operator", "reference", "constant", "call"):
             self.endExpression(name)
-        elif name in ("name"):
+        elif name in ("name",):
             if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
                 setattr(self.expressions[-1], name, self.content.getvalue())
         elif name=="entity":
@@ -190,6 +198,23 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endStatement(self):
         del self.statements[-1]
         
+    def startArguments(self, attrs):
+        obj = len(self.expressions)>0 and self.expressions[-1] or \
+              self.statements[-1]
+        obj.arguments = []
+
+    def endArguments(self):
+        pass
+
+    def startArgument(self, attrs):
+        pass
+
+    def endArgument(self):
+        obj = len(self.expressions)>0 and self.expressions[-1] or \
+              self.statements[-1]
+        if self._last!=None:
+            obj.arguments.append(self._last)
+
     def startUse(self, attrs):
         parent = len(self.contexts)>0 and self.contexts[-1] or None
         use = Use(self.astModel, parent)
@@ -243,8 +268,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.expressions.append(expr)
         
     def endExpression(self, name):
-        if len(self.setters)>0:
-            self.setters[-1](self.expressions[-1])
+        self._last = self.expressions[-1]
         del self.expressions[-1]
 
     def startEntity(self, attrs):
@@ -262,5 +286,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.setters.append(setter)
         
     def endSetter(self):
+        self.setters[-1](self._last)
         del self.setters[-1]
 
