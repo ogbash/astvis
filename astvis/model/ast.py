@@ -5,6 +5,7 @@
 from astvis.common import OPTIONS
 from astvis.xmlmap import XMLTag, XMLAttribute, PythonObject, Chain, Link
 import itertools
+from StringIO import StringIO
 
 ACTIVE_CHANGED = "active"
 
@@ -448,11 +449,39 @@ class Reference(Expression):
     def getChildren(self):
         children = []
         if self.base: children.append(self.base)
-        if self.sections: children.append(self.sections)
+        if self.sections: children.extend(self.sections)
         return children
 
     def __str__(self):
         return "%s.%s" % ((self.base or ''), self.name)
+
+class Section(ASTObject):
+
+    def __init__(self, model):
+        ASTObject.__init__(self, model)
+        self.first = None
+        self.last = None
+        self.stride = None
+
+    def getChildren(self):
+        c = []
+        for name in ("first", "last", "stride"):
+            v = getattr(self, name)
+            if v!=None:
+                c.append(v)
+        return c
+
+    def __str__(self):
+        s=StringIO()
+        if self.first!=None:
+            s.write(str(self.first))
+        s.write(":")
+        if self.last!=None:
+            s.write(str(self.last))
+        s.write(":")
+        if self.stride!=None:
+            s.write(str(self.stride))
+        return s.getvalue()
 
 class Entity(ASTObject):
     def __init__(self, model):
