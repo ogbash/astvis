@@ -283,6 +283,35 @@ class Statement(ASTObject):
         else:
             return self.blocks
 
+class SelectCase(Statement):
+    def __init__(self, model,parent=None):
+        ASTObject.__init__(self, model)
+        self.parent = parent
+        self.value = None    
+        self.cases = []
+
+    def getChildren(self):
+        c = []
+        c.append(self.value)
+        c.extend(self.cases)
+        return c
+
+class Case(ASTObject):
+    def __init__(self, model,parent=None):
+        ASTObject.__init__(self, model)
+        self.parent = parent
+        self.sections = []
+        self.block = None
+
+    def addBlock(self, block, attrs):
+        self.block = block
+
+    def getChildren(self):
+        c = []
+        c.extend(self.sections)
+        c.append(self.block)
+        return c
+
 class Assignment(Statement):
     _xmlTags = [XMLTag("statement", {'type': 'assignment'})]
     _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]

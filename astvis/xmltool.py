@@ -7,7 +7,8 @@ from common import FINE, FINER, FINEST
 import xml.sax
 from StringIO import StringIO
 from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
-    Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section
+    Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section, \
+    SelectCase, Case
 
 class ParseError(Exception):
     
@@ -53,6 +54,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startDeclaration(attrs)
         elif name in ("statement",):
             self.startStatement(attrs)
+        elif name in ("case",):
+            self.startCase(attrs)
         elif name in ("arguments",):
             self.startArguments(attrs)
         elif name in ("argument",):
@@ -100,6 +103,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endDeclaration()
         elif name in ("statement",):
             self.endStatement()
+        elif name in ("case",):
+            self.endCase()
         elif name in ("arguments",):
             self.endArguments()
         elif name in ("argument",):
@@ -147,6 +152,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
                 exc = ParseError(e)
                 exc.line = parser.getLineNumber()
                 exc.column = parser.getColumnNumber()
+                LOG.debug(e, exc_info=e)
                 raise exc
         finally:
             f.close()
@@ -225,6 +231,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         _type = attrs["type"]
         if _type=="assignment":
             st = Assignment(self.astModel, block)
+        elif _type=="selectcase":
+            st = SelectCase(self.astModel, block)
         else:
             st = Statement(self.astModel, block)
         st.type = _type
@@ -239,7 +247,18 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def endStatement(self):
         del self.statements[-1]
+
+    def startCase(self, attrs):
+        self.statements.append(Case(self.astModel))
+
+    def endCase(self):
+        selectcase = self.statements[-2]
+        case = self.statements[-1]
+        selectcase.cases.append(case)
+        case.parent = selectcase
         
+        del self.statements[-1]
+
     def startArguments(self, attrs):
         obj = len(self.expressions)>0 and self.expressions[-1] or \
               self.statements[-1]
