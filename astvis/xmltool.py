@@ -354,7 +354,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             expr.type = attrs.get('type', 'op')
         elif name=="reference":
             expr = Reference(self.astModel, parent)
-            expr.name = attrs['name']
+            expr.name = attrs.get('name', '<none')
         elif name=="constant":
             expr = Constant(self.astModel, parent)
             expr.type = attrs['type']

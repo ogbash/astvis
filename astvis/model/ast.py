@@ -146,7 +146,10 @@ class File(ASTObject):
         self.subprograms = []
 
     def getChildren(self):
-        return self.units
+        c = []
+        c.extend(self.subprograms)
+        c.extend(self.units)
+        return c
         
     def __str__(self):
         return "<File %s>" % self.name

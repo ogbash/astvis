@@ -37,6 +37,10 @@ class BasicModel(object):
         for n, file_ in enumerate(astFiles):
             event.manager.notifyObservers(self, event.TASK_PROGRESSED, (0.5*n/len(astFiles),))
             # subroutine, module::subroutine, module::variable
+            for astObj in file_.subprograms:
+                obj = self._createObject(None, astObj)
+                self.globalObjects[obj.name] = obj
+                _generateSubroutines(astObj, obj)
             for astObj in file_.units:
                 obj = self._createObject(None, astObj)
                 self.globalObjects[obj.name] = obj
@@ -70,7 +74,10 @@ class BasicModel(object):
         if isinstance(astObj, ast.TypeDeclaration):
             astScope = self.astModel.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
-            scope.scanDeclaration(astObj)
+            if scope!=None:
+                scope.scanDeclaration(astObj)
+            else:
+                LOG.debug('No object for %s', astScope)
         elif isinstance(astObj, ast.Use):
             astScope = self.astModel.getScope(astObj)
             scope = self.getObjectByASTObject(astScope)
@@ -130,6 +137,9 @@ class BasicModel(object):
         # recurse to upper scopes
         if scope.parent is not None and isinstance(scope.parent, Scope):
             return self.getObjectByName(name, scope.parent)
+        else:
+            #try global objects
+            return self.globalObjects.get(name, None)
 
 class BasicObject(object):
     def __init__(self, model):
