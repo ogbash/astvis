@@ -19,10 +19,15 @@ class RowFactory:
     def __init__(self):
         self.thumbnails = {}    
 
-    def getRow(self, obj):
+    def getRow(self, data):
+        obj,refs = data
         name = hasattr(obj,"name") and obj.name or str(obj)
-        
-        return [name, obj, self._getThumbnail(obj), gtk.gdk.color_parse("black")]
+
+        if refs!=None:
+            s = "%s (%d refs)" % (name, len(refs))
+        else:
+            s = name
+        return [s, (obj,refs) , self._getThumbnail(obj), gtk.gdk.color_parse("black")]
 
     def _getThumbnail(self, obj):
         "Thumbnail to be shown in GtkTreeView for the C{obj} element"
@@ -43,7 +48,9 @@ factory = RowFactory()
 class BackCallTree(BaseWidget):
 
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'back_call_tree', actionFilters=[{'category':'show-'}])
+        BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer',
+                            actionFilters=[{'category':'show-'}])
+
         self.root = root
         self.view = self.widget
 
@@ -60,11 +67,15 @@ class BackCallTree(BaseWidget):
 
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
         self.view.set_model(self.model)
-        
+
         if astTree!=None:
             astTree.view.get_selection().connect('changed', self._astTreeChanged)
             self._astTreeChanged(astTree.view.get_selection())
-        
+
+        # create refs list
+        self.refsList = ReferencesList(self, self.wTree)
+        self.view.get_selection().connect('changed', self.__selectionChanged)
+                
     def _astTreeChanged(self, selection):
         _model, iRow = selection.get_selected()
         if iRow!=None:
@@ -74,6 +85,15 @@ class BackCallTree(BaseWidget):
                 self.showObject(obj)
             else:
                 LOG.debug("No object found for AST object %s", astObj)
+
+    def __selectionChanged(self, selection): 
+        model, iRow = selection.get_selected()
+        
+        if iRow!=None:
+            obj,refs = model[iRow][1]
+            self.refsList.setReferences(refs)
+        else:
+            self.refsList.setReferences(None)
 
     def _clearModel(self):
         def free(model, path, iRow):
@@ -85,23 +105,71 @@ class BackCallTree(BaseWidget):
     def showObject(self, obj):
         "@type: BasicObject"
         self._clearModel()
-        self._addObject(obj, None, set())
+        self._addObject(obj, None, None, set())
 
-    def _addObject(self, obj, iParent, shown):
+    def _addObject(self, obj, refs, iParent, shown):
         if obj in shown:
             return
         
-        data = factory.getRow(obj)
+        data = factory.getRow((obj, refs))
         iObj = self.model.append(iParent, data)
         shown.add(obj)
         
         resolver = core.getService('ReferenceResolver')
-        references = resolver.getReferringObjects(obj).keys()
+        references = resolver.getReferringObjects(obj)
 
-        LOG.log(FINER, "Number of referring objects for %s: %d", obj, len(references))
-        for ref in references:
-            basicObj = ref.model.basicModel.getObjectByASTObject(ref)
-            self._addObject(basicObj, iObj, shown)
+        if LOG.isEnabledFor(FINER):
+            LOG.log(FINER, "Number of referring objects for %s: %d", obj, len(references.keys()))
+        for refScope, refs in references.items():
+            basicObj = refScope.model.basicModel.getObjectByASTObject(refScope)
+            self._addObject(basicObj, refs, iObj, shown)
 
         self.view.expand_row(self.model.get_path(iObj), False)        
 
+class ReferencesList(BaseWidget):
+
+    def __init__(self, backCallTree, wTree):
+        BaseWidget.__init__(self, 'back_call_tree_refs', outerWidgetName='back_call_tree_outer',
+                            wTree=wTree, actionFilters=[{'category':'show-'}])
+
+        self.parent = backCallTree
+        self.view = self.widget
+
+        self.widget.hide()
+        self.widget.connect("button-press-event", self.__buttonPress)
+
+        column = gtk.TreeViewColumn("Location")
+        cell = gtk.CellRendererText()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 2)
+        self.view.append_column(column)
+
+        self.model = gtk.ListStore(str, object, str)
+        self.view.set_model(self.model)
+
+    def setReferences(self, refs):
+        self.model.clear()
+
+        if refs:
+            self.widget.show()
+            for ref in refs:
+                if ref.location!=None:
+                    loc = "%s:%d,%d" % (ref.getFile().name,
+                                        ref.location.begin.line,
+                                        ref.location.begin.column)
+                else:
+                    loc = "%s" % ref.getFile().name
+                self.model.append((str(ref),ref,loc))
+        else:
+            self.widget.hide()
+
+    def __buttonPress(self, widget, event):
+        if event.type==gtk.gdk._2BUTTON_PRESS and event.button==1:
+            _model, iRow = self.view.get_selection().get_selected()
+            if iRow==None:
+                return False
+            obj = _model[iRow][1]
+            if hasattr(obj, 'location'):
+                self.parent.root.showFile(obj.model.project, obj.getFile(), obj.location)
+                return True
+        return False

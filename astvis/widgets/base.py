@@ -6,15 +6,20 @@ from astvis import action, gtkx
 class BaseWidget(object):
     "Base widget for the tree widgets."
 
-    def __init__(self, widgetName, outerWidgetName=None, gladeFile='astvisualizer.glade', widgetsWindow='widgets_window',
+    def __init__(self, widgetName, outerWidgetName=None, wTree=None, gladeFile='astvisualizer.glade', widgetsWindow='widgets_window',
             actionGroupName=None, menuName=None, **kvargs):
-            #contextAdapter=None, actionFilters=[{}], menuName=None):
-        self.wTree = gtk.glade.XML(gladeFile, widgetsWindow) #: widget tree
+
+        if wTree==None:
+            self.wTree = gtk.glade.XML(gladeFile, widgetsWindow) #: widget tree
+            self.outerWidget = self.wTree.get_widget(outerWidgetName or widgetName) #: widget that encloses all others (usually scrollbar window or so)
+            self.outerWidget.get_parent().remove(self.outerWidget)
+            self.wTree.signal_autoconnect(self)
+        else:
+            self.wTree = wTree
+    
         self.widget = self.wTree.get_widget(widgetName) #: widget that holds basic logic
-        self.outerWidget = self.wTree.get_widget(outerWidgetName or widgetName) #: widget that encloses all others (usually scrollbar window or so)
-        self.outerWidget.get_parent().remove(self.outerWidget)
-        self.wTree.signal_autoconnect(self)
-        "action group"
+
+        # actions
         self.actionGroup = action.manager.createActionGroup(actionGroupName or widgetName,
                 context=self, contextAdapter=self.getSelected,
                 **kvargs)
