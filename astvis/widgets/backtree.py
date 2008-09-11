@@ -151,8 +151,16 @@ class ReferencesList(BaseWidget):
         self.model.clear()
 
         if refs:
-            self.widget.show()
-            for ref in refs:
+            # sort references
+            sortedRefs = list(refs)
+            def compare(x,y):
+                return cmp(x.getFile(), y.getFile()) or \
+                       cmp(x.location.begin.line, y.location.begin.line) or \
+                       cmp(x.location.begin.column, y.location.begin.column)
+            sortedRefs.sort(compare)
+            
+            # add to model
+            for ref in sortedRefs:
                 if ref.location!=None:
                     loc = "%s:%d,%d" % (ref.getFile().name,
                                         ref.location.begin.line,
@@ -160,6 +168,8 @@ class ReferencesList(BaseWidget):
                 else:
                     loc = "%s" % ref.getFile().name
                 self.model.append((str(ref),ref,loc))
+
+            self.widget.show()
         else:
             self.widget.hide()
 
