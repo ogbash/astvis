@@ -344,13 +344,13 @@ class XMLLoader(xml.sax.handler.ContentHandler):
 
     def startBegin(self, attrs):
         if attrs.has_key('line'):
-            self.location.begin = Point(self.astModel)
+            self.location.begin = Point()
             self.location.begin.line = int(attrs['line'])
             self.location.begin.column = int(attrs['column'])
 
     def startEnd(self, attrs):
         if attrs.has_key('line'):
-            self.location.end = Point(self.astModel)
+            self.location.end = Point()
             self.location.end.line = int(attrs['line'])
             self.location.end.column = int(attrs['column'])
 

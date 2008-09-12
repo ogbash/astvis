@@ -557,8 +557,8 @@ class Location(object):
             
     def __init__(self, model):
         super(Location, self).__init__()
-        self.begin = None
-        self.end = None
+        self.begin = Point()
+        self.end = Point()
         
     def __str__(self):
         b = self.begin
@@ -566,6 +566,8 @@ class Location(object):
         return "<Location %d.%d to %d.%d>" % \
                (b and b.line or -1, b and b.column or -1,
                 e and e.line or -1, e and e.column or -1)
+
+    __repr__=__str__
         
 class Point(object):    
     _xmlTags = [XMLTag('begin'), XMLTag('end')]
@@ -573,7 +575,7 @@ class Point(object):
             (XMLAttribute('column'), PythonObject(int, ref='column'))]
     _xmlChildren = []
 
-    def __init__(self, model):
+    def __init__(self):
         self.line = -1
         self.column = -1
 
