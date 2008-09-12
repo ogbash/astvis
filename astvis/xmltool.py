@@ -328,6 +328,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.expressions[-1].location = self.location
         elif len(self.statements)>0:
             self.statements[-1].location = self.location
+        elif len(self.blocks)>0:
+            self.blocks[-1].location = self.location
         elif len(self.contexts)>0:
             self.contexts[-1].location = self.location
         

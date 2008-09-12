@@ -29,7 +29,7 @@ class BaseWidget(object):
             menuwTree = gtk.glade.XML(gladeFile, menuName)
         else:
             menuwTree = None
-        self.contextMenu = action.generateMenu(self.actionGroup, menuwTree, menuName)
+        self.contextMenu = action.generateMenuFromGlade(self.actionGroup, menuwTree, menuName)
             
         self.widget.connect("button-press-event", self.__buttonPress)
         self.widget.connect_after("popup-menu", self._popupMenu)
@@ -57,7 +57,7 @@ class BaseWidget(object):
     def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
         parent, childName, obj = _extractObjectInfo(model, iRow)
-        self.actionGroup.updateActions(obj, parent=parent, childName=childName)
+        self.actionGroup.updateActions(obj)
 
 def _extractObjectInfo(model, iRow):
     childName = None

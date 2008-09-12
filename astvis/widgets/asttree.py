@@ -107,7 +107,7 @@ class AstTree(BaseWidget):
     def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
         BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer', 
-                actionFilters=[{'targetClasses': (ast.ASTObject)}, {'category':'show-'}], menuName='object_menu')
+                actionFilters=[{'targetClasses': (ast.ASTObject,)}, {'category':'show-'}], menuName='object_menu')
         self.root = root
         self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  
@@ -267,6 +267,12 @@ class AstTree(BaseWidget):
     @Action('show-references', label='Show references')        
     def _onShowReferences(self, widget):
         self.root.openBackCallTree(self)
+
+        
+    def findLocationInTree(self, location):
+        file_, line, column = location
+        print location
+
         
 class FilterDialog:
     FILTER_VALUES = {

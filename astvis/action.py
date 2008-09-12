@@ -55,7 +55,7 @@ class ActionGroup(object):
             return False        
 
         # check target classes
-        if actionFilter.has_key('actionClasses') and action.targetClass!=None:
+        if actionFilter.has_key('targetClasses') and action.targetClass!=None:
             for targetClass in actionFilter['targetClasses']:
                 if issubclass(action.targetClass, targetClass):
                     return True
@@ -82,7 +82,7 @@ class ActionGroup(object):
                 return True
         return False
         
-    def updateActions(self, target, parent=None, childName=None):
+    def updateActions(self, target):
         """Show/hide actions based on the currently selected object.
         
         @param target: selected object"""
@@ -207,17 +207,10 @@ class ActionManager(object):
 
 manager = ActionManager()
 
-def generateMenu(actionGroup, wTree=None, templateMenuName=None):
-    if templateMenuName:
-        menu = wTree.get_widget(templateMenuName)
-    else:
+def generateMenu(actionGroup, menu=None, connectedActions = set()):
+    if menu==None:
         menu = gtk.Menu()
 
-    if wTree:
-        connectedActions = connectWidgetTree(actionGroup, wTree)
-    else:
-        connectedActions = set()
-    
     # add menu items for the actions missing from the menu
     LOG.log(FINER, "%s (actionGroup=%s): selecting and adding %s", menu, actionGroup, actionGroup.gtkactions)
     for name, gtkaction in actionGroup.gtkactions.iteritems():
@@ -226,7 +219,19 @@ def generateMenu(actionGroup, wTree=None, templateMenuName=None):
         menuItem = gtkaction.create_menu_item()
         menu.append(menuItem)
     return menu
+    
 
+def generateMenuFromGlade(actionGroup, wTree=None, templateMenuName=None):
+    menu = None
+    if templateMenuName:
+        menu = wTree.get_widget(templateMenuName)
+
+    connectedActions = set()
+    if wTree:
+        connectedActions = connectWidgetTree(actionGroup, wTree)
+
+    return generateMenu(actionGroup, menu, connectedActions)
+    
 def connectWidgetTree(actionGroup, wTree):
     "Scan widget tree and connect widgets to their actions"
     connectedActions = set()

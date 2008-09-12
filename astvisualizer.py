@@ -29,7 +29,8 @@ import math
 import cPickle as pickle
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
-from astvis.project import Project, ProjectService
+from astvis.project import Project
+from astvis.services import ProjectService, CodeService
 from astvis import widgets, diagram
 from astvis.misc import console
 from astvis.model import ast
@@ -225,7 +226,7 @@ class MainWindow(object):
         if not self.files.has_key(fileName):
             import os.path
             fl = file(os.path.join(project.sourceDir or '', fileName.name))
-            view = self._openFile(fl)
+            view = self._openFile(fl, fileName)
             self.files[fileName] = view
         else:
             view = self.files[fileName]
@@ -253,12 +254,9 @@ class MainWindow(object):
                     if iEnd is not None:
                         buf.select_range(iBegin, iEnd)
                     
-    def _openFile(self, fl):
+    def _openFile(self, fl, file_):
         import os.path
-        view = gtk.TextView()
-        view.set_editable(False)
-        font = pango.FontDescription("Courier 12")
-        view.modify_font(font)
+        view = widgets.CodeView(self, file_)
         view.get_buffer().set_text(unicode(fl.read(), 'iso8859-15'))
         window = gtk.ScrolledWindow()
         window.add(view)
@@ -328,6 +326,7 @@ if __name__ == "__main__":
     action.manager.registerActionService(tagService)
     core.registerService('TagService', tagService)
     action.manager.registerActionService(ProjectService())
+    action.manager.registerActionService(CodeService())
     action.manager.registerActionService(widgets)
     window = MainWindow()
     gtk.main()
