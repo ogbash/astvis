@@ -8,7 +8,7 @@ import xml.sax
 from StringIO import StringIO
 from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
     Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section, \
-    SelectCase, Case, Allocate
+    SelectCase, Case, Allocate, Typedef
 
 class ParseError(Exception):
     
@@ -52,6 +52,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startBlock(attrs)
         elif name in ("declaration",):
             self.startDeclaration(attrs)
+        elif name in ("typedef",):
+            self.startTypedef(attrs)
         elif name in ("statement",):
             self.startStatement(attrs)
         elif name in ("case",):
@@ -103,6 +105,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endBlock()
         elif name in ("declaration",):
             self.endDeclaration()
+        elif name in ("typedef",):
+            self.endTypedef()
         elif name in ("statement",):
             self.endStatement()
         elif name in ("case",):
@@ -201,13 +205,13 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         else:
             block = Block(self.astModel, self.contexts[-1])
             self.contexts[-1].addBlock(block, attrs)
-        self.blocks.append(block)
+        self.blocks.append((block,len(self.statements)))
         
     def endBlock(self):
         del self.blocks[-1]
         
     def startDeclaration(self, attrs):
-        block = len(self.blocks)>0 and self.blocks[-1] or self.contexts[-1]
+        block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
         _type = attrs["type"]
 
         if _type=="type":
@@ -221,6 +225,19 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endDeclaration(self):
         del self.statements[-1]
 
+
+    def startTypedef(self, attrs):
+        block = len( self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
+
+        typedef = Typedef(self.astModel, block)
+        typedef.name = attrs['name']
+        
+        block.addStatement(typedef)
+        self.statements.append(typedef)
+
+    def endTypedef(self):
+        del self.statements[-1]
+
     def startType(self, attrs):
         t = Type(self.astModel)
         self.statements[-1].type = t
@@ -231,7 +248,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         del self.expressions[-1]
 
     def startStatement(self, attrs):
-        block = len(self.blocks)>0 and self.blocks[-1] or self.contexts[-1]
+        block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
         _type = attrs["type"]
         if _type=="assignment":
             st = Assignment(self.astModel, block)
@@ -332,10 +349,10 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.location = Location(self.astModel)
         if len(self.expressions)>0:
             self.expressions[-1].location = self.location
-        elif len(self.statements)>0:
+        elif len(self.statements)> (len(self.blocks)>0 and self.blocks[-1][1] or 0):
             self.statements[-1].location = self.location
         elif len(self.blocks)>0:
-            self.blocks[-1].location = self.location
+            self.blocks[-1][0].location = self.location
         elif len(self.contexts)>0:
             self.contexts[-1].location = self.location
         

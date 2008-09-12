@@ -370,6 +370,19 @@ class Type(ASTObject):
     def __str__(self):
         return self.name
 
+class Typedef(ASTObject):
+    def __init__(self, model, parent=None):
+        ASTObject.__init__(self, model)
+        self.parent = parent
+        self.name = '<none>'
+        self.blocks = []
+
+    def addBlock(self, block, attrs):
+        self.blocks.append(block)
+
+    def getChildren(self):
+        return self.blocks
+
 class Entity(ASTObject):
     _xmlTags = [XMLTag('entity')]
     _xmlAttributes = []
@@ -405,14 +418,6 @@ class TypeDeclaration(Declaration):
         
     def getChildren(self):
         return self.entities
-
-class Type(ASTObject):
-    def __init__(self, model):
-        ASTObject.__init__(self, model)
-        self.name = '<none>'
-
-    def __str__(self):
-        return str(self.name)
 
 class Expression(ASTObject):
     def __init__(self, model, parent = None):
