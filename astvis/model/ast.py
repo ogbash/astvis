@@ -339,6 +339,16 @@ class Assignment(Statement):
         return "<%s = >" % self.target
 
 
+class Allocate(Statement):
+
+    def __init__(self, model, parent = None):
+        Statement.__init__(self, model, parent)
+        self.type = None # 'allocate', 'deallocate'
+        self.designators = []
+
+    def getChildren(self):
+        return self.designators
+        
 class Declaration(ASTObject):
     pass
 

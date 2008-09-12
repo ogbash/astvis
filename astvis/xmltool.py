@@ -8,7 +8,7 @@ import xml.sax
 from StringIO import StringIO
 from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
     Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section, \
-    SelectCase, Case
+    SelectCase, Case, Allocate
 
 class ParseError(Exception):
     
@@ -60,6 +60,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startArguments(attrs)
         elif name in ("argument",):
             self.startArgument(attrs)
+        elif name in ("designator",):
+            self.startDesignator(attrs)
         elif name in ("sections",):
             self.startSections(attrs)
         elif name in ("section",):
@@ -109,6 +111,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endArguments()
         elif name in ("argument",):
             self.endArgument()
+        elif name in ("designator",):
+            self.endDesignator()
         elif name in ("sections",):
             self.endSections()
         elif name in ("section",):
@@ -233,6 +237,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             st = Assignment(self.astModel, block)
         elif _type=="selectcase":
             st = SelectCase(self.astModel, block)
+        elif _type in ("allocate", "deallocate"):
+            st = Allocate(self.astModel, block)
         else:
             st = Statement(self.astModel, block)
         st.type = _type
@@ -370,6 +376,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endExpression(self, name):
         self._last = self.expressions[-1]
         del self.expressions[-1]
+
+    def startDesignator(self, attrs):
+        pass
+
+    def endDesignator(self):
+        self.statements[-1].designators.append(self._last)
 
     def startEntity(self, attrs):
         entity = Entity(self.astModel)
