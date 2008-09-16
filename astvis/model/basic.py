@@ -85,46 +85,77 @@ class BasicModel(object):
             use.name = astObj.name.lower()
             use.module = self.globalObjects.get(use.name, None)
             scope.uses[use.name] = use
+        elif isinstance(astObj, ast.Typedef):
+            astScope = self.astModel.getScope(astObj)
+            scope = self.getObjectByASTObject(astScope)
+            typedef = Typedef(self)
+            typedef.name = astObj.name.lower()
+            scope.typedefs[typedef.name] = typedef
         
         # recurse for children
         for childAstObj in astObj.getChildren():
             self._fillObject(childAstObj)
 
     def getObjectByASTObject(self, astObj):
-        """Returns object for any AST object.
-        
-        @todo: complete implementation for all possible AST objects"""
-    
+        """Returns object for any AST object."""
         if not hasattr(astObj, 'name'):
             raise Exception("AST object %s must have name to find corresponding object" % astObj)
             
         # index
         if self.objectsMap.has_key(astObj):
             return self.objectsMap[astObj]
-    
-        # find (super)parent with name
-        parentAstObj = astObj.parent
-        while parentAstObj and not hasattr(parentAstObj, 'name'):
-            parentAstObj = parentAstObj.parent
-            
+
+        # find (super)parent with name (scope)
+        parentAstObj = astObj.model.getScope(astObj)
+        
         # no parent with name found, but we expect global level to have File parent
         if parentAstObj is None:
-            raise Exception("AST object %s must have (super)parent with name defined" % astObj)
-        
+            raise Exception("AST object %s must have scope" % astObj)
+
         if isinstance(parentAstObj, ast.File):
             # this is global object, ie module/program or global subprogram
             return self.globalObjects.get(astObj.name.lower())
         else:
             parentObj = self.getObjectByASTObject(parentAstObj)
-            if parentObj is None:
+            obj = parentObj[astObj.name.lower()]
+            return obj
+
+
+    def getReferenceChainByASTObject(self, astObj):
+        """Return the list of basic objects that correspond to each part in
+        astObj data or subroutine reference."""
+    
+        if isinstance(astObj, ast.Reference) and astObj.base!=None:
+            chain = self.getReferenceChainByASTObject(astObj.base)
+            if chain==None:
                 return None
-            return parentObj[astObj.name.lower()]
+            #obj = self.getObjectByName(chain[-1].type.name, chain[-1])
+            baseVar = chain[-1]
+            baseType = self.getObjectByName(baseVar.typename, baseVar.parent)
+            if baseType!=None:
+                var = baseType[astObj.name.lower()]
+                chain.append(var)
+                return chain
+            else:
+                return None
+        else:
+            astScope = self.astModel.getScope(astObj)
+            scope = self.getObjectByASTObject(astScope)
+            referencedObj = self.getObjectByName(astObj.name.lower(), scope)
+            if referencedObj!=None:
+                return [referencedObj]
+            else:
+                return None
 
     def getObjectByName(self, name, scope):
+        "Find the object that the name refers to in the given scope."
         if scope.variables.has_key(name):
             return scope.variables[name]
         if scope.subprograms.has_key(name):
             return scope.subprograms[name];
+        # at the moment derived types namespace is in proc and var namespace
+        if scope.typedefs.has_key(name):
+            return scope.typedefs[name]
             
         # @todo handle renamed 'use'
         for use in scope.uses.itervalues():
@@ -159,6 +190,7 @@ class Scope(BasicObject):
         self.uses = {} #: name ->obj
         self.variables = {}
         self.subprograms = {} #: name->obj
+        self.typedefs = {} #: name->obj
         
     def scanDeclaration(self, astDecl):
         'Scan AST declaration and extend scope variables.'
@@ -167,13 +199,18 @@ class Scope(BasicObject):
             if variable==None:
                 variable = Variable(self.model)
                 variable.name = entity.name.lower()
+                variable.parent = self
                 self.variables[variable.name] = variable
                 if LOG.isEnabledFor(FINER):
                     LOG.log(FINER, "Add %s to %s", variable, self)
             variable.scanDeclaration(astDecl)
             
     def __getitem__(self, key):
-        return self.variables.get(key, None)
+        if self.variables.has_key(key):
+            return self.variables[key]
+        elif self.typedefs.has_key(key):
+            return self.typedefs[key]
+        return None
 
 
 class ProgramUnit(Scope):
@@ -202,6 +239,7 @@ class Variable(BasicObject):
         self.name = None
         
     def scanDeclaration(self, astDecl):
+        self.typename = astDecl.type.name.lower()
         self.astObjects.append(astDecl)
 
     def __str__(self):
@@ -215,5 +253,17 @@ class Use(BasicObject):
         self.only = {} # name->name
     def __str__(self):
         return "<Use %s>" % self.name
+
+class Typedef(Scope):
+
+    def __init__(self, model):
+        Scope.__init__(self, model)
+        self.name = None
+        self.parent = None
+
+    def scanDeclarations(self, astTypedef):
+        self.astObject = astTypedef
+        
+    
 
 

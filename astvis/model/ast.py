@@ -19,10 +19,10 @@ class ASTModel(object):
         for f in self.files:
             f.itertree(callback)
 
-    def getScope(self, astObj):
-        if isinstance(astObj, (Subprogram, ProgramUnit)):
+    def getScope(self, astObj, original = True):
+        if not original and isinstance(astObj, (Subprogram, ProgramUnit, Typedef)):
             return astObj
-        return astObj.parent!=None and self.getScope(astObj.parent) or None
+        return astObj.parent!=None and self.getScope(astObj.parent, False) or None
 
     def getStatement(self, astObj):
         if isinstance(astObj, Statement):

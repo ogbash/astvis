@@ -48,13 +48,12 @@ class ReferenceResolver(object):
 
         def callback(self, astObj):
             if isinstance(astObj, ast.Statement) and astObj.type=='call' or\
-                    isinstance(astObj, ast.Reference) and astObj.base is None or\
+                    isinstance(astObj, ast.Reference) or\
                     isinstance(astObj, ast.Call):
                 astScope = self.astModel.getScope(astObj)
-                scope = self.model.getObjectByASTObject(astScope)
-                referencedObj = self.model.getObjectByName(astObj.name.lower(), scope)
-                if referencedObj is not None:
-                    self._addReference(astObj, astScope, referencedObj)
+                chain = self.model.getReferenceChainByASTObject(astObj)
+                if chain!=None:
+                    self._addReference(astObj, astScope, chain[-1])
                 
         def _addReference(self, astObj, astScope, referencedObj):
             if not self.references.has_key(astScope):
