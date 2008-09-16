@@ -108,12 +108,14 @@ class BackCallTree(BaseWidget):
         self._addObject(obj, None, None, set())
 
     def _addObject(self, obj, refs, iParent, shown):
-        if obj in shown:
-            return
         
         data = factory.getRow((obj, refs))
         iObj = self.model.append(iParent, data)
-        shown.add(obj)
+
+        if obj in shown:
+            return
+        else:
+            shown.add(obj)
         
         resolver = core.getService('ReferenceResolver')
         references = resolver.getReferringObjects(obj)

@@ -16,6 +16,7 @@ class ReferenceResolver(object):
         if not self._caches.has_key(model):
             cache = self._collectReferences(model)
             self._caches[model] = cache
+            #model._cache=cache
         cache = self._caches[model]
         return cache.references.get(astScope, ())
         
@@ -24,6 +25,7 @@ class ReferenceResolver(object):
         if not self._caches.has_key(model):
             cache = self._collectReferences(model)
             self._caches[model] = cache
+            #model._cache=cache
         cache = self._caches[model]
         return cache.backReferences.get(obj, {})
 
