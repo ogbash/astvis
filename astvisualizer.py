@@ -155,6 +155,7 @@ class MainWindow(object):
     def addView(self, obj, widget, labelText):
         self.views[obj] = widget
         self.sidebarNotebook.append_page(widget, gtk.Label(labelText))
+        self.sidebarNotebook.set_tab_detachable(widget, True)
 
     @Action('show-ast', 'Show AST tree', targetClass=ast.ASTModel)
     def openASTTree(self, astModel, context):
