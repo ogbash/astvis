@@ -9,7 +9,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
 from astvis import event, project, gtkx
-from astvis.action import Action
+from astvis import action
 from astvis.widgets.base import BaseWidget
 import gtk
 import pickle
@@ -240,7 +240,7 @@ class AstTree(BaseWidget):
                 return True
             if hasattr(obj, 'location'):
                 self.root.showFile(self.astModel.project, obj.getFile(), obj.location)
-                return True        
+                return True
         return False
      
     def _dragDataGet(self, widget, context, data, info, timestamp):
@@ -260,20 +260,33 @@ class AstTree(BaseWidget):
             self.regenerateSidebarTree()
         dialog.destroy()
 
-    @Action('show-calls', label='Show calls')        
-    def _onShowCalls(self, widget):
-        self.root.openCallTree(self)
-
-    @Action('show-references', label='Show references')        
-    def _onShowReferences(self, widget):
-        self.root.openBackCallTree(self)
-
+    @action.Action('follow-call', label='Follow call', sensitivePredicate=
+                   lambda x,c: isinstance(x,ast.Call) or isinstance(x,ast.Statement) and x.type=='call')
+    def _onFollowCall(self, astObj, context=None):
+        astScope = astObj.model.getScope(astObj, original=True)
+        model = astObj.model.basicModel
+        scope = model.getObjectByASTObject(astScope)
+        obj = model.getObjectByName(astObj.name.lower(), scope)
+        if obj!=None and obj.astObjects:
+            self.selectObject(obj.astObjects[0])
+            self.updateHistory()
         
     def findLocationInTree(self, location):
         file_, line, column = location
         print location
 
-        
+    def getState(self):
+        "Return selected AST object or None."
+        model, iRow = self.view.get_selection().get_selected()
+        if iRow==None:
+            return None
+        else:
+            return model[iRow][1]
+
+    def setState(self, state):
+        self.selectObject(state)
+
+
 class FilterDialog:
     FILTER_VALUES = {
         'eq': [lambda value: int(value), lambda value: float(value), lambda value: str(value)],

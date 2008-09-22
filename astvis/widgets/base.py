@@ -20,6 +20,7 @@ class BaseWidget(object):
         self.widget = self.wTree.get_widget(widgetName) #: widget that holds basic logic
 
         # actions
+        action.manager.registerActionService(self)        
         self.actionGroup = action.manager.createActionGroup(actionGroupName or widgetName,
                 context=self, contextAdapter=self.getSelected,
                 **kvargs)
@@ -34,6 +35,13 @@ class BaseWidget(object):
         self.widget.connect("button-press-event", self.__buttonPress)
         self.widget.connect_after("popup-menu", self._popupMenu)
         self.widget.get_selection().connect("changed", self.__selectionChanged)
+
+        # browse history
+        self._history = []
+        self._historyPosition = -1
+        self._historyForwardButton = self.wTree.get_widget("%s_history_forward" % widgetName)
+        self._historyBackwardButton = self.wTree.get_widget("%s_history_backward" % widgetName)
+        self._updateHistoryButtons()
 
     def getSelected(self, context):
         model, iRow = self.widget.get_selection().get_selected()
@@ -59,6 +67,43 @@ class BaseWidget(object):
         parent, childName, obj = _extractObjectInfo(model, iRow)
         self.actionGroup.updateActions(obj)
 
+    def history_backward(self, widget):
+        if self._historyPosition>0:
+            self._historyPosition = self._historyPosition-1
+            state = self._history[self._historyPosition]
+            self.setState(state)
+
+            self._updateHistoryButtons()
+
+    def history_forward(self, widget):
+        if self._historyPosition<len(self._history)-1:
+            self._historyPosition = self._historyPosition+1
+            state = self._history[self._historyPosition]
+            self.setState(state)
+
+            self._updateHistoryButtons()
+
+    def updateHistory(self):
+        "Take current state and insert it at the current history position."
+        state = self.getState()
+        if state!=None:
+            del self._history[self._historyPosition+1:]
+            self._history.append(state)
+            self._historyPosition = self._historyPosition+1
+            self._updateHistoryButtons()
+
+    def _updateHistoryButtons(self):
+        if self._historyForwardButton!=None:
+            self._historyForwardButton.set_sensitive(self._historyPosition<len(self._history)-1)
+        if self._historyBackwardButton!=None:
+            self._historyBackwardButton.set_sensitive(self._historyPosition>0)
+
+    def getState(self):
+        raise NotImplemented
+
+    def setState(self, state):
+        raise NotImplemented
+
 def _extractObjectInfo(model, iRow):
     childName = None
     obj = None
@@ -71,4 +116,3 @@ def _extractObjectInfo(model, iRow):
         else:
             obj = model[iRow][1]
     return parent, childName, obj
-
