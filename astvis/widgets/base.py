@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+import logging
+from astvis.common import FINE, FINER, FINEST
+LOG = logging.getLogger('basetree')
+
 import gtk.glade
 from astvis import action, gtkx
 
@@ -87,6 +91,7 @@ class BaseWidget(object):
         "Take current state and insert it at the current history position."
         state = self.getState()
         if state!=None:
+            LOG.debug("Update history state=%s", state)
             del self._history[self._historyPosition+1:]
             self._history.append(state)
             self._historyPosition = self._historyPosition+1
@@ -99,10 +104,10 @@ class BaseWidget(object):
             self._historyBackwardButton.set_sensitive(self._historyPosition>0)
 
     def getState(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def setState(self, state):
-        raise NotImplemented
+        raise NotImplementedError()
 
 def _extractObjectInfo(model, iRow):
     childName = None

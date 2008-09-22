@@ -53,6 +53,7 @@ class BackCallTree(BaseWidget):
 
         self.root = root
         self.view = self.widget
+        self._object = None
 
         column = gtk.TreeViewColumn("Name")
         cell = gtk.CellRendererPixbuf()
@@ -82,6 +83,8 @@ class BackCallTree(BaseWidget):
             self.refsList.setReferences(None)
 
     def _clearModel(self):
+        self._object = None
+        
         def free(model, path, iRow):
             obj = model[iRow][1]
     
@@ -91,6 +94,7 @@ class BackCallTree(BaseWidget):
     def showObject(self, obj):
         "@type: BasicObject"
         self._clearModel()
+        self._object = obj
         self._addObject(obj, None, None, set())
 
     def _addObject(self, obj, refs, iParent, shown):
@@ -112,7 +116,13 @@ class BackCallTree(BaseWidget):
             basicObj = refScope.model.basicModel.getObjectByASTObject(refScope)
             self._addObject(basicObj, refs, iObj, shown)
 
-        self.view.expand_row(self.model.get_path(iObj), False)        
+        self.view.expand_row(self.model.get_path(iObj), False)
+
+    def getState(self):
+        return self._object
+
+    def setState(self, state):
+        self.showObject(state)
 
 class ReferencesList(BaseWidget):
 

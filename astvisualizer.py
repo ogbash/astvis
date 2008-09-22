@@ -172,6 +172,7 @@ class MainWindow(object):
     def openASTObject(self, astObj, context):
         if self._astTree!=None:
             self._astTree.selectObject(astObj)
+            self._astTree.updateHistory()
     
     @Action('show-calls', 'Show calls', contextClass=widgets.AstTree)
     def openCallTree(self, target, context):
@@ -187,16 +188,11 @@ class MainWindow(object):
             self._referenceTree = widgets.BackCallTree(self)
             self.addView(self._referenceTree, self._referenceTree.outerWidget, 'back')
 
-        astTreeWidget=context
-        _model, iRow = astTreeWidget.view.get_selection().get_selected()
-        if iRow!=None:
-            astObj = _model[iRow][1]
-            obj = astObj.model.basicModel.getObjectByASTObject(astObj)
-            if not obj is None:
-                self._referenceTree.showObject(obj)
-            else:
-                LOG.debug("No object found for AST object %s", astObj)
-        
+        basicModel = target.model.basicModel
+        obj = basicModel.getObjectByASTObject(target)
+        if obj!=None:
+            self._referenceTree.showObject(obj)
+            self._referenceTree.updateHistory()
 
     @Action('show-diagram', 'Show diagram', targetClass=diagram.Diagram)
     def openDiagram(self, diagram, context):
