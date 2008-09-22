@@ -54,6 +54,8 @@ class MainWindow(object):
         self.globalActionGroup = action.manager.createActionGroup('global', self)
         action.connectWidgetTree(self.globalActionGroup, self.wTree)
 
+        self._astTree = None
+        self._callTree = None
         self._referenceTree = None # call back tree
         
         self.notebook = self.wTree.get_widget('notebook')
@@ -162,14 +164,21 @@ class MainWindow(object):
     @Action('show-ast', 'Show AST tree', targetClass=ast.ASTModel)
     def openASTTree(self, astModel, context):
         "ast tree view"
-        astTree = widgets.AstTree(self, astModel)        
-        self.addView(astTree, astTree.outerWidget, 'ast')
+        if self._astTree==None:
+            self._astTree = widgets.AstTree(self, astModel)        
+            self.addView(self._astTree, self._astTree.outerWidget, 'ast')
+
+    @Action('show-ast-object', 'Show in AST', targetClass=ast.ASTObject)
+    def openASTObject(self, astObj, context):
+        if self._astTree!=None:
+            self._astTree.selectObject(astObj)
     
     @Action('show-calls', 'Show calls', contextClass=widgets.AstTree)
     def openCallTree(self, target, context):
         "create call tree"
-        callTree = widgets.CallTree(self, context)
-        self.addView(callTree, callTree.outerWidget, 'call')
+        if self._callTree==None:
+            self._callTree = widgets.CallTree(self, context)
+            self.addView(self._callTree, self._callTree.outerWidget, 'call')
 
     @Action('show-references', 'Show references', contextClass=widgets.AstTree)
     def openBackCallTree(self, target, context):
