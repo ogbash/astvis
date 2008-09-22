@@ -53,6 +53,8 @@ class MainWindow(object):
         action.manager.registerActionService(self)
         self.globalActionGroup = action.manager.createActionGroup('global', self)
         action.connectWidgetTree(self.globalActionGroup, self.wTree)
+
+        self._referenceTree = None # call back tree
         
         self.notebook = self.wTree.get_widget('notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
@@ -172,8 +174,20 @@ class MainWindow(object):
     @Action('show-references', 'Show references', contextClass=widgets.AstTree)
     def openBackCallTree(self, target, context):
         "create back call tree"
-        backCallTree = widgets.BackCallTree(self, context)
-        self.addView(backCallTree, backCallTree.outerWidget, 'back')
+        if self._referenceTree==None:
+            self._referenceTree = widgets.BackCallTree(self)
+            self.addView(self._referenceTree, self._referenceTree.outerWidget, 'back')
+
+        astTreeWidget=context
+        _model, iRow = astTreeWidget.view.get_selection().get_selected()
+        if iRow!=None:
+            astObj = _model[iRow][1]
+            obj = astObj.model.basicModel.getObjectByASTObject(astObj)
+            if not obj is None:
+                self._referenceTree.showObject(obj)
+            else:
+                LOG.debug("No object found for AST object %s", astObj)
+        
 
     @Action('show-diagram', 'Show diagram', targetClass=diagram.Diagram)
     def openDiagram(self, diagram, context):

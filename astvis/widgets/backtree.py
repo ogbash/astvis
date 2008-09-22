@@ -68,24 +68,10 @@ class BackCallTree(BaseWidget):
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
         self.view.set_model(self.model)
 
-        if astTree!=None:
-            astTree.view.get_selection().connect('changed', self._astTreeChanged)
-            self._astTreeChanged(astTree.view.get_selection())
-
         # create refs list
         self.refsList = ReferencesList(self, self.wTree)
         self.view.get_selection().connect('changed', self.__selectionChanged)
                 
-    def _astTreeChanged(self, selection):
-        _model, iRow = selection.get_selected()
-        if iRow!=None:
-            astObj = _model[iRow][1]
-            obj = astObj.model.basicModel.getObjectByASTObject(astObj)
-            if not obj is None:
-                self.showObject(obj)
-            else:
-                LOG.debug("No object found for AST object %s", astObj)
-
     def __selectionChanged(self, selection): 
         model, iRow = selection.get_selected()
         
