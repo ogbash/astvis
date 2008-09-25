@@ -7,4 +7,5 @@ from asttree import AstTree
 from calltree import CallTree
 from codeview import CodeView
 from tags import *
-
+from concepts import NewConceptDialog
+from diagrams import NewDiagramDialog

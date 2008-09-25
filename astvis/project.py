@@ -228,6 +228,25 @@ class TagDict(ObservableDict):
             if hasattr(obj,'parent') and obj.parent!=None:
                 self._modifyCallTags(obj.parent, obj, added, removed)
 
+class ConceptList(ObservableList):
+    __gtkmodel__ = gtkx.GtkModel()
+
+    name = "Concepts"
+    __gtkmodel__.appendAttribute('name')    
+
+    def __init__(self, project):
+        list.__init__(self)
+        self.project = project
+
+    def __hash__(self,obj):
+        return object.__hash__(self,obj)
+
+    def __eq__(self, obj):
+        return self is obj
+        
+    def __str__(self):
+        return "<ConceptList size=%s, project=%s>" % (len(self), self.project)
+
 class Project(object):
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
     classes = list(objClasses)
@@ -270,6 +289,8 @@ class Project(object):
     "Tags"
     tags = property(lambda self: self._tags)
 
+    __gtkmodel__.appendChild('concepts')
+
     def __init__(self, projectFileName=None):
         self._name = "(unnamed)"
         self.sourceDir = None
@@ -278,5 +299,6 @@ class Project(object):
         self._diagrams = DiagramList(self) #: diagrams
         self._tagTypes = TagTypeList(self) #: tag types
         self._tags = TagDict(self) #: object -> set<tagType>()
+        self.concepts = ConceptList(self)
 
         
