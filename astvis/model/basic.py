@@ -245,6 +245,8 @@ class Variable(BasicObject):
     def __str__(self):
         return "<Variable %s>" % self.name
 
+    __repr__=__str__
+
 class Use(BasicObject):
     def __init__(self, model):
         BasicObject.__init__(self, model)

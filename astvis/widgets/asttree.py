@@ -275,6 +275,18 @@ class AstTree(BaseWidget):
         file_, line, column = location
         print location
 
+    @action.Action('open-declaration', label='Open declaration', sensitivePredicate=
+                   lambda x,c: isinstance(x,ast.Call) \
+                   or isinstance(x,ast.Statement) and x.type=='call' \
+                   or isinstance(x,ast.Reference))
+    def _openDeclaration(self, astObj, context=None):
+        model = astObj.model.basicModel
+        objs = model.getReferenceChainByASTObject(astObj)
+        if objs and objs[-1].astObjects:
+            obj = objs[-1]
+            self.selectObject(obj.astObjects[0])
+            self.updateHistory()
+
     def getState(self):
         "Return selected AST object or None."
         model, iRow = self.view.get_selection().get_selected()
