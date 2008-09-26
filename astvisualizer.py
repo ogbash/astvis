@@ -40,8 +40,11 @@ from astvis.misc.list import ObservableList
 import astvis.widgets.task
 
 class MainWindow(object):
+
+    windows = {}
     
     def __init__(self):
+        MainWindow.windows[id(self)] = self
         self.projects = ObservableList()
         self.files = {} #: opened files (model.File -> gtk.TextView)
         self.views = {} #: opened views (models -> widgets)
@@ -57,6 +60,7 @@ class MainWindow(object):
         self._astTree = None
         self._callTree = None
         self._referenceTree = None # call back tree
+        self._conceptTree = None
         
         self.notebook = self.wTree.get_widget('notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
@@ -85,29 +89,17 @@ class MainWindow(object):
         pyconsole.set_size_request(640,480)
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
-        
-    def _data_recv(self, widget, context, x, y, data, info, timestamp, obj):
-        LOG.debug("GTK DnD data_recv with info=%d"%info)
-        if info==INFO_OBJECT_PATH.number:
-            diagram = obj
-            clazz, path = pickle.loads(data.data)
-            if clazz==ast.ProgramUnit or clazz==ast.Subprogram:
-                # get canvas coordinates
-                m = cairo.Matrix(*widget.matrix)
-                m.invert()
-                cx, cy = m.transform_point(x,y)
-                # add item
-                obj = diagram.project.astModel.getObjectByPath(path)
-                item = diagram.add(obj, cx,cy)
-                context.drop_finish(True, timestamp)
-            else:
-                context.drop_finish(False, timestamp)                
-        else:
-            context.drop_finish(False, timestamp)
+
+    def externalize(self):
+        return id(self)
+
+    @staticmethod
+    def internalize(data):
+        return MainWindow.windows[data]
     
     @Action('project-new', label='New project', contextClass=widgets.ProjectTree, icon='gtk-new')
     def _newProject(self, target, context):
-        self._addProject(Project())
+        self._addProject(Project(self))
 
     def _addProject(self, project):
         LOG.debug("Adding %s" % project)
@@ -204,10 +196,7 @@ class MainWindow(object):
         #outer.set_hadjustment(view.hadjustment)
         #outer.set_vadjustment(view.vadjustment)
         view.connect("key-press-event", self.keyPress, diagram)
-        view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
-                [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
-                gtk.gdk.ACTION_COPY)
-        view.connect("drag-data-received", self._data_recv, diagram)
+        diagram.setupView(view)
         self.views[diagram] = view
         self.notebook.append_page(view, gtk.Label('diagram'))
 

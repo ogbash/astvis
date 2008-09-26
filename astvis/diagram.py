@@ -75,6 +75,9 @@ class Diagram(object):
     def getCanvas(self):
         return self._canvas
 
+    def setupView(self, view):
+        pass
+
 class DiagramList(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()
 

@@ -4,11 +4,12 @@ import logging
 LOG = logging.getLogger("projecttree")
 from astvis.common import FINE, FINER, FINEST
 
-from astvis.project import Project, readASTModel, TagTypeList, TagType
+from astvis.project import Project, readASTModel, TagTypeList, TagType, Concepts
 from astvis import event, thread, xmlmap, action
 from astvis.model import ast, basic
 from astvis.widgets.base import BaseWidget
 from astvis.widgets.tags import TagTypeDialog
+from astvis.widgets.concepttree import ConceptTree
 from astvis import gtkx, diagram
 
 import gtk
@@ -72,6 +73,13 @@ class ProjectTree(BaseWidget):
             action.manager.activate('show-diagram', obj, self)
         elif isinstance(obj, TagType):
             self._handleTagTypeDialog(obj)
+        elif isinstance(obj, Concepts):
+            self._openConceptTree(obj)
+
+    def _openConceptTree(self, concepts):
+        if self.root._conceptTree==None:
+            self.root._conceptTree = ConceptTree(self.root, concepts)
+            self.root.addView(concepts, self.root._conceptTree.outerWidget, "concepts")
 
     def _handleTagTypeDialog(self, tagType):
         dialog = TagTypeDialog(tagType)
@@ -88,6 +96,7 @@ class ProjectTree(BaseWidget):
                 project.astModel = dialog.astModel
                 project.model = basic.BasicModel(project.astModel)
             project.sourceDir = dialog.sourceDir
+
 
 #    @thread.threaded                
 #    def _astFileChanged(self, filename):

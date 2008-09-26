@@ -4,14 +4,17 @@ import logging
 LOG=logging.getLogger('project')
 from common import FINE, FINER, FINEST
 
-import gtk
-import xmltool
 from astvis import event, gtkx, action, core
 from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
 from astvis.diagram import DiagramList
 from astvis.widgets.tags import TaggedObjectsList
 from astvis.calldiagram import CallDiagram
+from astvis.transfer import externalize, internalize
+
+import gtk
+import xmltool
+import uuid
 
 def readASTModel(filename):
     """load xml file
@@ -64,8 +67,8 @@ class TagTypeList(ObservableList):
         list.__init__(self)
         self.project = project
 
-    def __hash__(self,obj):
-        return object.__hash__(self,obj)
+    def __hash__(self):
+        return object.__hash__(self)
 
     def __eq__(self, obj):
         return self is obj
@@ -228,24 +231,24 @@ class TagDict(ObservableDict):
             if hasattr(obj,'parent') and obj.parent!=None:
                 self._modifyCallTags(obj.parent, obj, added, removed)
 
-class ConceptList(ObservableList):
+class Concepts(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()
 
-    name = "Concepts"
-    __gtkmodel__.appendAttribute('name')    
+    name = "concepts"
+    __gtkmodel__.appendAttribute('name')
 
     def __init__(self, project):
-        list.__init__(self)
+        ObservableList.__init__(self)
         self.project = project
 
-    def __hash__(self,obj):
-        return object.__hash__(self,obj)
+    def __hash__(self):
+        return object.__hash__(self)
 
     def __eq__(self, obj):
         return self is obj
         
     def __str__(self):
-        return "<ConceptList size=%s, project=%s>" % (len(self), self.project)
+        return "<Concepts size=%s, project=%s>" % (len(self), self.project)
 
 class Project(object):
     objClasses = [ast.File, ast.ProgramUnit, ast.Subprogram]
@@ -291,7 +294,9 @@ class Project(object):
 
     __gtkmodel__.appendChild('concepts')
 
-    def __init__(self, projectFileName=None):
+    def __init__(self, root, projectFileName=None):
+        self.root = root
+        self._id = uuid.uuid1()
         self._name = "(unnamed)"
         self.sourceDir = None
         self._astModel = None #: ast model
@@ -299,6 +304,16 @@ class Project(object):
         self._diagrams = DiagramList(self) #: diagrams
         self._tagTypes = TagTypeList(self) #: tag types
         self._tags = TagDict(self) #: object -> set<tagType>()
-        self.concepts = ConceptList(self)
+        self.concepts = Concepts(self)
 
-        
+    def externalize(self):
+        return self._id, externalize(self.root)
+
+    @staticmethod
+    def internalize(data):
+        id, root = data[0], internalize(data[1])
+        projects = filter(lambda x: x._id==id, root.projects)
+        if projects:
+            return projects[0]
+        else:
+            raise LookupError("Projects with id=%s not found" % id)

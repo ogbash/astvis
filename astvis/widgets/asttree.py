@@ -132,13 +132,17 @@ class AstTree(BaseWidget):
 
         self.view.connect("key-press-event", self._keyPress, None)
         self.view.connect("button-press-event", self._buttonPress)
-        self.view.get_selection().connect("changed", self._selectionChanged, None)        
+        self.view.get_selection().connect("changed", self._selectionChanged, None)
+        
         self.view.connect("drag-data-get", self._dragDataGet)
         self.view.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, 
                 [(INFO_TEXT.name, 0, INFO_TEXT.number),
                  (INFO_OBJECT_PATH.name, 0, INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)
+        
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
+        import gobject
+        print '---', gobject.type_interfaces(self.model)
         self.view.set_model(self.model)
                 
         event.manager.subscribeClass(self._objectChanged, ast.ASTObject)                

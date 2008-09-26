@@ -1,5 +1,5 @@
 from astvis import widgets
-from astvis.project import TagTypeList, DiagramList, TagType, ConceptList
+from astvis.project import TagTypeList, DiagramList, TagType, Concepts
 from astvis.calldiagram import CallDiagram
 from astvis.generaldiagram import GeneralDiagram
 from astvis import model
@@ -34,14 +34,15 @@ class ProjectService(object):
         dialog = TaggedObjectsList(tag, objs, root=context.root)
         dialog.run()
 
-    @action.Action('new-concept', 'New concept', targetClass=ConceptList, contextClass=widgets.ProjectTree)
-    def newConcept(self, conceptList, context):
+    @action.Action('new-concept', 'New concept', contextClass=widgets.ConceptTree)
+    def newConcept(self, obj, context):
+        conceptList = context.concepts
         dialog = widgets.NewConceptDialog(['activity','data'])
         if dialog.run()>0:
             if dialog.conceptType=='activity':
-                concept = model.concept.Activity()
+                concept = model.concept.Activity(conceptList.project)
             elif dialog.conceptType=='data':
-                concept = model.concept.Data()
+                concept = model.concept.Data(conceptList.project)
             else:
                 raise "Unknown concept type: %s" % dialog.concepType
 

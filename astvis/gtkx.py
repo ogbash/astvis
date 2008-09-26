@@ -406,6 +406,19 @@ class PythonTreeModel(gtk.GenericTreeModel):
             parent = data.parentData.object
         return parent
 
+    
+    def row_draggable(path):
+        print 'a'
+        return True
+    
+    def drag_data_delete(path):
+        print 'b'
+        return False
+        
+    def drag_data_get(path, selection_data):
+        print selection_data.target
+        return False
+
 def connectTreeView(treeView, pythonTreeModel):
     columns = pythonTreeModel._columns
     

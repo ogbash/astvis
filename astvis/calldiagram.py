@@ -15,6 +15,9 @@ from astvis import core
 from astvis import gtkx
 
 import gaphas
+import gtk
+import pickle
+import cairo
 
 class DisconnectHandle(object):
 
@@ -116,7 +119,33 @@ class CallDiagram(diagram.Diagram):
                     
     def __setstate__(self, state):
         self.__dict__.update(state)
-        event.manager.subscribeClass(self._notify, ast.ASTObject)        
+        event.manager.subscribeClass(self._notify, ast.ASTObject)
+
+
+    def setupView(self, view):
+        view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
+                [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
+                gtk.gdk.ACTION_COPY)
+        view.connect("drag-data-received", self._dragDataRecv)
+
+    def _dragDataRecv(self, widget, context, x, y, data, info, timestamp):
+        LOG.debug("GTK DnD data_recv with info=%d"%info)
+        if info==INFO_OBJECT_PATH.number:
+            clazz, path = pickle.loads(data.data)
+            if clazz==ast.ProgramUnit or clazz==ast.Subprogram:
+                # get canvas coordinates
+                m = cairo.Matrix(*widget.matrix)
+                m.invert()
+                cx, cy = m.transform_point(x,y)
+                # add item
+                obj = self.project.astModel.getObjectByPath(path)
+                item = self.add(obj, cx,cy)
+                context.drop_finish(True, timestamp)
+            else:
+                context.drop_finish(False, timestamp)                
+        else:
+            context.drop_finish(False, timestamp)
+
 
 def _draw_head(context):
     cr = context.cairo
