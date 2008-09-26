@@ -7,16 +7,17 @@ from astvis import diagram
 from astvis import gtkx
 from astvis import event
 from astvis.model import concept
-from gaphasx import EllipseItem, RectangleItem
+from gaphasx import RoundedRectangleItem, RectangleItem
 from astvis.transfer import internalize
 
 import gtk
 import pickle
+import cairo
 
 class ItemFactory(diagram.ItemFactory):
     def getDiagramItem(self, obj):
         if isinstance(obj, concept.Activity):
-            item = ActivityItem(obj.name)
+            item = ActivityItem(obj)
             item.object = obj
             return item
         elif isinstance(obj, concept.Data):
@@ -51,14 +52,23 @@ class GeneralDiagram(diagram.Diagram):
         if info==INFO_PROJECTS_ATTRPATH.number:
             attrpath = pickle.loads(data.data)
             obj = internalize(attrpath)
-            print obj
+            if obj!=None:
+                # get canvas coordinates
+                m = cairo.Matrix(*widget.matrix)
+                m.invert()
+                cx, cy = m.transform_point(x,y)
+                # add item
+                item = self.add(obj, cx,cy)
+                context.drop_finish(True, timestamp)
+            else:
+                context.drop_finish(False, timestamp)                
+        else:
+            context.drop_finish(False, timestamp)
 
-
-
-class ActivityItem(EllipseItem):
+class ActivityItem(RoundedRectangleItem):
     def __init__(self, obj):
-        EllipseItem.__init__(self, obj.name)
+        RoundedRectangleItem.__init__(self, obj.name)
         self.object = obj
 
     def draw(self, context):
-        super(SubprogramItem, self).draw(context)
+        super(ActivityItem, self).draw(context)

@@ -1,5 +1,6 @@
 import gaphas
 import math
+
 from gaphas.matrix import Matrix
 from gaphas.canvas import CanvasProjection
 from gaphas.constraint import LineConstraint
@@ -77,6 +78,38 @@ class NamedItem(gaphas.item.Item):
     def draw(self, context):
         cr = context.cairo
         gaphas.util.text_center(cr, 0, 0, self.name)
+
+
+class RoundedRectangleItem(NamedItem):
+
+    def draw(self, context):
+        super(RoundedRectangleItem, self).draw(context)
+
+        c = context.cairo
+
+        if context.selected:
+            c.set_source_rgba(0,0,1,1)
+        elif context.hovered:
+            c.set_source_rgba(0.5,0.5,1,1)
+        else:
+            c.set_source_rgba(0.,0.,0.)
+
+        d = 8
+        w = self.w+16
+        h = self.h+16
+
+        pi = math.pi
+        c.move_to(-w/2, -h/2+d)
+        c.arc(-w/2+d, -h/2+d, d, pi, 1.5 * pi)
+        c.line_to(w/2-d, -h/2)
+        c.arc(w/2-d, -h/2+d, d, 1.5 * pi, 0)
+        c.line_to(w/2, h/2-d)
+        c.arc(w/2-d, h/2-d, d, 0, 0.5 * pi)
+        c.line_to(-w/2+d, h/2)
+        c.arc(-w/2+d, h/2-d, d, 0.5 * pi, pi)
+        c.close_path()
+
+        c.stroke()
 
 class EllipseItem(NamedItem):
     "Ellipse item with the name inside."
