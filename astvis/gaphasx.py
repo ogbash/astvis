@@ -58,11 +58,31 @@ def _side(handle, glued, view, item):
     assert False
 
 
-class EllipseItem(gaphas.item.Item):
+class NamedItem(gaphas.item.Item):
+    "Item with the name"
+
+    def __init__(self, name):
+        gaphas.item.Item.__init__(self)
+        self.name = name
+        self.w = 1; self.h = 1
+
+    def _calculate_text_width(self, context):
+        cr = context.cairo
+        self.w, self.h = gaphas.util.text_extents(cr, self.name)
+        self.w, self.h = self.w, self.h
+
+    def pre_update(self, context):
+        self._calculate_text_width(context)
+
+    def draw(self, context):
+        cr = context.cairo
+        gaphas.util.text_center(cr, 0, 0, self.name)
+
+class EllipseItem(NamedItem):
     "Ellipse item with the name inside."
 
     def __init__(self, name):
-        super(EllipseItem, self).__init__()
+        super(EllipseItem, self).__init__(name)
         handle = gaphas.item.Handle(movable=False)
         handle.visible = False
         self._handles.append(handle)
@@ -71,15 +91,9 @@ class EllipseItem(gaphas.item.Item):
         self.w = 1; self.h = 1
         self.color = (0,0,0,1)
 
-    def _calculate_width(self, context):
-        cr = context.cairo
-        self.w, self.h = gaphas.util.text_extents(cr, self.name)
-        self.w, self.h = self.w+30, self.h+20
-
-    def pre_update(self, context):
-        self._calculate_width(context)
-
     def draw(self, context):
+        super(EllipseItem, self).draw(context)
+        
         cr = context.cairo
         cr.save()
         if context.selected:
@@ -88,9 +102,8 @@ class EllipseItem(gaphas.item.Item):
             cr.set_source_rgba(0.5,0.5,1,1)
         else:
             cr.set_source_rgba(*self.color)
-        gaphas.util.path_ellipse(cr, 0, 0, self.w, self.h)
+        gaphas.util.path_ellipse(cr, 0, 0, self.w+20, self.h+20)
         cr.stroke()
-        gaphas.util.text_center(cr, 0, 0, self.name)
         cr.restore()
 
     def point(self, x, y):
@@ -104,41 +117,32 @@ class EllipseItem(gaphas.item.Item):
         return (distance, point)
 
     def intersect(self, alpha):
-        radius = math.pow(math.cos(alpha)/(self.w/2.), 2) + math.pow(math.sin(alpha)/(self.h/2.), 2)
+        radius = math.pow(math.cos(alpha)/((self.w+20)/2.), 2) + math.pow(math.sin(alpha)/((self.h+20)/2.), 2)
         radius = 1/math.pow(radius, 0.5)
         point = (math.cos(alpha)*radius, math.sin(alpha)*radius)
         return (radius, point)
 
-class RectangleItem(gaphas.item.Item):
+class RectangleItem(NamedItem):
     "Rectangle item with the name inside."
 
     def __init__(self, name):
-        super(RectangleItem, self).__init__()
+        super(RectangleItem, self).__init__(name)
         handle = gaphas.item.Handle(movable=False)
         handle.visible = False
         self._handles.append(handle)
         self.center = handle
-        self.name = name
-        self.w = 1; self.h = 1
-
-    def _calculate_width(self, context):
-        cr = context.cairo
-        self.w, self.h = gaphas.util.text_extents(cr, self.name)
-        self.w, self.h = self.w+20, self.h+10
-
-    def pre_update(self, context):
-        self._calculate_width(context)
 
     def draw(self, context):
+        super(RectangleItem, self).draw(context)
+        
         cr = context.cairo
         cr.save()
         if context.selected:
             cr.set_source_rgba(0,0,1,1)
         elif context.hovered:
             cr.set_source_rgba(0.5,0.5,1,1)
-        cr.rectangle(-self.w/2, -self.h/2, self.w, self.h)        
+        cr.rectangle(-self.w/2-5, -self.h/2-5, self.w+10, self.h+10)
         cr.stroke()
-        gaphas.util.text_center(cr, 0, 0, self.name)
 
     def point(self, x, y):
         return 0
@@ -152,7 +156,7 @@ class RectangleItem(gaphas.item.Item):
 
     def intersect(self, alpha):
         v = (math.cos(alpha), math.sin(alpha))
-        point = _point_on_rectangle((-self.w/2, -self.h/2, self.w, self.h), v)
+        point = _point_on_rectangle((-self.w/2-5, -self.h/2-5, self.w+10, self.h+10), v)
         return (_vec_length(point), point)
 
 
