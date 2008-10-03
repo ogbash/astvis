@@ -11,6 +11,7 @@ from astvis.model import ast
 from astvis import event, project, gtkx
 from astvis import action
 from astvis.widgets.base import BaseWidget
+
 import gtk
 import pickle
 

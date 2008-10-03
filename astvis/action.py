@@ -12,7 +12,7 @@ import types
 class Action(object):
     "Logical action that is used as a template for the GTK actions."
     def __init__(self, name, label = None, tooltip = None, icon = None,
-            targetClass=None, contextClass=None, sensitivePredicate=None):
+                 targetClass=None, contextClass=None, sensitivePredicate=None):
         self.name = name
         self.label = label or name
         self.tooltip = tooltip
@@ -37,14 +37,18 @@ class ActionGroup(object):
     
     @param actionFilters: list of action filters
     """
-    def __init__(self, manager, groupName, context, contextAdapter, actionFilters=[{}]):
+    def __init__(self, manager, groupName, context, contextAdapter, actionFilters=[{}], radioPrefix=None):
         self.manager = manager #: host manager
         self.name = groupName #: group name
         self.context = context #: widget or other action context
         self.contextAdapter = contextAdapter #: function to extract target from context
         self.actionFilters = actionFilters #: filters for actions to include in this group
+        self.radioPrefix = radioPrefix #: action name prefix for the radio group
+
         self.gtkgroup = gtk.ActionGroup(groupName) #: corresponding GTK group
         self.gtkactions = {} #: action name -> GTK action
+        self.radioGroup = None
+        self.radioActions = []
 
     def _filterAcceptsAction(self, action, actionFilter):
         "Check that if all conditions in the filter hold"
@@ -52,7 +56,7 @@ class ActionGroup(object):
         if actionFilter.has_key('category') and not action.name.startswith(actionFilter['category']):
             if LOG.isEnabledFor(FINEST):
                 LOG.log(FINEST, "%s is not in the category '%s'" % (action, actionFilter['category']))
-            return False        
+            return False
 
         # check target classes
         if actionFilter.has_key('targetClasses') and action.targetClass!=None:
@@ -66,6 +70,11 @@ class ActionGroup(object):
             
     def acceptsAction(self, action):
         "Checks that at least one filter for the action holds."
+
+        # check group prefix
+        if self.radioPrefix!=None:
+            if action.name.startswith(self.radioPrefix):
+                return True
 
         # check that action required context is satisfied
         if action.contextClass!=None:
@@ -103,7 +112,16 @@ class ActionGroup(object):
                 gtkaction.props.sensitive = True         
         
     def addAction(self, action):
-        gtkaction = gtk.Action(action.name, action.label, action.tooltip, action.icon)
+        if self.radioPrefix==None:
+            gtkaction = gtk.Action(action.name, action.label, action.tooltip, action.icon)
+        else:
+            gtkaction = gtk.RadioAction(action.name, action.label, action.tooltip, action.icon, len(self.radioActions))
+            self.radioActions.append(action)
+            if self.radioGroup==None:
+                self.radioGroup=gtkaction
+            else:
+                gtkaction.set_group(self.radioGroup)
+        
         gtkaction.connect("activate", self._activate)
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Adding gtk instance of %s with context %s" % (action, self.context))
@@ -157,13 +175,13 @@ class ActionManager(object):
         self._groups[groupName].append(group)    
         
     def registerActionService(self, service):
-        "Collects actions of action service and "
+        "Collects actions of action service."
         if type(service) not in [types.ModuleType]:
             clazz = type(service)
         else:
             clazz = service
         actions = {} #: action -> service method
-        
+
         for attrname in dir(clazz):
             attr = getattr(clazz, attrname)
             if hasattr(attr, '__action__'):
@@ -176,11 +194,11 @@ class ActionManager(object):
         self._services.append(actions)
         return actions
 
-    def createActionGroup(self, groupName, context, contextAdapter=None, actionFilters=[{}]):
+    def createActionGroup(self, groupName, context, contextAdapter=None, **kvargs):
         "Creates new group and fills it with gtk actions"
         LOG.debug('Creating action group "%s" with context %s', groupName, context)
                 
-        group = ActionGroup(self, groupName, context, contextAdapter, actionFilters=actionFilters)
+        group = ActionGroup(self, groupName, context, contextAdapter, **kvargs)
         for action in self._actions.itervalues():
             if group.acceptsAction(action):            
                 group.addAction(action)

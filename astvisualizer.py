@@ -90,6 +90,9 @@ class MainWindow(object):
         self.consoleWindow.add(pyconsole)
         #self.consoleWindow.show_all()
 
+        self.toolbox = widgets.DiagramItemToolbox(self.wTree, self)
+        
+
     def externalize(self):
         return id(self)
 
@@ -200,6 +203,20 @@ class MainWindow(object):
         self.views[diagram] = view
         self.notebook.append_page(view, gtk.Label('diagram'))
 
+    def getDiagram(self):
+        "Return current shown diagram."
+        page = self.getCurrentPage()
+        if isinstance(page, gaphas.view.GtkView):
+            diagrams = filter(lambda x: x[1]==page, self.views.items())
+            return diagrams and diagrams[0][0] or None
+        return None
+
+    def getCurrentPage(self):
+        i = self.notebook.get_current_page()
+        if i<0:
+            return None
+        page = self.notebook.get_nth_page(i)
+        return page
         
     def openObjectList(self):
         lst = widgets.ObjectList()

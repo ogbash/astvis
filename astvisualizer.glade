@@ -148,21 +148,50 @@
                     <property name="scrollable">True</property>
                     <property name="group_id">1</property>
                     <child>
-                      <placeholder/>
+                      <widget class="GtkVBox" id="diagram-item-toolbox-outer">
+                        <property name="visible">True</property>
+                        <child>
+                          <widget class="GtkHButtonBox" id="diagram-item-toolbox">
+                            <property name="visible">True</property>
+                            <property name="homogeneous">True</property>
+                            <property name="layout_style">GTK_BUTTONBOX_START</property>
+                            <child>
+                              <widget class="GtkToggleButton" id="button-toolbox-item-flow">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="label" translatable="yes">flow</property>
+                                <property name="response_id">0</property>
+                              </widget>
+                            </child>
+                            <child>
+                              <widget class="GtkToggleButton" id="button-toolbox-item-use">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="label" translatable="yes">use</property>
+                                <property name="response_id">0</property>
+                              </widget>
+                              <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </widget>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                          </packing>
+                        </child>
+                      </widget>
                     </child>
                     <child>
-                      <placeholder/>
+                      <widget class="GtkLabel" id="label16">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">items</property>
+                      </widget>
                       <packing>
                         <property name="type">tab</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                      <packing>
-                        <property name="type">tab</property>
+                        <property name="tab_fill">False</property>
                       </packing>
                     </child>
                   </widget>
@@ -296,8 +325,9 @@
   </widget>
   <widget class="GtkWindow" id="widgets_window">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+    <property name="window_position">GTK_WIN_POS_CENTER</property>
     <child>
-      <widget class="GtkNotebook" id="notebook2">
+      <widget class="GtkNotebook" id="diagram-items">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>

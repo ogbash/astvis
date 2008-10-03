@@ -9,4 +9,4 @@ from concepttree import ConceptTree
 from codeview import CodeView
 from tags import *
 from concepts import NewConceptDialog
-from diagrams import NewDiagramDialog
+from diagrams import NewDiagramDialog, DiagramItemToolbox
