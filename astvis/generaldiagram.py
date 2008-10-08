@@ -9,6 +9,7 @@ from astvis import event
 from astvis.model import concept
 from gaphasx import RoundedRectangleItem, RectangleItem
 from astvis.transfer import internalize
+from gaphas.item import Line
 
 import gtk
 import pickle
@@ -24,7 +25,9 @@ class ItemFactory(diagram.ItemFactory):
             item= RectangleItem(obj.name)
             item.object = obj
             return item
-
+        elif isinstance(obj, concept.Flow):
+            item = Line()
+            return item
 
 class GeneralDiagram(diagram.Diagram):
 
@@ -72,3 +75,6 @@ class ActivityItem(RoundedRectangleItem):
 
     def draw(self, context):
         super(ActivityItem, self).draw(context)
+
+
+    

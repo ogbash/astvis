@@ -43,6 +43,9 @@ class Diagram(object):
         self._canvas.add(item)
         item.matrix.translate(x,y)            
         self._canvas.update_matrix(item)
+
+    def getItem(self, obj):
+        return self._items.get(obj, None)
     
     def remove(self, obj):
         if self._items.has_key(obj):

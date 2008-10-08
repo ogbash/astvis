@@ -25,3 +25,6 @@ class Data(Concept):
     def __init__(self, project):
         Concept.__init__(self, project)
         self.name = "(noname)"
+
+class Flow:
+    pass

@@ -1,7 +1,9 @@
 
 from astvis import action
+from astvis.model import concept
 
 import gtk
+import gaphas
 
 gladeFile='astvisualizer.glade'
 
@@ -54,10 +56,15 @@ class DiagramItemToolbox(object):
     def item_flow(self, target, context):
         diagram = self.root.getDiagram()
         view = self.root.views[diagram]
-        view.tool = PlacementTool()
+        def add():
+            obj=concept.Flow()
+            diagram.add(objty)
+            return diagram.getItem(obj)
+            
+        view.tool = gaphas.tool.PlacementTool(add, gaphas.tool.HandleTool(), 0)
 
     @action.Action('toolbox-item-use', 'use')
     def item_use(self, target, context):
         diagram = self.root.getDiagram()
         view = self.root.views[diagram]
-        view.tool = PlacementTool()
+        view.tool = gaphas.PlacementTool()
