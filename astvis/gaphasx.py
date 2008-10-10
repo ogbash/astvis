@@ -1,6 +1,7 @@
-import gaphas
 import math
 
+import gaphas
+import gaphas.util
 from gaphas.matrix import Matrix
 from gaphas.canvas import CanvasProjection
 from gaphas.constraint import LineConstraint
@@ -158,6 +159,9 @@ class EllipseItem(NamedItem):
 class RectangleItem(NamedItem):
     "Rectangle item with the name inside."
 
+    PADX=10
+    PADY=10
+
     def __init__(self, name):
         super(RectangleItem, self).__init__(name)
         handle = gaphas.item.Handle(movable=False)
@@ -174,7 +178,7 @@ class RectangleItem(NamedItem):
             cr.set_source_rgba(0,0,1,1)
         elif context.hovered:
             cr.set_source_rgba(0.5,0.5,1,1)
-        cr.rectangle(-self.w/2-5, -self.h/2-5, self.w+10, self.h+10)
+        cr.rectangle(-(self.w+self.PADX)/2, -(self.h+self.PADY)/2, self.w+self.PADX, self.h+self.PADY)
         cr.stroke()
 
     def point(self, x, y):
@@ -189,7 +193,7 @@ class RectangleItem(NamedItem):
 
     def intersect(self, alpha):
         v = (math.cos(alpha), math.sin(alpha))
-        point = _point_on_rectangle((-self.w/2-5, -self.h/2-5, self.w+10, self.h+10), v)
+        point = _point_on_rectangle((-(self.w+self.PADX)/2, -(self.h+self.PADY)/2, self.w+self.PADX, self.h+self.PADY), v)
         return (_vec_length(point), point)
 
 

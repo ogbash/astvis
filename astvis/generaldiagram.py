@@ -10,6 +10,7 @@ from astvis.model import concept
 from gaphasx import RoundedRectangleItem, RectangleItem
 from astvis.transfer import internalize
 from gaphas.item import Line
+from gaphas.connector import PointPort, Handle
 
 import gtk
 import pickle
@@ -22,11 +23,11 @@ class ItemFactory(diagram.ItemFactory):
             item.object = obj
             return item
         elif isinstance(obj, concept.Data):
-            item= RectangleItem(obj.name)
+            item= DataItem(obj.name)
             item.object = obj
             return item
         elif isinstance(obj, concept.Flow):
-            item = Line()
+            item = FlowLine()
             return item
 
 class GeneralDiagram(diagram.Diagram):
@@ -77,4 +78,25 @@ class ActivityItem(RoundedRectangleItem):
         super(ActivityItem, self).draw(context)
 
 
-    
+class DataItem(RectangleItem):
+
+    def __init__(self, label):
+        RectangleItem.__init__(self, label)
+
+        for hname in ['left','right','top','bottom']:
+            h = Handle()
+            h.movable=False
+            self._handles.append(h)
+            setattr(self,'_%s'%hname,h)
+            self._ports.append(PointPort(h))
+
+    def pre_update(self, context):
+        super(DataItem, self).pre_update(context)
+        self._left.x = -(self.w+self.PADX)/2.0
+        self._right.x = (self.w+self.PADX)/2.0
+        self._top.y = -(self.h+self.PADY)/2.0
+        self._bottom.y = (self.h+self.PADY)/2.0
+
+class FlowLine(Line):
+
+    pass

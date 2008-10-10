@@ -52,13 +52,21 @@ class DiagramItemToolbox(object):
         self.actionGroup = action.manager.createActionGroup('toolbox', context=self, radioPrefix='toolbox-item')
         action.connectWidgetTree(self.actionGroup, self.wTree)
 
+    @action.Action('toolbox-item-arrow', 'arrow')
+    def item_arrow(self, target, context):
+        diagram = self.root.getDiagram()
+        view = self.root.views[diagram]
+            
+        view.tool = gaphas.tool.DefaultTool()
+
+
     @action.Action('toolbox-item-flow', 'flow')
     def item_flow(self, target, context):
         diagram = self.root.getDiagram()
         view = self.root.views[diagram]
         def add():
             obj=concept.Flow()
-            diagram.add(objty)
+            diagram.add(obj)
             return diagram.getItem(obj)
             
         view.tool = gaphas.tool.PlacementTool(add, gaphas.tool.HandleTool(), 0)
@@ -67,4 +75,9 @@ class DiagramItemToolbox(object):
     def item_use(self, target, context):
         diagram = self.root.getDiagram()
         view = self.root.views[diagram]
-        view.tool = gaphas.PlacementTool()
+        def add():
+            obj=concept.Use()
+            diagram.add(obj)
+            return diagram.getItem(obj)
+            
+        view.tool = gaphas.tool.PlacementTool(add, gaphas.tool.HandleTool(), 0)
