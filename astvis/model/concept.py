@@ -28,3 +28,6 @@ class Data(Concept):
 
 class Flow:
     pass
+
+class Use:
+    pass

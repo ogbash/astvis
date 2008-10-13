@@ -1,3 +1,7 @@
+import logging
+from astvis.common import FINE, FINER, FINEST
+LOG = logging.getLogger(__name__)
+
 import math
 
 import gaphas
@@ -63,6 +67,9 @@ def _side(handle, glued, view, item):
 class NamedItem(gaphas.item.Item):
     "Item with the name"
 
+    PADX=10
+    PADY=10
+
     def __init__(self, name):
         gaphas.item.Item.__init__(self)
         self.name = name
@@ -78,7 +85,11 @@ class NamedItem(gaphas.item.Item):
 
     def draw(self, context):
         cr = context.cairo
-        gaphas.util.text_center(cr, 0, 0, self.name)
+        cr.save()
+        try:
+            gaphas.util.text_center(cr, 0, 0, self.name)
+        finally:
+            cr.restore()
 
 
 class RoundedRectangleItem(NamedItem):
@@ -96,8 +107,8 @@ class RoundedRectangleItem(NamedItem):
             c.set_source_rgba(0.,0.,0.)
 
         d = 8
-        w = self.w+16
-        h = self.h+16
+        w = self.w+self.PADX
+        h = self.h+self.PADY
 
         pi = math.pi
         c.move_to(-w/2, -h/2+d)
@@ -136,7 +147,7 @@ class EllipseItem(NamedItem):
             cr.set_source_rgba(0.5,0.5,1,1)
         else:
             cr.set_source_rgba(*self.color)
-        gaphas.util.path_ellipse(cr, 0, 0, self.w+20, self.h+20)
+        gaphas.util.path_ellipse(cr, 0, 0, self.w+self.PADX, self.h+self.PADY)
         cr.stroke()
         cr.restore()
 
@@ -158,9 +169,6 @@ class EllipseItem(NamedItem):
 
 class RectangleItem(NamedItem):
     "Rectangle item with the name inside."
-
-    PADX=10
-    PADY=10
 
     def __init__(self, name):
         super(RectangleItem, self).__init__(name)
@@ -270,10 +278,10 @@ class ConnectingTool(gaphas.tool.HandleTool):
             try:
                 view.canvas.solver.remove_constraint(handle._connect_constraint)
             except KeyError:
-                print 'constraint was already removed for', item, handle
+                LOG.warn('constraint was already removed for', item, handle)
                 pass # constraint was alreasy removed
             else:
-                print 'constraint removed for', item, handle
+                LOG.debug('constraint removed for', item, handle)
             handle._connect_constraint = None
             handle.connected_to = None
             # Remove disconnect handler:

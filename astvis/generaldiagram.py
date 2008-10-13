@@ -10,7 +10,7 @@ from astvis.model import concept
 from gaphasx import RoundedRectangleItem, RectangleItem
 from astvis.transfer import internalize
 from gaphas.item import Line
-from gaphas.connector import PointPort, Handle
+from gaphas.connector import PointPort, LinePort, Handle
 
 import gtk
 import pickle
@@ -74,9 +74,24 @@ class ActivityItem(RoundedRectangleItem):
         RoundedRectangleItem.__init__(self, obj.name)
         self.object = obj
 
+        for hname in ['left']:
+            h_from = Handle(movable=False)
+            self._handles.append(h_from)
+            setattr(self,'_%s_from'%hname,h_from)
+            h_to = Handle(movable=False)
+            self._handles.append(h_to)
+            setattr(self,'_%s_to'%hname,h_to)
+            self._ports.append(LinePort(h_from, h_to))
+
     def draw(self, context):
         super(ActivityItem, self).draw(context)
 
+    def pre_update(self, context):
+        super(ActivityItem, self).pre_update(context)
+        self._left_from.x = -(self.w+self.PADX)/2.0
+        self._left_from.y = -(self.h+self.PADY)/2.0
+        self._left_to.x = -(self.w+self.PADX)/2.0
+        self._left_to.y = +(self.h+self.PADY)/2.0
 
 class DataItem(RectangleItem):
 
@@ -99,4 +114,10 @@ class DataItem(RectangleItem):
 
 class FlowLine(Line):
 
-    pass
+    def draw_head(self, context):
+        cr = context.cairo
+        cr.move_to(0,0)
+        cr.line_to(8,5)
+        cr.move_to(8,-5)
+        cr.line_to(0,0)
+
