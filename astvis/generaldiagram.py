@@ -74,8 +74,9 @@ class ActivityItem(RoundedRectangleItem):
         RoundedRectangleItem.__init__(self, obj.name)
         self.object = obj
 
-        for hname in ['left']:
+        for hname in ['left','right','top','bottom']:
             h_from = Handle(movable=False)
+            h_from.x=-10
             self._handles.append(h_from)
             setattr(self,'_%s_from'%hname,h_from)
             h_to = Handle(movable=False)
@@ -88,10 +89,15 @@ class ActivityItem(RoundedRectangleItem):
 
     def pre_update(self, context):
         super(ActivityItem, self).pre_update(context)
-        self._left_from.x = -(self.w+self.PADX)/2.0
-        self._left_from.y = -(self.h+self.PADY)/2.0
-        self._left_to.x = -(self.w+self.PADX)/2.0
-        self._left_to.y = +(self.h+self.PADY)/2.0
+        for hname, fx, fy, tx, ty in \
+            [('left', -1, -1, -1, 1),
+             ('right', 1, -1, 1, 1),
+             ('top', -1, -1, 1, -1),
+             ('bottom', -1, 1, 1, 1)]:
+            getattr(self, '_%s_from'%hname).x = fx*(self.w+self.PADX)/2.0
+            getattr(self, '_%s_from'%hname).y = fy*(self.h+self.PADY)/2.0
+            getattr(self, '_%s_to'%hname).x = tx*(self.w+self.PADX)/2.0
+            getattr(self, '_%s_to'%hname).y = ty*(self.h+self.PADY)/2.0
 
 class DataItem(RectangleItem):
 

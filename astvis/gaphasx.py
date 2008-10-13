@@ -75,6 +75,11 @@ class NamedItem(gaphas.item.Item):
         self.name = name
         self.w = 1; self.h = 1
 
+        handle = gaphas.item.Handle(movable=False)
+        handle.visible = False
+        self._handles.append(handle)
+        self.center = handle        
+
     def _calculate_text_width(self, context):
         cr = context.cairo
         self.w, self.h = gaphas.util.text_extents(cr, self.name)
@@ -85,14 +90,12 @@ class NamedItem(gaphas.item.Item):
 
     def draw(self, context):
         cr = context.cairo
-        cr.save()
-        try:
-            gaphas.util.text_center(cr, 0, 0, self.name)
-        finally:
-            cr.restore()
+        gaphas.util.text_center(cr, 0, 0, self.name)
 
 
 class RoundedRectangleItem(NamedItem):
+
+    RADIUS=8
 
     def draw(self, context):
         super(RoundedRectangleItem, self).draw(context)
@@ -106,7 +109,7 @@ class RoundedRectangleItem(NamedItem):
         else:
             c.set_source_rgba(0.,0.,0.)
 
-        d = 8
+        d = self.RADIUS
         w = self.w+self.PADX
         h = self.h+self.PADY
 
@@ -128,10 +131,6 @@ class EllipseItem(NamedItem):
 
     def __init__(self, name):
         super(EllipseItem, self).__init__(name)
-        handle = gaphas.item.Handle(movable=False)
-        handle.visible = False
-        self._handles.append(handle)
-        self.center = handle
         self.name = name
         self.w = 1; self.h = 1
         self.color = (0,0,0,1)
@@ -172,10 +171,6 @@ class RectangleItem(NamedItem):
 
     def __init__(self, name):
         super(RectangleItem, self).__init__(name)
-        handle = gaphas.item.Handle(movable=False)
-        handle.visible = False
-        self._handles.append(handle)
-        self.center = handle
 
     def draw(self, context):
         super(RectangleItem, self).draw(context)
@@ -266,8 +261,8 @@ class ConnectingTool(gaphas.tool.HandleTool):
                         i2v = view.get_matrix_i2v(i).transform_point
                         glue_point = i2v(*point)
                         glue_item = i
-                except AttributeError:
-                    pass
+                except AttributeError, e:
+                    LOG.warn(e)
         if glue_point:
             v2i = view.get_matrix_v2i(item).transform_point
             handle.x, handle.y = v2i(*glue_point)
