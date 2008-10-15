@@ -27,6 +27,7 @@ import gaphas
 import gaphas.examples
 import math
 import cPickle as pickle
+import astvis.stock
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
@@ -91,7 +92,10 @@ class MainWindow(object):
         #self.consoleWindow.show_all()
 
         self.toolbox = widgets.DiagramItemToolbox(self.wTree, self)
-        
+        vbox = gtk.VBox()
+        vbox.pack_start(self.toolbox.widget, expand=False)
+        vbox.show_all()
+        self.sidebarNotebook.append_page(vbox, gtk.Label('Items'))
 
     def externalize(self):
         return id(self)

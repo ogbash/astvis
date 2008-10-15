@@ -10,3 +10,4 @@ from codeview import CodeView
 from tags import *
 from concepts import NewConceptDialog
 from diagrams import NewDiagramDialog, DiagramItemToolbox
+from wrapbox import Wrapbox
