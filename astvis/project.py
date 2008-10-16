@@ -317,3 +317,8 @@ class Project(object):
             return projects[0]
         else:
             raise LookupError("Projects with id=%s not found" % id)
+
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['root']
+        return d

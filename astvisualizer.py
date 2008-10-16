@@ -151,6 +151,7 @@ class MainWindow(object):
                 project = pickle.load(file_)
                 file_.close()
                 project.filename = filename
+                project.root = self
                 self._addProject(project)
         finally:
             dialog.destroy()
