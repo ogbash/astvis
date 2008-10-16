@@ -8,6 +8,6 @@ from calltree import CallTree
 from concepttree import ConceptTree
 from codeview import CodeView
 from tags import *
-from concepts import NewConceptDialog
+from concepts import ConceptDialog
 from diagrams import NewDiagramDialog, DiagramItemToolbox
 from wrapbox import Wrapbox

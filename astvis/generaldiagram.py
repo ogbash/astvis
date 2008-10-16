@@ -45,6 +45,8 @@ class GeneralDiagram(diagram.Diagram):
         self.project = project
         self._name = name
 
+        event.manager.subscribeClass(self._notify, concept.Concept)
+
     def setupView(self, view):
         view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
                            [(INFO_PROJECTS_ATTRPATH.name,0,INFO_PROJECTS_ATTRPATH.number)],
@@ -68,6 +70,14 @@ class GeneralDiagram(diagram.Diagram):
                 context.drop_finish(False, timestamp)                
         else:
             context.drop_finish(False, timestamp)
+
+    def _notify(self, obj, ev, args, dargs):
+        if ev is event.PROPERTY_CHANGED and isinstance(obj, concept.Concept):
+            if self._items.has_key(obj):
+                item = self._items[obj]
+                item.name = obj.name
+                self._canvas.request_update(item)
+            
 
 class ActivityItem(RoundedRectangleItem):
     def __init__(self, obj):

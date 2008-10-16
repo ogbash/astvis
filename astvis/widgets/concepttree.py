@@ -39,6 +39,13 @@ class ConceptTree(BaseWidget):
                  (INFO_PROJECTS_ATTRPATH.name, 0, INFO_PROJECTS_ATTRPATH.number)],
                 gtk.gdk.ACTION_COPY)
 
+        event.manager.subscribeClass(self._notify, concept.Concept)
+
+    def _notify(self, obj, ev, args, dargs):
+        if ev is event.PROPERTY_CHANGED and isinstance(obj, concept.Concept):
+            #prop, detail, newval, oldval = args
+            self.__fillTree()
+
     def _dragDataGet(self, widget, context, data, info, timestamp):
         "Returns data for the GTK DnD protocol."
         LOG.debug("GTK DnD dragDataGet with info=%d"%(info,))

@@ -6,6 +6,10 @@ from astvis import model
 from astvis import action
 
 class ProjectService(object):
+
+    conceptTypes = {'activity':model.concept.Activity,
+                    'data':model.concept.Data}
+    
     @action.Action('new-tag-type', 'New tag', targetClass=TagTypeList, contextClass=widgets.ProjectTree)
     def newTagType(self, tagList, context):
         tagList.append(TagType(tagList.project, '(unnamed)'))
@@ -37,7 +41,7 @@ class ProjectService(object):
     @action.Action('new-concept', 'New concept', contextClass=widgets.ConceptTree)
     def newConcept(self, obj, context):
         conceptList = context.concepts
-        dialog = widgets.NewConceptDialog(['activity','data'])
+        dialog = widgets.ConceptDialog(self.conceptTypes)
         if dialog.run()>0:
             if dialog.conceptType=='activity':
                 concept = model.concept.Activity(conceptList.project)
@@ -50,3 +54,12 @@ class ProjectService(object):
                 concept.name = dialog.conceptName
                 
             conceptList.append(concept)
+
+    @action.Action('edit-concept', 'Edit concept', targetClass=model.concept.Concept)
+    def editConcept(self, obj, context):
+        concept = obj
+        dialog = widgets.ConceptDialog(self.conceptTypes, concept=concept)
+        
+        if dialog.run()>0:
+            if dialog.conceptName:
+                concept.name = dialog.conceptName

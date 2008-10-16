@@ -1,7 +1,8 @@
 
+from astvis import event
 from astvis.transfer import externalize, internalize
 
-class Concept:
+class Concept(object):
     "Concept on the concept diagram."
     def __init__(self, project):
         self.project = project
@@ -16,15 +17,23 @@ class Concept:
 
 class Activity(Concept):
 
+    def _setName(self, name): self._name = name
+    name = property(lambda self: self._name, _setName)
+    name = event.Property(name,'name')
+
     def __init__(self, project):
         Concept.__init__(self, project)
-        self.name = "(noname)"
+        self._name = "(noname)"
 
 class Data(Concept):
 
+    def _setName(self, name): self._name = name
+    name = property(lambda self: self._name, _setName)
+    name = event.Property(name,'name')
+
     def __init__(self, project):
         Concept.__init__(self, project)
-        self.name = "(noname)"
+        self._name = "(noname)"
 
 class Flow:
     pass

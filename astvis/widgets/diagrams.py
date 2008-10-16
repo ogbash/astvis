@@ -1,5 +1,5 @@
 
-from astvis import action
+from astvis import action, event
 from astvis.model import concept
 from wrapbox import Wrapbox
 
@@ -56,7 +56,6 @@ class DiagramItemToolbox(object):
                 continue
             button = gtk.ToggleToolButton()
             gtkaction = self.actionGroup.gtkactions[action_.name]
-            print gtkaction
             gtkaction.connect_proxy(button)
             self.widget.add(button)
             
