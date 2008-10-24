@@ -10,11 +10,11 @@ class ProjectService(object):
     conceptTypes = {'activity':model.concept.Activity,
                     'data':model.concept.Data}
     
-    @action.Action('new-tag-type', 'New tag', targetClass=TagTypeList, contextClass=widgets.ProjectTree)
+    @action.Action('project-new-tag-type', 'New tag', targetClass=TagTypeList, contextClass=widgets.ProjectTree)
     def newTagType(self, tagList, context):
         tagList.append(TagType(tagList.project, '(unnamed)'))
 
-    @action.Action('new-diagram', 'New diagram', targetClass=DiagramList, contextClass=widgets.ProjectTree)
+    @action.Action('project-new-diagram', 'New diagram', targetClass=DiagramList, contextClass=widgets.ProjectTree)
     def newDiagram(self, diagrams, context):
         dialog = widgets.NewDiagramDialog(['general','call'])
         if dialog.run()>0:
@@ -38,7 +38,7 @@ class ProjectService(object):
         dialog = TaggedObjectsList(tag, objs, root=context.root)
         dialog.run()
 
-    @action.Action('new-concept', 'New concept', contextClass=widgets.ConceptTree)
+    @action.Action('project-new-concept', 'New concept', contextClass=widgets.ConceptTree)
     def newConcept(self, obj, context):
         conceptList = context.concepts
         dialog = widgets.ConceptDialog(self.conceptTypes)
@@ -55,7 +55,7 @@ class ProjectService(object):
                 
             conceptList.append(concept)
 
-    @action.Action('edit-concept', 'Edit concept', targetClass=model.concept.Concept)
+    @action.Action('concept-edit', 'Edit concept', targetClass=model.concept.Concept)
     def editConcept(self, obj, context):
         concept = obj
         dialog = widgets.ConceptDialog(self.conceptTypes, concept=concept)

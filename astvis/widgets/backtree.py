@@ -49,7 +49,7 @@ class BackCallTree(BaseWidget):
 
     def __init__(self, root, astTree=None):
         BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer',
-                            actionFilters=[{'category':'show-'}])
+                            categories=['show'])
 
         self.root = root
         self.view = self.widget
@@ -128,7 +128,8 @@ class ReferencesList(BaseWidget):
 
     def __init__(self, backCallTree, wTree):
         BaseWidget.__init__(self, 'back_call_tree_refs', outerWidgetName='back_call_tree_outer',
-                            wTree=wTree, actionFilters=[{'category':'show-'}])
+                            wTree=wTree,
+                            categories=['show'])
 
         self.parent = backCallTree
         self.view = self.widget

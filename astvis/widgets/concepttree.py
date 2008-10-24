@@ -16,7 +16,9 @@ import pickle
 class ConceptTree(BaseWidget):
     
     def __init__(self, root, concepts):
-        BaseWidget.__init__(self, 'concept_tree', 'concept_tree_outer')
+        BaseWidget.__init__(self, 'concept_tree', 'concept_tree_outer',
+                            categories=['concept', 'project-new-concept'],
+                            targetClasses=[concept.Concept])
         self.root = root
         self.view = self.widget
         self.concepts = concepts

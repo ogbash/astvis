@@ -5,7 +5,7 @@ LOG = logging.getLogger("projecttree")
 from astvis.common import FINE, FINER, FINEST
 
 from astvis.project import Project, readASTModel, TagTypeList, TagType, Concepts
-from astvis import event, thread, xmlmap, action
+from astvis import event, thread, xmlmap, action, project
 from astvis.model import ast, basic
 from astvis.widgets.base import BaseWidget
 from astvis.widgets.tags import TagTypeDialog
@@ -16,7 +16,9 @@ import gtk
 
 class ProjectTree(BaseWidget):
     def __init__(self, projects, root):
-        BaseWidget.__init__(self, 'project_tree', 'project_tree_outer')
+        BaseWidget.__init__(self, 'project_tree', 'project_tree_outer',
+                            categories=['project', 'diagram', 'concept', 'tag'],
+                            targetClasses=[Project, TagTypeList, TagType, Concepts, project.DiagramList, diagram.Diagram])
         self.view = self.widget
         self.projects = projects
         self.root = root
@@ -33,6 +35,11 @@ class ProjectTree(BaseWidget):
             self.model.append(iProject, ('Basic model', project.model, None))
             
         event.manager.subscribe(self._projectChanged, project)
+
+    def __selectionChanged(self, selection):
+        model, iRow = selection.get_selected()
+        parent, childName, obj = _extractObjectInfo(model, iRow)
+        self.actionGroup.updateActions(obj)
 
     def _projectChanged(self, project, event_, args, dargs):
         if event_ == event.PROPERTY_CHANGED:

@@ -17,7 +17,7 @@ class Action(object):
         self.label = label or name
         self.tooltip = tooltip
         self.icon = icon
-        
+
         self.targetClass = targetClass #: required target class
         self.contextClass = contextClass #: required context class
         self.sensitivePredicate = sensitivePredicate #: given target and context returns if action should be enabled
@@ -35,14 +35,23 @@ class ActionGroup(object):
     Action filter is a dictionary with the following possible key-value pairs:
       - C{'category':categoryName} filters actions with the given prefix in their names
     
-    @param actionFilters: list of action filters
+    @param actionFilter: action filter
     """
-    def __init__(self, manager, groupName, context, contextAdapter, actionFilters=[{}], radioPrefix=None):
+    def __init__(self, manager, groupName, context, contextAdapter, targetClasses=[], categories=[],
+                 actionFilter=None, radioPrefix=None):
         self.manager = manager #: host manager
         self.name = groupName #: group name
         self.context = context #: widget or other action context
         self.contextAdapter = contextAdapter #: function to extract target from context
-        self.actionFilters = actionFilters #: filters for actions to include in this group
+        self.targetClasses = targetClasses
+        if not categories:
+            categories = [groupName]
+        standardFilter = AndFilter(ContextFilter(), TargetFilter(), OneOfCategoriesFilter(categories))
+        if actionFilter:
+            self.filter = AndFilter(standardFilter, actionFilter)
+        else:
+            self.filter = standardFilter
+        
         self.radioPrefix = radioPrefix #: action name prefix for the radio group
 
         self.gtkgroup = gtk.ActionGroup(groupName) #: corresponding GTK group
@@ -50,46 +59,10 @@ class ActionGroup(object):
         self.radioGroup = None
         self.radioActions = []
 
-    def _filterAcceptsAction(self, action, actionFilter):
-        "Check that if all conditions in the filter hold"
-        # check that action is in a given category
-        if actionFilter.has_key('category') and not action.name.startswith(actionFilter['category']):
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "%s is not in the category '%s'" % (action, actionFilter['category']))
-            return False
-
-        # check target classes
-        if actionFilter.has_key('targetClasses') and action.targetClass!=None:
-            for targetClass in actionFilter['targetClasses']:
-                if issubclass(action.targetClass, targetClass):
-                    return True
-            else:
-                return False
-
-        return True
-            
     def acceptsAction(self, action):
         "Checks that at least one filter for the action holds."
-
-        # check group prefix
-        if self.radioPrefix!=None:
-            if action.name.startswith(self.radioPrefix):
-                return True
-
-        # check that action required context is satisfied
-        if action.contextClass!=None:
-            if isinstance(self.context, action.contextClass):
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "Context %s for action %s is not satisfied (given %s)" 
-                            % (action.contextClass, action, self.context.__class__))
-                return True
-            return False
-
-        # user defined filters
-        for actionFilter in self.actionFilters:
-            if self._filterAcceptsAction(action, actionFilter):
-                return True
-        return False
+        s = self.filter.satisfies(self, action)
+        return s
         
     def updateActions(self, target):
         """Show/hide actions based on the currently selected object.
@@ -100,16 +73,12 @@ class ActionGroup(object):
         # for all group actions
         for name, gtkaction in self.gtkactions.iteritems():
             action = manager.getAction(name)
-            # show/hide action
-            if action.targetClass!=None and not isinstance(target, action.targetClass):
-                gtkaction.props.visible = False
-            else:
-                gtkaction.props.visible = True
             # enable/disable action
-            if action.sensitivePredicate!=None and not action.sensitivePredicate(target, self.context):
-                gtkaction.props.sensitive = False
+            if self.filter.enabled(self, action, target, self.context):
+                gtkaction.set_sensitive(True)
             else:
-                gtkaction.props.sensitive = True         
+                gtkaction.set_sensitive(False)
+        self.manager.ui.ensure_update()
         
     def addAction(self, action):
         if self.radioPrefix==None:
@@ -150,10 +119,11 @@ class ActionGroup(object):
         
 class ActionManager(object):
 
-    def __init__(self):
+    def __init__(self, ui):
         self._actions = {} #: name -> gtk action
         self._groups = {} #: name -> list(gtk action group)
         self._services = [] #: list(dict(action -> service method))
+        self.ui = ui
         
     def getGroups(self, groupName):
         return self._groups[groupName]
@@ -172,7 +142,12 @@ class ActionManager(object):
         if not self._groups.has_key(groupName):
             self._groups[groupName] = []
         LOG.debug('Adding action group %s', groupName)
-        self._groups[groupName].append(group)    
+        
+        if hasattr(group.context, 'UI_DESCRIPTION'):
+            self.ui.add_ui_from_string(group.context.UI_DESCRIPTION)
+        self.ui.insert_action_group(group.gtkgroup, -1)
+
+        self._groups[groupName].append(group)   
         
     def registerActionService(self, service):
         "Collects actions of action service."
@@ -223,7 +198,7 @@ class ActionManager(object):
                 except Exception, e:
                     LOG.warn("Error during %s activation", action, exc_info=e)
 
-manager = ActionManager()
+manager = None
 
 def generateMenu(actionGroup, menu=None, connectedActions = set()):
     if menu==None:
@@ -262,3 +237,100 @@ def connectWidgetTree(actionGroup, wTree):
             connectedActions.add(actionName)
     return connectedActions
 
+
+
+class ActionFilter:
+
+    def satisfies(self, actionGroup, action):
+        raise NotImplementedError('Implement in subclass')
+
+    def enabled(self, actionGroup, action, target, context):
+        raise NotImplementedError('Implement in subclass')
+
+class AndFilter(ActionFilter):
+
+    def __init__(self, *filters):
+        self.filters = filters
+
+    def satisfies(self, actionGroup, action):
+        for actionFilter in self.filters:
+            if not actionFilter.satisfies(actionGroup, action):
+                return False
+        return True
+
+    def enabled(self, actionGroup, action, target, context):
+        for actionFilter in self.filters:
+            if not actionFilter.enabled(actionGroup, action, target, context):
+                return False
+        return True
+
+class OrFilter(ActionFilter):
+
+    def __init__(self, *filters):
+        self.filters = filters
+
+    def satisfies(self, actionGroup, action):
+        for actionFilter in self.filters:
+            if actionFilter.satisfies(actionGroup, action):
+                return True
+        return False
+
+    def enabled(self, actionGroup, action, target, context):
+        for actionFilter in self.filters:
+            if actionFilter.enabled(actionGroup, action, target, context):
+                return True
+        return False
+
+class ContextFilter(ActionFilter):
+
+    def satisfies(self, actionGroup, action):
+        # check that action required context is satisfied
+        if action.contextClass!=None:
+            if not isinstance(actionGroup.context, action.contextClass):
+                return False
+        return True
+
+    def enabled(self, actionGroup, action, target, context):
+        if action.contextClass!=None:
+            return isinstance(context, action.contextClass)
+        return True
+
+class TargetFilter(ActionFilter):
+
+    def satisfies(self, actionGroup, action):
+        # check target class is satisfied
+        if action.targetClass!=None:
+            for targetClass in actionGroup.targetClasses:
+                if issubclass(action.targetClass, targetClass):
+                    break
+            else:
+                return False
+        return True
+
+    def enabled(self, actionGroup, action, target, context):
+        if action.targetClass!=None:
+            return isinstance(target, action.targetClass)
+        return True
+
+class CategoryFilter(ActionFilter):
+
+    def __init__(self, categoryName):
+        self.categoryName = categoryName
+
+    def satisfies(self, actionGroup, action):
+        return action.name.startswith(self.categoryName)
+
+    def enabled(self, actionGroup, action, target, context):
+        return True
+
+class OneOfCategoriesFilter(ActionFilter):
+
+    def __init__(self, categoryNames):
+        filters = [CategoryFilter(name) for name in categoryNames]
+        self.filter = OrFilter(*filters)
+
+    def satisfies(self, actionGroup, action):
+        return self.filter.satisfies(actionGroup, action)
+
+    def enabled(self, actionGroup, action, target, context):
+        return self.filter.enabled(actionGroup, action, target, context)

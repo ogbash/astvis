@@ -41,10 +41,24 @@ from astvis.misc.list import ObservableList
 import astvis.widgets.task
 
 class MainWindow(object):
+    
+    UI_DESCRIPTION = '''
+    <menubar name="MenuBar">
+      <menu action="file">
+        <menuitem action="project-new"/>
+        <separator/>
+        <menuitem action="main-quit"/>
+      </menu>
+    </menubar>
+    <toolbar name="Toolbar">
+      <toolitem action="project-new"/>
+      <separator/>
+    </toolbar>
+    '''
 
     windows = {}
     
-    def __init__(self):
+    def __init__(self, ui):
         MainWindow.windows[id(self)] = self
         self.projects = ObservableList()
         self.files = {} #: opened files (model.File -> gtk.TextView)
@@ -52,12 +66,30 @@ class MainWindow(object):
         
         self.wTree = gtk.glade.XML("astvisualizer.glade", 'main_window')
         self.mainWindow = self.wTree.get_widget("main_window")
-        self.mainWindow.connect("destroy",gtk.main_quit)
-        
-        action.manager.registerActionService(self)
-        self.globalActionGroup = action.manager.createActionGroup('global', self)
-        action.connectWidgetTree(self.globalActionGroup, self.wTree)
+        self.mainWindow.connect("destroy",self._quit)
 
+        ## UI Manager
+        self.ui = ui
+
+        # main action group
+        action.manager.registerActionService(self)
+        self.globalActionGroup = action.manager.createActionGroup('global',
+                                                                  self,
+                                                                  categories = ['main','file','project'])
+        self.globalActionGroup.gtkgroup.add_action(gtk.Action('file', 'File', None, None))
+        #action.connectWidgetTree(self.globalActionGroup, self.wTree)        
+
+        self.globalActionGroup.updateActions(None)
+        
+        self.ui.add_ui_from_string(self.UI_DESCRIPTION)
+        self.menubar = self.ui.get_widget('/MenuBar')
+        self.toolbar = self.ui.get_widget('/Toolbar')
+
+        vbox = self.wTree.get_widget('main_window_header')
+        vbox.pack_start(self.menubar)
+        vbox.pack_start(self.toolbar)
+
+        ## widgets
         self._astTree = None
         self._callTree = None
         self._referenceTree = None # call back tree
@@ -97,6 +129,11 @@ class MainWindow(object):
         vbox.show_all()
         self.sidebarNotebook.append_page(vbox, gtk.Label('Items'))
 
+
+    @Action('main-quit', label='Quit')
+    def _quit(self, obj, context=None):
+        gtk.main_quit()
+
     def externalize(self):
         return id(self)
 
@@ -104,7 +141,7 @@ class MainWindow(object):
     def internalize(data):
         return MainWindow.windows[data]
     
-    @Action('project-new', label='New project', contextClass=widgets.ProjectTree, icon='gtk-new')
+    @Action('project-new', label='New project', icon='gtk-new') #contextClass=widgets.ProjectTree
     def _newProject(self, target, context):
         self._addProject(Project(self))
 
@@ -114,7 +151,8 @@ class MainWindow(object):
         #event.manager.notifyObservers(self.projects, event.PROPERTY_CHANGED, 
         #        (None, event.PC_ADDED, project, None), {'index':len(self.projects)-1})
             
-    @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project)
+    @Action('project-save', label='Save project', icon='gtk-save', targetClass=Project,\
+            sensitivePredicate=lambda x,c: isinstance(x,Project))
     def _saveProject(self, project, context):
         "Save project with all trees and diagrams to disk."
         import gaphas.picklers
@@ -350,6 +388,8 @@ class MainWindow(object):
         self._objectBrowser = Browser('browser', target)
 
 if __name__ == "__main__":
+    ui = gtk.UIManager()
+    action.manager = action.ActionManager(ui)
     from astvis.services import references, tags
     core.registerService('ASTTreeWalker', references.ASTTreeWalker())
     core.registerService('ReferenceResolver', references.ReferenceResolver())
@@ -359,6 +399,7 @@ if __name__ == "__main__":
     action.manager.registerActionService(ProjectService())
     action.manager.registerActionService(CodeService())
     action.manager.registerActionService(widgets)
-    window = MainWindow()
+    window = MainWindow(ui)
+    
     gtk.main()
 
