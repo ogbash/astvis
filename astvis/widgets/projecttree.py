@@ -15,6 +15,22 @@ from astvis import gtkx, diagram
 import gtk
 
 class ProjectTree(BaseWidget):
+    UI_DESCRIPTION = '''
+    <menubar name="MenuBar">
+      <menu action="file">
+        <placeholder name="project">
+          <menuitem action="project-save"/>
+        </placeholder>
+      </menu>
+    </menubar>
+    <toolbar name="Toolbar">
+      <placeholder name="project">
+        <toolitem action="project-save"/>
+      </placeholder>
+      <separator/>
+    </toolbar>
+'''
+
     def __init__(self, projects, root):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer',
                             categories=['project', 'diagram', 'concept', 'tag'],

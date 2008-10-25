@@ -45,13 +45,19 @@ class MainWindow(object):
     UI_DESCRIPTION = '''
     <menubar name="MenuBar">
       <menu action="file">
-        <menuitem action="project-new"/>
+        <placeholder name="project">
+          <menuitem action="project-new"/>
+          <menuitem action="project-open"/>
+        </placeholder>
         <separator/>
         <menuitem action="main-quit"/>
       </menu>
     </menubar>
     <toolbar name="Toolbar">
-      <toolitem action="project-new"/>
+      <placeholder name="project">
+        <toolitem action="project-new"/>
+        <toolitem action="project-open"/>
+      </placeholder>
       <separator/>
     </toolbar>
     '''
@@ -175,7 +181,7 @@ class MainWindow(object):
         finally:
             dialog.destroy()
 
-    @Action('project-open', label='Open project', contextClass=widgets.ProjectTree, )
+    @Action('project-open', label='Open project', icon='gtk-open', contextClass=widgets.ProjectTree, )
     def _openProject(self, widget, context):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
