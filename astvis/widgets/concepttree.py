@@ -14,11 +14,19 @@ import gtk
 import pickle
 
 class ConceptTree(BaseWidget):
+
+    UI_DESCRIPTION='''
+    <popup name="concepttree-popup">
+      <menuitem action="project-new-concept"/>
+      <menuitem action="concept-edit"/>
+    </popup>
+    '''
     
     def __init__(self, root, concepts):
         BaseWidget.__init__(self, 'concept_tree', 'concept_tree_outer',
                             categories=['concept', 'project-new-concept'],
-                            targetClasses=[concept.Concept])
+                            targetClasses=[concept.Concept],
+                            menuName='concepttree-popup')
         self.root = root
         self.view = self.widget
         self.concepts = concepts

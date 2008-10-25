@@ -29,12 +29,22 @@ class ProjectTree(BaseWidget):
       </placeholder>
       <separator/>
     </toolbar>
+
+    <popup name="projecttree-popup">
+      <placeholder name="project">
+        <menuitem action="project-save"/>
+      </placeholder>
+      <separator/>
+      <menuitem action="project-new-tag-type"/>
+      <menuitem action="project-new-diagram"/>
+    </popup>    
 '''
 
     def __init__(self, projects, root):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer',
                             categories=['project', 'diagram', 'concept', 'tag'],
-                            targetClasses=[Project, TagTypeList, TagType, Concepts, project.DiagramList, diagram.Diagram])
+                            targetClasses=[Project, TagTypeList, TagType, Concepts, project.DiagramList, diagram.Diagram],
+                            menuName='projecttree-popup')
         self.view = self.widget
         self.projects = projects
         self.root = root

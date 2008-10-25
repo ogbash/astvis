@@ -104,12 +104,21 @@ Filter.PREDEFINED_FILTERS['show globals'] = Filter([
 
 
 class AstTree(BaseWidget):
+
+    UI_DESCRIPTION='''
+    <popup name="asttree-popup">
+      <menuitem action="show-references"/>
+      <menuitem action="show-calls"/>
+      <menuitem action="ast-follow-call"/>
+      <menuitem action="ast-open-declaration"/>
+    </popup>
+    '''
     
     def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
         BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer',
-                            targetClasses=[ast.ASTObject], categories=['show'],
-                            menuName='object_menu')
+                            targetClasses=[ast.ASTObject], categories=['ast','show'],
+                            menuName='asttree-popup')
         self.root = root
         self.astModel = astModel
         self.model = None #: GTK tree model for the AST tree  
@@ -266,7 +275,7 @@ class AstTree(BaseWidget):
             self.regenerateSidebarTree()
         dialog.destroy()
 
-    @action.Action('follow-call', label='Follow call', sensitivePredicate=
+    @action.Action('ast-follow-call', label='Follow call', sensitivePredicate=
                    lambda x,c: isinstance(x,ast.Call) or isinstance(x,ast.Statement) and x.type=='call')
     def _onFollowCall(self, astObj, context=None):
         astScope = astObj.model.getScope(astObj, original=True)
@@ -281,7 +290,7 @@ class AstTree(BaseWidget):
         file_, line, column = location
         print location
 
-    @action.Action('open-declaration', label='Open declaration', sensitivePredicate=
+    @action.Action('ast-open-declaration', label='Open declaration', sensitivePredicate=
                    lambda x,c: isinstance(x,ast.Call) \
                    or isinstance(x,ast.Statement) and x.type=='call' \
                    or isinstance(x,ast.Reference))

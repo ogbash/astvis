@@ -30,11 +30,15 @@ class BaseWidget(object):
                 **kvargs)
 
         # context menu
+        #if menuName:
+        #    menuwTree = gtk.glade.XML(gladeFile, menuName)
+        #else:
+        #    menuwTree = None
+        #self.contextMenu = action.generateMenuFromGlade(self.actionGroup, menuwTree, menuName)
         if menuName:
-            menuwTree = gtk.glade.XML(gladeFile, menuName)
+            self.contextMenu = self.actionGroup.manager.ui.get_widget("/%s"%menuName)
         else:
-            menuwTree = None
-        self.contextMenu = action.generateMenuFromGlade(self.actionGroup, menuwTree, menuName)
+            self.contextMenu = None
             
         self.widget.connect("button-press-event", self.__buttonPress)
         self.widget.connect_after("popup-menu", self._popupMenu)
@@ -58,8 +62,9 @@ class BaseWidget(object):
         return obj
 
     def _popupMenu(self, widget, time=0):
-        _model, iRow = self.widget.get_selection().get_selected()
-        self.contextMenu.popup(None, None, None, 3, time)
+        if self.contextMenu!=None:
+            _model, iRow = self.widget.get_selection().get_selected()
+            self.contextMenu.popup(None, None, None, 3, time)
 
     def __buttonPress(self, widget, event):
         if event.type==gtk.gdk.BUTTON_PRESS and event.button==3:
