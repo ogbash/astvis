@@ -22,6 +22,12 @@ class ProjectTree(BaseWidget):
           <menuitem action="project-save"/>
         </placeholder>
       </menu>
+
+      <menu action="tools">
+        <placeholder name="other">
+          <menuitem action="show-object-browser"/>
+        </placeholder>
+      </menu>
     </menubar>
     <toolbar name="Toolbar">
       <placeholder name="project">
@@ -37,12 +43,16 @@ class ProjectTree(BaseWidget):
       <separator/>
       <menuitem action="project-new-tag-type"/>
       <menuitem action="project-new-diagram"/>
+      <separator/>
+      <placeholder name="other">
+        <menuitem action="show-object-browser"/>
+      </placeholder>
     </popup>    
 '''
 
     def __init__(self, projects, root):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer',
-                            categories=['project', 'diagram', 'concept', 'tag'],
+                            categories=['project', 'diagram', 'concept', 'tag', 'show'],
                             targetClasses=[Project, TagTypeList, TagType, Concepts, project.DiagramList, diagram.Diagram],
                             menuName='projecttree-popup')
         self.view = self.widget

@@ -141,13 +141,17 @@ class ActionManager(object):
     def addGroup(self, groupName, group):
         if not self._groups.has_key(groupName):
             self._groups[groupName] = []
-        LOG.debug('Adding action group %s', groupName)
-        
+
+        LOG.debug('Adding action group %s with actions %s', groupName, group.gtkactions.keys())
         if hasattr(group.context, 'UI_DESCRIPTION'):
             self.ui.add_ui_from_string(group.context.UI_DESCRIPTION)
         self.ui.insert_action_group(group.gtkgroup, -1)
 
-        self._groups[groupName].append(group)   
+        self._groups[groupName].append(group)
+
+    def bringToFront(self, group):
+        self.ui.remove_action_group(group.gtkgroup)
+        self.ui.insert_action_group(group.gtkgroup, 0)
         
     def registerActionService(self, service):
         "Collects actions of action service."
@@ -212,7 +216,11 @@ def generateMenu(actionGroup, menu=None, connectedActions = set()):
         menuItem = gtkaction.create_menu_item()
         menu.append(menuItem)
     return menu
-    
+
+
+def getMenu(actionGroup, menuName):
+    menu=actionGroup.manager.ui.get_widget("/%s"%menuName)
+    return menu
 
 def generateMenuFromGlade(actionGroup, wTree=None, templateMenuName=None):
     menu = None

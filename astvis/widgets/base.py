@@ -36,11 +36,12 @@ class BaseWidget(object):
         #    menuwTree = None
         #self.contextMenu = action.generateMenuFromGlade(self.actionGroup, menuwTree, menuName)
         if menuName:
-            self.contextMenu = self.actionGroup.manager.ui.get_widget("/%s"%menuName)
+            self.contextMenu = action.getMenu(self.actionGroup, menuName)
         else:
             self.contextMenu = None
             
         self.widget.connect("button-press-event", self.__buttonPress)
+        self.widget.connect("focus-in-event", self._focusIn)
         self.widget.connect_after("popup-menu", self._popupMenu)
         self.widget.get_selection().connect("changed", self.__selectionChanged)
 
@@ -75,6 +76,10 @@ class BaseWidget(object):
         model, iRow = selection.get_selected()
         parent, childName, obj = _extractObjectInfo(model, iRow)
         self.actionGroup.updateActions(obj)
+
+    def _focusIn(self, widget, ev):
+        if self.actionGroup!=None:
+            action.manager.bringToFront(self.actionGroup)
 
     def history_backward(self, widget):
         if self._historyPosition>0:

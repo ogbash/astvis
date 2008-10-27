@@ -106,6 +106,14 @@ Filter.PREDEFINED_FILTERS['show globals'] = Filter([
 class AstTree(BaseWidget):
 
     UI_DESCRIPTION='''
+    <menubar name="MainMenu">
+      <menu action="tools">
+        <placeholder name="other">
+          <menuitem action="show-object-browser"/>
+        </placeholder>
+      </menu>
+    </menubar>
+
     <popup name="asttree-popup">
       <menuitem action="show-references"/>
       <menuitem action="show-calls"/>
@@ -152,8 +160,6 @@ class AstTree(BaseWidget):
                 gtk.gdk.ACTION_COPY)
         
         self.model = gtk.TreeStore(str, object, gtk.gdk.Pixbuf, gtk.gdk.Color)
-        import gobject
-        print '---', gobject.type_interfaces(self.model)
         self.view.set_model(self.model)
                 
         event.manager.subscribeClass(self._objectChanged, ast.ASTObject)                

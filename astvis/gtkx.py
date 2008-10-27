@@ -310,7 +310,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
         except IndexError, e:
             # strange behaviour from GenericTreeModel, it calls this method with (0,)
             #  even when tree is empty, so we have to handle this case
-            LOG.debug(e, exc_info=e)
+            LOG.log(FINER, e, exc_info=e)
             if len(path)==1 and path[0]==0: return None
             else: raise
         for index in path[1:]:

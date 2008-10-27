@@ -52,6 +52,9 @@ class MainWindow(object):
         <separator/>
         <menuitem action="main-quit"/>
       </menu>
+
+      <menu action="tools">
+      </menu>
     </menubar>
     <toolbar name="Toolbar">
       <placeholder name="project">
@@ -83,7 +86,7 @@ class MainWindow(object):
                                                                   self,
                                                                   categories = ['main','file','project'])
         self.globalActionGroup.gtkgroup.add_action(gtk.Action('file', 'File', None, None))
-        #action.connectWidgetTree(self.globalActionGroup, self.wTree)        
+        self.globalActionGroup.gtkgroup.add_action(gtk.Action('tools', 'Tools', None, None))
 
         self.globalActionGroup.updateActions(None)
         
