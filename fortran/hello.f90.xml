@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ASTCollection>
+<file name="hello.f90">
+<program id="Hello">
+<location>
+<begin tokenIndex="0" line="1" column="0"/>
+<end tokenIndex="10" line="5" column="17"/>
+</location>
+<block type="executions">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</block>
+</program>
+</file>
+</ASTCollection>

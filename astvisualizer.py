@@ -31,7 +31,7 @@ import astvis.stock
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
-from astvis.services import ProjectService, CodeService
+from astvis.services import ProjectService, CodeService, OFPService
 from astvis import widgets, diagram
 from astvis.misc import console
 from astvis.model import ast
@@ -54,6 +54,7 @@ class MainWindow(object):
       </menu>
 
       <menu action="tools">
+        <menuitem action="main-generate-ofp-astxml"/>
       </menu>
     </menubar>
     <toolbar name="Toolbar">
@@ -407,6 +408,7 @@ if __name__ == "__main__":
     core.registerService('TagService', tagService)
     action.manager.registerActionService(ProjectService())
     action.manager.registerActionService(CodeService())
+    action.manager.registerActionService(OFPService())
     action.manager.registerActionService(widgets)
     window = MainWindow(ui)
     
