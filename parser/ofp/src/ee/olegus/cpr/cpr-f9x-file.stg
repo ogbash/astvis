@@ -1,0 +1,627 @@
+group cpr-f9x-file;
+
+info_print(args) ::= <<
+print *, cpr_rank, $args$
+
+>>
+
+debug_print(args) ::= <<
+!print *, cpr_rank, $args$
+
+>>
+
+cprmodule() ::= <<
+
+module cpr_requests_m
+  type cpr_request_t
+    integer :: rnumber
+    integer :: rtype ! SEND or RECEIVE
+    integer(1),pointer :: buf(:)
+    integer :: count
+    integer :: mpitype
+    integer :: comm
+    integer :: request
+    integer,pointer :: values(:) ! epoch and mode, piggybacked on ISend
+  end type
+
+  type(cpr_request_t), pointer :: cpr_requests(:)
+  integer :: cpr_requests_size
+contains
+  subroutine cpr_requests_init()
+    allocate(cpr_requests(20))
+    cpr_requests_size = 0
+  end subroutine cpr_requests_init
+  
+  subroutine cpr_requests_add(req)
+  	type(cpr_request_t), intent(in) :: req
+  	type(cpr_request_t), pointer :: old_array(:)
+  	
+  	if(size(cpr_requests)==cpr_requests_size) then
+  	  ! extend array
+  	  old_array => cpr_requests
+  	  allocate(cpr_requests(size(old_array)*2))
+  	  cpr_requests(1:size(old_array)) = old_array
+  	  deallocate(old_array)
+  	endif
+  
+    cpr_requests_size = cpr_requests_size+1
+    cpr_requests(cpr_requests_size) = req
+    !print *, "added", req%rnumber
+    
+  end subroutine cpr_requests_add
+
+  subroutine cpr_requests_take(reqn, success, req)
+    integer, intent(in) :: reqn
+  	type(cpr_request_t), intent(out) :: req
+  	logical, intent(out) :: success
+  	integer :: i
+  
+    do i=1,cpr_requests_size
+      if(cpr_requests(i)%rnumber == reqn) then
+        !print *, "removed", cpr_requests(i)%rnumber
+        success = .TRUE.
+        req = cpr_requests(i)
+        if(i<cpr_requests_size) cpr_requests(i) = cpr_requests(cpr_requests_size)
+        cpr_requests_size = cpr_requests_size-1
+        return
+      endif
+    end do
+    
+    success = .FALSE.
+    !print *, "unsuccessful", reqn
+  end subroutine cpr_requests_take
+
+end module cpr_requests_m
+
+module cpr_m
+  use mpi
+  implicit none
+
+  integer, parameter :: CPR_REQUESTS_TYPE_SEND = 1, CPR_REQUESTS_TYPE_RECV = 2
+  integer,parameter :: CPRS_NORMAL=1, CPRS_SAVE=2, CPRS_RESTORE=3, CPRS_RECOVER=4
+  integer :: cpr_state = CPRS_NORMAL
+  logical :: cpr_docheckpoint = .FALSE. ! request chekpoint process to start
+  logical :: cpr_dorecover = .FALSE.
+  integer :: cpr_fd = 44
+  integer :: cpr_numproc
+  integer :: cpr_rank
+  
+  integer,parameter :: CPRM_RUN=1, CPRM_NONDETLOG=2, CPRM_LATELOG = 3, CPRM_RESTORE=4
+  integer :: cpr_epoch = 1
+  integer :: cpr_mode = CPRM_RUN
+  integer,pointer :: cpr_sendCount(:), cpr_recvCount(:), cpr_earlyRecvCount(:), cpr_lateRecvCount(:), &
+     cpr_otherSendCount(:), cpr_oldRecvCount(:), cpr_oldEarlyRecvCount(:)
+  
+  integer,pointer :: cpr_modes(:)
+
+  integer, parameter :: COLLECTIVES = -1, COLLECTIVES_TAG = 0
+
+  ! control channel
+  integer, parameter :: CPRCT_MODECHANGED = 1, CPRCT_ENDNONDET = 2, CPRCT_SENDCOUNT = 3
+  integer :: cpr_controlComm
+  integer :: cpr_controlRequest
+  integer :: cpr_controlData(2)
+
+  ! temporary help variables
+  integer :: min_epoch, max_epoch 
+  integer,pointer :: cpr_data(:) ! [epoch, mode, messageN] of every(or one) process
+ 
+  interface cpr_save
+  	module procedure cpr_saveIntegerD0, cpr_saveIntegerD1, &
+  	    cpr_saveRealD0, cpr_saveRealD1, &
+  	    cpr_saveRealK8D0, cpr_saveRealK8D1
+  end interface cpr_save
+  
+  interface cpr_restore
+    module procedure cpr_restoreIntegerD0, cpr_restoreIntegerD1, &
+        cpr_restoreRealD0, cpr_restoreRealD1, &
+        cpr_restoreRealK8D0, cpr_restoreRealK8D1
+  end interface cpr_restore
+
+  interface
+    subroutine cprc_restorepointer(p)
+      real(8),pointer :: p(:)
+    end subroutine cprc_restorepointer
+  end interface
+
+contains
+
+  subroutine cpr_init()
+    use cpr_requests_m
+    
+    integer :: ierr
+    
+    call cprc_init(cpr_docheckpoint, cpr_dorecover)
+
+    call cpr_requests_init()
+    
+    if(cpr_dorecover) then
+      call cpr_mpi_init(ierr)
+      call cpr_setState(CPRS_RECOVER)
+    endif
+
+  end subroutine cpr_init
+  
+  subroutine cpr_mpi_init(ierr)
+    
+    integer,intent(out) :: ierr
+    
+    call MPI_Init(ierr)
+
+    call MPI_Comm_size(MPI_COMM_WORLD, cpr_numproc, ierr)
+    call MPI_Comm_rank(MPI_COMM_WORLD, cpr_rank, ierr)
+    
+    allocate(cpr_data(cpr_numproc*3))
+    allocate(cpr_sendCount(0:cpr_numproc-1), cpr_recvCount(0:cpr_numproc-1), &
+      cpr_earlyRecvCount(0:cpr_numproc-1), cpr_lateRecvCount(0:cpr_numproc-1), &
+      cpr_otherSendCount(0:cpr_numproc-1), cpr_oldRecvCount(0:cpr_numproc-1), &
+      cpr_oldEarlyRecvCount(0:cpr_numproc-1))
+    cpr_sendCount = 0
+    cpr_recvCount = 0
+    cpr_earlyRecvCount = 0
+    cpr_lateRecvCount = 0
+    cpr_otherSendCount = -1
+    cpr_oldRecvCount = 0
+    cpr_oldEarlyRecvCount = 0
+    
+    allocate(cpr_modes(0:cpr_numproc-1))
+    cpr_modes = CPRM_RUN
+    
+    call MPI_Comm_dup(MPI_COMM_WORLD, cpr_controlComm, ierr)
+    call MPI_IRecv(cpr_controlData, 2, MPI_INTEGER, MPI_ANY_TAG, MPI_ANY_SOURCE, cpr_controlComm, &
+         cpr_controlRequest, ierr)
+  end subroutine
+
+  !subroutine cpr_finalize(ierr)
+  !end subroutine cpr_finalize
+
+  subroutine cpr_mpi_finalize(ierr)
+    use cpr_requests_m
+    integer, intent(out) :: ierr
+    integer :: reqLeft
+
+	$debug_print("\"sendCount\", cpr_sendCount")$
+	$debug_print("\"recvCount\", cpr_recvCount")$
+	$debug_print("\"requests left\", cpr_requests_size")$
+	
+	call mpi_cancel(cpr_controlRequest, ierr)
+	call mpi_comm_free(cpr_controlComm, ierr)
+	
+	call mpi_finalize(ierr)
+
+  end subroutine cpr_mpi_finalize
+  
+  subroutine cpr_setState(st)
+    
+    integer,intent(in) :: st
+    character(4) :: suffix
+    integer :: cpr_rank, ierr
+
+    call MPI_Comm_rank(MPI_COMM_WORLD, cpr_rank, ierr)
+	write(suffix,FMT="(A,I3.3)") ".", cpr_rank 
+
+    if(st==CPRS_SAVE) then
+      $info_print("\"Opening file for checkpoint\"")$
+      open(cpr_fd, file="data"//suffix//".cpr", FORM='UNFORMATTED')
+    endif
+    if(cpr_state==CPRS_SAVE.and.st/=CPRS_SAVE) then
+      $info_print("\"Closing file for checkpoint\"")$
+      close(cpr_fd)
+      cpr_epoch = cpr_epoch + 1
+      call cpr_setMode(CPRM_NONDETLOG)
+    endif
+    if(st==CPRS_RESTORE.or.st==CPRS_RECOVER) then
+      $info_print("\"Opening file for restore/recover\"")$
+      open(cpr_fd, file="data"//suffix//".cpr",action='READ',position='APPEND',FORM='UNFORMATTED')
+    endif
+    if(cpr_state==CPRS_RESTORE.and.st/=CPRS_RESTORE .or. &
+        cpr_state==CPRS_RECOVER.and.st/=CPRS_RECOVER) then
+      $info_print("\"Closing file for restore/recover\"")$
+      close(cpr_fd)
+    endif
+
+    cpr_state = st
+
+  end subroutine cpr_setState
+  
+  subroutine cpr_setMode(mode)
+    
+    integer,intent(in) :: mode
+    integer :: ierr
+  
+    integer :: controlData(2)
+    integer :: i
+  
+    if(mode==CPRM_NONDETLOG) then
+      controlData = (/cpr_epoch,mode/)
+      call MPI_Send(controlData,2,MPI_INTEGER,0,CPRCT_MODECHANGED,cpr_controlComm,ierr)
+      cpr_oldRecvCount = cpr_recvCount
+      cpr_recvCount = 0
+      cpr_lateRecvCount = 0
+      do i=0,cpr_numproc-1
+        call MPI_Send((/cpr_sendCount(i)/),1,MPI_INTEGER,i,CPRCT_SENDCOUNT,cpr_controlComm,ierr)
+      enddo
+    endif
+
+	if(mode==CPRM_RUN) then
+      cpr_oldEarlyRecvCount = cpr_earlyRecvCount
+      cpr_earlyRecvCount = 0
+    endif
+
+    $info_print("\"Mode transition from \",cpr_mode,\"to\",mode")$
+    cpr_mode = mode
+  end subroutine cpr_setMode
+
+  subroutine cpr_checkControlChannel()
+  
+  logical :: flag
+  integer :: status(MPI_STATUS_SIZE)
+  integer :: ierr, i
+  
+  call MPI_Test(cpr_controlRequest, flag, status, ierr)
+  do while(flag)
+      $info_print("\"Received \", status(MPI_TAG),\"by control channel \", cpr_controlData")$
+      
+      if(cpr_rank==0) then
+        if(status(MPI_TAG)==CPRCT_MODECHANGED) then
+          cpr_modes(status(MPI_SOURCE)) = cpr_controlData(2)
+          if(all(cpr_modes==CPRM_NONDETLOG)) then
+            !print *, "All reached non-det"
+            do i=0,cpr_numproc-1
+              call MPI_Send((/cpr_epoch/), 1, MPI_INTEGER, i, CPRCT_ENDNONDET, cpr_controlComm, ierr)
+            enddo
+          endif
+        endif
+      endif
+      
+      if(status(MPI_TAG)==CPRCT_ENDNONDET) then
+        call cpr_setMode(CPRM_LATELOG)
+      endif
+      
+      if(status(MPI_TAG)==CPRCT_SENDCOUNT) then
+        cpr_otherSendCount(status(MPI_SOURCE)) = cpr_controlData(1)
+        call cpr_checkTransitions(.FALSE.,.FALSE.)
+      endif
+            
+      ! repeat recv
+      call MPI_IRecv(cpr_controlData, 2, MPI_INTEGER, MPI_ANY_TAG, MPI_ANY_SOURCE, cpr_controlComm, &
+         cpr_controlRequest, ierr)
+      call MPI_Test(cpr_controlRequest, flag, status, ierr)
+  enddo
+    
+  end subroutine cpr_checkControlChannel
+  
+  subroutine cpr_checkTransitions(isEarly, isLate)
+    logical, intent(in) :: isEarly, isLate
+    
+    ! early message
+    if(isEarly .and. cpr_mode==CPRM_RUN) then
+      cpr_docheckpoint = .TRUE.
+    endif
+    
+    if(cpr_mode==CPRM_LATELOG) then
+      if(all(cpr_otherSendCount/=-1)) then
+        call cpr_saveMessagesAndEvents()
+        call cpr_setMode(CPRM_RUN)
+        !print *, cpr_rank, "counts", cpr_otherSendCount - (cpr_oldRecvCount+cpr_lateRecvCount-cpr_oldEarlyRecvCount)
+      endif
+    endif
+    
+  end subroutine cpr_checkTransitions
+
+  subroutine cpr_saveMessagesAndEvents()
+    $info_print("\"Saving messages and events\"")$
+  
+    call messages_print()
+    call messages_save(cpr_rank)
+    call messages_clear()
+  end subroutine cpr_saveMessagesAndEvents
+  
+  ! ------------- SAVE and RESTORE subroutines
+
+  subroutine cpr_saveLabel(labelNum)
+    integer, intent(in) :: labelNum
+    $debug_print("\"saving label\", labelNum")$
+    write(cpr_fd) labelNum
+  end subroutine cpr_saveLabel
+
+  subroutine cpr_restoreLabel(labelNum)
+    integer, intent(out) :: labelNum
+    backspace(cpr_fd)
+    read(cpr_fd) labelNum
+    $debug_print("\"restoring label\", labelNum")$
+    backspace(cpr_fd)
+  end subroutine cpr_restoreLabel
+
+  subroutine cpr_saveIntegerD0(i)
+    integer, intent(in) :: i
+    $debug_print("\"saving integer\", i")$
+    write(cpr_fd) i
+  end subroutine cpr_saveIntegerD0
+
+  subroutine cpr_restoreIntegerD0(i)
+    integer, intent(out) :: i
+    backspace(cpr_fd)    
+    read(cpr_fd) i
+    $debug_print("\"restoring integer\", i")$
+    backspace(cpr_fd)
+  end subroutine cpr_restoreIntegerD0
+
+  subroutine cpr_saveRealD0(r)
+    real, intent(in) :: r
+    write(cpr_fd) r
+  end subroutine cpr_saveRealD0
+
+  subroutine cpr_restoreRealD0(r)
+    real, intent(out) :: r
+    backspace(cpr_fd)
+    read(cpr_fd) r
+    backspace(cpr_fd)
+  end subroutine cpr_restoreRealD0
+
+  ! arrays
+  subroutine cpr_saveIntegerD1(i)
+    integer, intent(in) :: i(:)
+    write(cpr_fd) i
+  end subroutine cpr_saveIntegerD1
+
+  subroutine cpr_restoreIntegerD1(i)
+    integer, intent(out) :: i(:)
+    backspace(cpr_fd)
+    read(cpr_fd) i
+    backspace(cpr_fd)
+  end subroutine cpr_restoreIntegerD1
+
+  subroutine cpr_saveRealD1(r)
+    real, intent(in) :: r(:)
+    write(cpr_fd) r
+  end subroutine cpr_saveRealD1
+
+  subroutine cpr_restoreRealD1(r)
+    real, intent(out) :: r(:)
+    backspace(cpr_fd)
+    read(cpr_fd) r
+    backspace(cpr_fd)
+  end subroutine cpr_restoreRealD1
+
+  ! ----- double precision
+  subroutine cpr_saveRealK8D0(r)
+    real(8), intent(in) :: r
+    write(cpr_fd) r
+  end subroutine cpr_saveRealK8D0
+
+  subroutine cpr_restoreRealK8D0(r)
+    real(8), intent(out) :: r
+    backspace(cpr_fd)
+    read(cpr_fd) r
+    backspace(cpr_fd)
+  end subroutine cpr_restoreRealK8D0
+
+  subroutine cpr_saveRealK8D1(r)
+    real(8), intent(in) :: r(:)
+    write(cpr_fd) r
+  end subroutine cpr_saveRealK8D1
+
+  subroutine cpr_restoreRealK8D1(r)
+    real(8), intent(out) :: r(:)
+    backspace(cpr_fd)
+    read(cpr_fd) r
+    backspace(cpr_fd)
+  end subroutine cpr_restoreRealK8D1
+
+end module cpr_m
+
+subroutine cpr_mpi_send(buf,count,type_,dest,tag,comm,ierr)
+  
+  use cpr_m
+  implicit none
+  integer(1), intent(in) :: buf(*)
+  integer, intent(in) :: count, type_, dest, tag, comm
+  integer, intent(out) :: ierr
+  
+  integer :: pbvalue(2)
+  
+  call cpr_checkControlChannel()
+  
+  cpr_sendCount(dest) = cpr_sendCount(dest)+1
+  
+  pbvalue = (/cpr_epoch, cpr_mode/)
+  call MPI_Send(pbvalue,2,MPI_INTEGER,dest,tag,comm,ierr)
+  call MPI_Send(buf,count,type_,dest,tag,comm,ierr)
+  
+end subroutine cpr_mpi_send
+
+subroutine cpr_mpi_recv(buf,count,type_,src,tag,comm,status,ierr)
+  
+  use cpr_m
+  implicit none
+  integer(1), intent(in) :: buf(*)
+  integer, intent(in) :: count, type_, src, tag, comm
+  integer, intent(out) :: ierr
+  integer, intent(out) :: status(MPI_STATUS_SIZE)
+
+  integer :: pbvalue(2)
+  integer :: pbstatus(MPI_STATUS_SIZE)
+  logical :: isEarly, isLate
+  integer :: source, tsize
+  
+  !call cpr_checkControlChannel()
+  
+  call MPI_Recv(pbvalue,2,MPI_INTEGER,src,tag,comm,pbstatus,ierr)  
+  isEarly = pbvalue(1)>cpr_epoch
+  isLate = pbvalue(1)<cpr_epoch
+  source = pbstatus(MPI_SOURCE)
+  call cpr_checkTransitions(isEarly,isLate)  
+  call MPI_Recv(buf,count,type_,source,pbstatus(MPI_TAG),comm,status,ierr)
+  
+  ! saving late message
+  if(isLate) then
+    call MPI_Type_size(type_, tsize, ierr)
+    call messages_add(comm, source, status(MPI_TAG), cpr_rank, buf, count*tsize)
+  endif  
+  
+  ! (|early|late) recv count
+  if(isEarly) then
+    cpr_earlyRecvCount(source) = cpr_earlyRecvCount(source)+1
+  else if(isLate) then
+    cpr_lateRecvCount(source) = cpr_lateRecvCount(source)+1
+  else
+    cpr_recvCount(source) = cpr_recvCount(source)+1
+  endif
+  
+end subroutine cpr_mpi_recv
+
+! ----------- ISEND
+
+subroutine cpr_mpi_isend(buf,count,type_,dest,tag,comm,request,ierr)
+  
+  use cpr_m
+  use cpr_requests_m  
+  implicit none
+  integer(1), intent(in) :: buf(*)
+  integer, intent(in) :: count, type_, dest, tag, comm
+  integer, intent(out) :: request, ierr
+  
+  type(cpr_request_t) :: req  
+  req%rtype = CPR_REQUESTS_TYPE_SEND
+  
+  call cpr_checkControlChannel()
+  
+  cpr_sendCount(dest) = cpr_sendCount(dest)+1
+  
+  allocate(req%values(2))
+  req%values = (/cpr_epoch, cpr_mode/)
+  call MPI_ISend(req%values,2,MPI_INTEGER,dest,tag,comm,req%rnumber,ierr)
+  call MPI_ISend(buf,count,type_,dest,tag,comm,req%request,ierr)
+
+  call cpr_requests_add(req)
+
+  request = req%rnumber
+end subroutine cpr_mpi_isend
+
+! ----------- IRECV
+
+subroutine cpr_mpi_irecv(buf,count,type_,src,tag,comm,request,ierr)
+  
+  use cpr_m
+  use cpr_requests_m
+  implicit none
+  integer(1),target :: buf(*)
+  integer, intent(in) :: count, type_, src, tag, comm
+  integer, intent(out) :: request, ierr
+  
+  type(cpr_request_t) :: req
+  req%rtype = CPR_REQUESTS_TYPE_RECV
+
+  allocate(req%values(2))
+  call MPI_IRecv(req%values,2,MPI_INTEGER,src,tag,comm,req%rnumber,ierr)
+  
+  req%buf => buf(:1)
+  req%count = count
+  req%mpitype = type_
+  req%comm = comm
+  call cpr_requests_add(req)
+  
+  request = req%rnumber
+end subroutine cpr_mpi_irecv
+
+! ----------- WAIT
+
+subroutine cpr_mpi_wait(request,status,ierr)
+  
+  use cpr_m
+  use cpr_requests_m  
+  implicit none
+  integer, intent(inout) :: request
+  integer, intent(out) :: status(MPI_STATUS_SIZE)
+  integer, intent(out) :: ierr
+  
+  logical :: success
+  integer :: pbstatus(MPI_STATUS_SIZE)
+  integer :: source, tsize
+  logical :: isEarly, isLate
+
+  type(cpr_request_t) :: req
+  
+  call cpr_requests_take(request,success,req)
+  if(.not.success) return
+  
+  if(req%rtype==CPR_REQUESTS_TYPE_RECV) then
+    call cpr_checkControlChannel()
+  
+    call MPI_Wait(request,pbstatus,ierr)
+    isEarly = req%values(1)>cpr_epoch
+    isLate = req%values(1)<cpr_epoch
+    source = pbstatus(MPI_SOURCE)    
+
+    ! (|early|late) recv count
+    if(isEarly) then
+      cpr_earlyRecvCount(source) = cpr_earlyRecvCount(source)+1
+    else if(isLate) then
+      cpr_lateRecvCount(source) = cpr_lateRecvCount(source)+1
+    else if(.not.isEarly.and. .not.isLate) then
+      cpr_recvCount(source) = cpr_recvCount(source)+1
+    endif    
+    
+    call cpr_checkTransitions(isEarly,isLate)
+    deallocate(req%values)
+
+    ! actual receive
+    call MPI_Recv(req%buf,req%count,req%mpitype,source,pbstatus(MPI_TAG),req%comm, status, ierr)
+
+    ! saving late message
+    if(isLate) then
+      call MPI_Type_size(req%mpitype, tsize, ierr)
+      call messages_add(req%comm, source, status(MPI_TAG), cpr_rank, req%buf, req%count*tsize)
+    endif
+    
+  else if(req%rtype==CPR_REQUESTS_TYPE_SEND) then
+    call MPI_Wait(request,pbstatus,ierr)  
+    call MPI_Wait(req%request, status, ierr)
+    deallocate(req%values)
+  else
+    print *, "Error in wait with key", req%rnumber
+  endif
+  
+end subroutine cpr_mpi_wait
+
+! ------------- COLLECTIVES
+
+subroutine cpr_mpi_reduce(sendbuf,recvbuf,count,type_,op,root,comm,ierr)
+  
+  implicit none
+  integer(1), intent(in) :: sendbuf(*), recvbuf(*)
+  integer, intent(in) :: count, type_, op, root, comm
+  integer, intent(out) :: ierr
+  call MPI_Reduce(sendbuf,recvbuf,count,type_,op,root,comm,ierr)
+end subroutine cpr_mpi_reduce
+
+subroutine cpr_mpi_allreduce(sendbuf,recvbuf,count,type_,op,comm,ierr)
+  
+  use cpr_m
+  implicit none
+  integer(1), intent(in) :: sendbuf(*), recvbuf(*)
+  integer, intent(in) :: count, type_, op, comm
+  integer, intent(out) :: ierr
+  
+  integer :: tsize
+  
+  cpr_data(cpr_rank*3+1) = cpr_epoch
+  cpr_data(cpr_rank*3+2) = cpr_mode
+  cpr_data(cpr_rank*3+3) = 0
+  call MPI_Allgather(cpr_data(cpr_rank*3+1),3,MPI_INTEGER,&
+    cpr_data,3,MPI_INTEGER,comm,ierr)
+  max_epoch = maxval(cpr_data(1::3))
+  min_epoch = minval(cpr_data(1::3))
+
+  call cpr_checkTransitions(cpr_epoch<max_epoch,cpr_epoch>min_epoch)
+
+  call MPI_Allreduce(sendbuf,recvbuf,count,type_,op,comm,ierr)
+  
+  if(min_epoch<cpr_epoch) then ! late message
+    call MPI_Type_size(type_, tsize, ierr)
+    call messages_add(comm, COLLECTIVES, COLLECTIVES_TAG, cpr_rank, recvbuf, tsize*count)
+  endif
+end subroutine cpr_mpi_allreduce
+
+>>

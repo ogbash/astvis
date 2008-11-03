@@ -1,0 +1,334 @@
+group cpr-f9x-cfile;
+
+debug_print(args) ::= <<
+printf($args$);
+
+>>
+
+cprcfile() ::= <<
+
+#include <signal.h>
+#include <stdio.h>
+
+static int* cprf_docheckpoint;
+static int* cprf_dorecover;
+
+static void sig_docheckpoint(int sig)
+{
+  printf("signal here\n");
+  *cprf_docheckpoint = 1;
+}
+
+void cprc_init_(int* do_cp, int* do_re)
+{
+  char *dorestore;
+  
+  cprf_docheckpoint = do_cp;
+  cprf_dorecover = do_re;
+  
+  dorestore = getenv("CPR_DORECOVER");
+  if(dorestore != NULL)
+    *cprf_dorecover = 1;
+  
+  signal(SIGUSR2, sig_docheckpoint);
+}
+
+static void *pointer;
+
+void cprc_savepointer_(void* p) {
+  $debug_print("\"store pointer %x\\n\", p")$
+  pointer = p;
+}
+
+void cprc_restorepointer_(void **pp) {
+  $debug_print("\"restore pointer %x\\n\", *pp")$
+  *pp = pointer;
+}
+
+>>
+
+cprdatacfile() ::= <<
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#define integer_t int
+#define logical_t int
+
+struct event_t
+{
+  integer_t message_tag;
+  integer_t message_source;
+  integer_t message_target;
+};
+
+#define EVENTS_CHUNK_CAPACITY 100
+
+struct events_chunk_t
+{
+  int capacity;
+  int size;
+  struct event_t *events;
+  struct events_chunk_t *next;
+};
+
+static struct events_chunk_t *root_chunk = 0;
+
+void events_add(int message_source, int message_tag)
+{
+
+}
+
+struct message_channel
+{
+  integer_t comm, source, target, tag;
+  struct message *first_message;
+  struct message *last_message;
+  struct message_channel *next;
+};
+
+struct message
+{
+  void *data;
+  integer_t size;
+  struct message *next;
+};
+
+static struct message_channel *message_channel_first = 0;
+static int messages_count = 0;
+
+/*
+  return matching channel or 0
+ */
+static struct message_channel *find_channel(integer_t comm, integer_t source, integer_t tag, integer_t target)
+{
+  struct message_channel *ch = message_channel_first;
+  while(ch) {
+    if(ch->comm == comm && ch->source == source &&
+       ch->tag == tag && ch->target == target)
+      return ch;
+    ch = ch-> next;
+  }
+
+  return 0;
+}
+
+/*
+  return matching channel or create one
+ */
+static
+struct message_channel *get_channel(integer_t comm, integer_t source, integer_t tag, integer_t target)
+{
+  struct message_channel *ch = find_channel(comm,source,tag,target);
+  if(!ch) {
+    /* create and add channel struct */
+    ch = malloc(sizeof(struct message_channel));
+    ch->comm = comm;
+    ch->source = source;
+    ch->tag = tag;
+    ch->target = target;
+    ch->first_message = 0;
+    ch->last_message = 0;
+    ch->next = message_channel_first;
+    message_channel_first = ch;
+  }
+
+  return ch;
+}
+
+static
+
+int channel_message_count(struct message_channel *ch) {
+  int count = 0;
+  struct message *m = ch->first_message;
+  while(m) {
+    count++;
+    m = m->next;
+  }
+  
+  return count;
+}
+
+static
+void channel_add_message(struct message_channel *ch, void *data, integer_t size)
+{
+  struct message *m = malloc(sizeof(struct message));
+  m->data = malloc(size);
+  memcpy(m->data, data, size);
+  m->size = size;
+  m->next = 0;
+
+  if(!ch->first_message) {
+    ch->first_message = m;
+    ch->last_message = m;
+  } else {
+    ch->last_message->next = m;
+    ch->last_message = m;
+  }
+
+  messages_count++;
+}
+
+static void channel_print(struct message_channel *ch)
+{
+  printf("CHANNEL(comm=%d,source=%d,tag=%d,target=%d)[", (int)ch->comm,
+         (int)ch->source, (int)ch->tag, (int)ch->target);
+  struct message *m = ch->first_message;
+  while(m) {
+    printf("MESSAGE(%d,%p)", (int)m->size, m->data);
+    m = m->next;
+    if(m) printf(", ");
+  }
+  printf("]");
+}
+
+void messages_add_(integer_t *comm, integer_t *source, integer_t *tag, integer_t *target, void *indata, integer_t *datasize)
+{
+  struct message_channel *ch = get_channel(*comm,*source,*tag,*target);
+  channel_add_message(ch, indata, *datasize);
+}
+
+void messages_size_(integer_t *size)
+{
+  *size = messages_count;
+}
+
+void messages_has_(integer_t *comm, integer_t *source, integer_t *tag, integer_t *target, logical_t *has)
+{
+  struct message_channel *ch = find_channel(*comm,*source,*tag,*target);
+  *has = (ch!=0);
+}
+
+void messages_get_(integer_t *comm, integer_t *source, integer_t *tag, void *outdata)
+{
+
+}
+
+void messages_print_()
+{
+  struct message_channel *ch = message_channel_first;
+  while(ch) {
+    channel_print(ch);
+    printf("\n");
+    ch = ch->next;
+  }
+}
+
+static
+int channels_count()
+{
+  int count = 0;
+  struct message_channel *ch = message_channel_first;
+  while(ch) {
+    count ++;
+    ch = ch->next;
+  }
+  return count;
+}
+
+void messages_save_(integer_t *rank)
+{
+  char filename[32];
+  
+  snprintf(filename, sizeof(filename),"messages.%3.3d.cpr", *rank);
+  int fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+  printf("%d: saving %d late messages to %s\n", *rank, messages_count, filename);
+
+  int ch_c = channels_count();
+  write(fd, &ch_c, sizeof(ch_c));
+  
+  struct message_channel *ch = message_channel_first;
+  while(ch) {
+    /* save channel messages */
+    write(fd, ch->comm, sizeof(ch->comm));
+    write(fd, ch->source, sizeof(ch->source));
+    write(fd, ch->tag, sizeof(ch->tag));
+    write(fd, ch->target, sizeof(ch->target));
+    
+    int m_c = channel_message_count(ch);
+    write(fd, &m_c, sizeof(m_c));
+    struct message *m = ch->first_message;
+    while(m) {
+      write(fd, m->size, sizeof(m->size));
+      write(fd, m->data, m->size);
+      m = m->next;
+    }
+    
+    ch = ch->next;
+  }
+  
+  close(fd);
+}
+
+static
+void channel_clear(struct message_channel *ch) {
+    struct message *m = ch->first_message;
+    while(m) {
+      struct message *next = m->next;
+      free(m->data);
+      free(m);
+      m = next;
+    }
+}
+
+void messages_clear_() {
+  struct message_channel *ch = message_channel_first;
+  message_channel_first = 0;
+  while(ch) {
+    struct message_channel *next = ch->next;
+    channel_clear(ch);
+    free(ch);
+    
+    ch = next;
+  }  
+}
+
+void messages_load_(integer_t *rank)
+{
+  char filename[32];
+  
+  snprintf(filename, sizeof(filename),"messages.%3.3d.cpr", *rank);
+  int fd = open(filename, O_RDONLY, 0);
+
+  printf("%d: loading late messages from %s\n", *rank, messages_count, filename);
+
+  int ch_c;
+  read(fd, &ch_c, sizeof(ch_c));
+  
+  int ic;
+  for(ic=0; ic<ch_c; ic++) {
+    struct message_channel *ch = malloc(sizeof(struct message_channel));
+    ch->next = message_channel_first;
+    message_channel_first = ch;
+    read(fd, &ch->comm, sizeof(ch->comm));
+    read(fd, &ch->source, sizeof(ch->source));
+    read(fd, &ch->tag, sizeof(ch->tag));
+    read(fd, &ch->target, sizeof(ch->target));
+    ch->first_message = 0;
+    ch->last_message = 0;
+    
+    /* load channel messages */
+    int m_c;
+    read(fd, &m_c, sizeof(m_c));
+    int im;
+    for(im=0; im<m_c; im++) {
+      struct message *m = malloc(sizeof(struct message));
+      if(!ch->first_message) ch->first_message = m;
+      if(ch->last_message) ch->last_message->next = m;
+      ch->last_message = m;
+      m->next = 0;
+      read(fd, m->size, sizeof(m->size));
+      read(fd, m->data, m->size);
+      
+      messages_count++;
+    }
+  }
+  
+  close(fd);
+}
+
+>>

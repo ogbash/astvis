@@ -1,0 +1,227 @@
+group cpr-f9x;
+
+debug_print(args) ::= <<
+>>
+
+gcprmodule(moduleNames) ::= <<
+! Module for saving/restoring application globals
+module gcpr_m
+
+  implicit none
+  
+contains  
+  
+  subroutine gcpr_save()
+    use $moduleNames; separator=" ,"$
+    
+    $moduleNames:{name |call cpr_saveM_$name$()$\n$}$
+  end subroutine gcpr_save
+
+  subroutine gcpr_restore()
+    use $moduleNames; separator=" ,"$
+    
+    $moduleNames:{name |call cpr_restoreM_$name$()$\n$}$
+  end subroutine gcpr_restore
+
+end module gcpr_m
+  
+>>
+
+pcheckpoint(label) ::= <<
+$label$ if(cpr_state==CPRS_RESTORE.or.cpr_state==CPRS_RECOVER) then
+   call cpr_setState(CPRS_NORMAL)
+end if
+if(cpr_state==CPRS_NORMAL .AND. cpr_docheckpoint) then
+    cpr_docheckpoint = .FALSE.
+    call cpr_setState(CPRS_SAVE)
+end if
+
+>>
+
+docheckpoint(label,vars,reverseVars,isMain) ::= <<
+! do checkpoint here
+if(cpr_state==CPRS_SAVE) then
+   call cpr_saveLabel($label$)
+   $vars:save(var=it)$
+   $if(isMain)$
+   call gcpr_save()
+   call cpr_setState(CPRS_RESTORE)
+   call gcpr_restore()
+   $reverseVars:restore(var=it)$
+   call cpr_restoreLabel(lcpr_label)
+   goto $label$
+   $else$
+   return
+   $endif$
+end if
+
+>>
+
+save(var, prefix) ::= <<
+$debug_print("\"saving "+var.name+"\"")$
+$if(var.pointer)$
+if(associated($prefix$$var.name$)) then
+  call cpr_save($prefix$$var.name$)
+  $debug_print("\"saved "+var.name+"\"")$
+  call cpr_save(lbound($prefix$$var.name$))
+  $debug_print("\"saved lcpr_lbound of "+var.name+"=\", lbound("+prefix+var.name+")")$
+  call cpr_save(ubound($prefix$$var.name$))
+  $debug_print("\"saved lcpr_ubound of "+var.name+"=\", ubound("+prefix+var.name+")")$
+else
+  call cpr_save(1)
+  call cpr_save(-1)
+  $debug_print("\"saved unassociated lcpr_size of "+var.name+"=\", -1")$
+endif
+
+$else$
+$if(var.allocatable)$
+if(allocated($prefix$$var.name$)) then
+  call cpr_save($prefix$$var.name$)
+  $debug_print("\"saved "+var.name+"\"")$
+  call cpr_save(lbound($prefix$$var.name$))
+  $debug_print("\"saved lcpr_lbound of "+var.name+"=\", lbound("+prefix+var.name+")")$
+  call cpr_save(ubound($prefix$$var.name$))
+  $debug_print("\"saved lcpr_ubound of "+var.name+"=\", ubound("+prefix+var.name+")")$
+else
+  call cpr_save(1)
+  call cpr_save(-1)
+  $debug_print("\"saved unallocated lcpr_size of "+var.name+"=\", -1")$
+endif
+
+$else$
+call cpr_save($prefix$$var.name$)
+$debug_print("\"saved "+var.name+"\"")$
+
+$endif$
+$endif$
+
+>>
+
+declarations() ::= <<
+integer :: lcpr_label, lcpr_size, lcpr_lbound, lcpr_ubound
+
+>>
+
+dorestore(labels, vars, reverseVars,isMain) ::= <<
+$if(isMain)$call cpr_init()$endif$
+if(cpr_state==CPRS_RESTORE.or.cpr_state==CPRS_RECOVER) then
+  $if(isMain)$call gcpr_restore()$endif$
+  $reverseVars:restore(var=it)$
+  call cpr_restoreLabel(lcpr_label)
+  select case (lcpr_label)
+     $labels:{case($it$); goto $it$$\n$}$
+  end select
+end if
+
+>>
+
+restore(var, prefix) ::= <<
+$debug_print("\"restoring "+var.name+"\"")$
+$if(var.pointer)$
+call cpr_restore(lcpr_ubound)
+call cpr_restore(lcpr_lbound)
+lcpr_size = lcpr_ubound+1-lcpr_lbound
+$debug_print("\"restored lcpr_size=u-l+1 of "+var.name+"=\", lcpr_size")$
+if(lcpr_size>=0) then
+  if(cpr_state==CPRS_RECOVER) allocate($prefix$$var.name$(lcpr_lbound:lcpr_ubound))
+  call cpr_restore($prefix$$var.name$)
+  $debug_print("\"restored "+var.name+"\"")$
+else
+  nullify($prefix$$var.name$)
+endif
+
+$else$
+$if(var.allocatable)$
+call cpr_restore(lcpr_ubound)
+call cpr_restore(lcpr_lbound)
+lcpr_size = lcpr_ubound+1-lcpr_lbound
+$debug_print("\"restored lcpr_size=u-l+1 of "+var.name+"=\", lcpr_size")$
+if(lcpr_size>=0) then
+  allocate($prefix$$var.name$(lcpr_lbound:lcpr_ubound))
+  call cpr_restore($prefix$$var.name$)
+  $debug_print("\"restored "+var.name+"\"")$
+endif
+
+$else$
+call cpr_restore($prefix$$var.name$)
+$debug_print("\"restored "+var.name+"\"")$
+
+$endif$
+$endif$
+
+>>
+
+usecpr(isMain) ::= <<
+use cpr_m
+$if(isMain)$use gcpr_m$endif$
+
+>>
+
+type_interfaces(type,numsDimensions) ::= <<
+interface cpr_save
+  module procedure cpr_save_$type.name$D0 $numsDimensions:{n | ,cpr_save_$type.name$D$n$}$
+end interface
+
+interface cpr_restore
+  module procedure cpr_restore_$type.name$D0 $numsDimensions:{n | ,cpr_restore_$type.name$D$n$}$
+end interface
+
+>>
+
+type_subprograms(type,vars,reverseVars) ::= <<
+subroutine cpr_save_$type.name$D0(t)
+  use cpr_m
+  $declarations()$
+  type($type.name$),intent(in) :: t
+  $debug_print("'Saving type "+type.name+"'")$
+  $vars:save(var=it,prefix="t%")$
+end subroutine cpr_save_$type.name$D0
+
+subroutine cpr_restore_$type.name$D0(t)
+  use cpr_m
+  $declarations()$
+  type($type.name$),intent(out) :: t
+  $debug_print("'Restoring type "+type.name+"'")$
+  $reverseVars:restore(var=it,prefix="t%")$
+end subroutine cpr_restore_$type.name$D0
+
+>>
+
+type_subprogramsDN(type,dimensions) ::= <<
+subroutine cpr_save_$type.name$D$length(dimensions)$(t)
+  type($type.name$),intent(in),dimension($dimensions:{:}; separator=","$) :: t
+  integer :: i
+  $debug_print("\"saving array of "+type.name+" with shape\", shape(t)")$
+  do i=lbound(t,dim=1),ubound(t,dim=1)
+    call cpr_save(t(i)$rest(dimensions):{,:}$)
+  end do
+end subroutine cpr_save_$type.name$D$length(dimensions)$
+
+subroutine cpr_restore_$type.name$D$length(dimensions)$(t)
+  type($type.name$),intent(out),dimension($dimensions:{:}; separator=","$) :: t
+  integer :: i
+  do i=ubound(t,dim=1),lbound(t,dim=1),-1
+    call cpr_restore(t(i)$rest(dimensions):{,:}$)
+  end do
+end subroutine cpr_restore_$type.name$D$length(dimensions)$
+
+>>
+
+module_subprograms(moduleName,vars,reverseVars) ::= <<
+subroutine cpr_saveM_$moduleName$()
+  use cpr_m
+  $declarations()$
+  $debug_print("'Saving module "+moduleName+" variables'")$
+  $vars:save(var=it)$
+  $debug_print("'Saved module "+moduleName+" variables'")$
+end subroutine cpr_saveM_$moduleName$
+
+subroutine cpr_restoreM_$moduleName$()
+  use cpr_m
+  $declarations()$
+  $debug_print("'Restoring module "+moduleName+" variables'")$
+  $reverseVars:restore(var=it)$
+  $debug_print("'Restored module "+moduleName+" variables'")$
+end subroutine cpr_restoreM_$moduleName$
+
+>>
