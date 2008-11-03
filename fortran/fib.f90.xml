@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ASTCollection>
+<file name="fib.f90">
+<program id="Fib">
+<location>
+<begin tokenIndex="0" line="1" column="0"/>
+<end tokenIndex="141" line="28" column="15"/>
+</location>
+<block type="declarations">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="15" line="5" column="16"/>
+</location>
+<declaration type="type">
+<location>
+<begin tokenIndex="6" line="4" column="2"/>
+<end tokenIndex="10" line="4" column="19"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="2">
+<entity>
+<name>e2</name>
+</entity>
+<entity>
+<name>e1</name>
+</entity>
+</entities>
+</declaration>
+<declaration type="type">
+<location>
+<begin tokenIndex="12" line="5" column="2"/>
+<end tokenIndex="15" line="5" column="16"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="2">
+<entity>
+<name>e4</name>
+</entity>
+<entity>
+<name>e3</name>
+</entity>
+</entities>
+</declaration>
+</block>
+<block type="executions">
+<location>
+<begin tokenIndex="18" line="7" column="2"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="18" line="7" column="2"/>
+<end tokenIndex="23" line="7" column="19"/>
+</location>
+<target>
+<reference name="e1">
+<location>
+<begin tokenIndex="18" line="7" column="2"/>
+<end tokenIndex="18" line="7" column="4"/>
+</location>
+</reference>
+</target>
+<value>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="20" line="7" column="7"/>
+<end tokenIndex="23" line="7" column="19"/>
+</location>
+<arguments count="1">
+<argument>
+<constant type="integer">5</constant>
+</argument>
+</arguments>
+</call>
+</value>
+</statement>
+<statement type="assignment">
+<location>
+<begin tokenIndex="26" line="8" column="2"/>
+<end tokenIndex="31" line="8" column="20"/>
+</location>
+<target>
+<reference name="e2">
+<location>
+<begin tokenIndex="26" line="8" column="2"/>
+<end tokenIndex="26" line="8" column="4"/>
+</location>
+</reference>
+</target>
+<value>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="28" line="8" column="7"/>
+<end tokenIndex="31" line="8" column="20"/>
+</location>
+<arguments count="1">
+<argument>
+<constant type="integer">10</constant>
+</argument>
+</arguments>
+</call>
+</value>
+</statement>
+<statement type="assignment">
+<location>
+<begin tokenIndex="34" line="9" column="2"/>
+<end tokenIndex="39" line="9" column="20"/>
+</location>
+<target>
+<reference name="e3">
+<location>
+<begin tokenIndex="34" line="9" column="2"/>
+<end tokenIndex="34" line="9" column="4"/>
+</location>
+</reference>
+</target>
+<value>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="36" line="9" column="7"/>
+<end tokenIndex="39" line="9" column="20"/>
+</location>
+<arguments count="1">
+<argument>
+<constant type="integer">15</constant>
+</argument>
+</arguments>
+</call>
+</value>
+</statement>
+<statement type="assignment">
+<location>
+<begin tokenIndex="42" line="10" column="2"/>
+<end tokenIndex="47" line="10" column="19"/>
+</location>
+<target>
+<reference name="e4">
+<location>
+<begin tokenIndex="42" line="10" column="2"/>
+<end tokenIndex="42" line="10" column="4"/>
+</location>
+</reference>
+</target>
+<value>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="44" line="10" column="7"/>
+<end tokenIndex="47" line="10" column="19"/>
+</location>
+<arguments count="1">
+<argument>
+<constant type="integer">0</constant>
+</argument>
+</arguments>
+</call>
+</value>
+</statement>
+</block>
+<function id="Fibonacci">
+<location>
+<begin tokenIndex="63" line="16" column="12"/>
+<end tokenIndex="137" line="27" column="24"/>
+</location>
+<block type="declarations">
+<location>
+<begin tokenIndex="73" line="17" column="4"/>
+<end tokenIndex="84" line="18" column="16"/>
+</location>
+<declaration type="type">
+<location>
+<begin tokenIndex="73" line="17" column="4"/>
+<end tokenIndex="80" line="17" column="28"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="1">
+<entity>
+<name>n</name>
+</entity>
+</entities>
+</declaration>
+<declaration type="type">
+<location>
+<begin tokenIndex="82" line="18" column="4"/>
+<end tokenIndex="84" line="18" column="16"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="1">
+<entity>
+<name>r</name>
+</entity>
+</entities>
+</declaration>
+</block>
+<block type="executions">
+<location>
+<begin tokenIndex="87" line="20" column="4"/>
+<end tokenIndex="133" line="26" column="10"/>
+</location>
+<statement type="if">
+<location>
+<begin tokenIndex="87" line="20" column="4"/>
+<end tokenIndex="94" line="20" column="48"/>
+</location>
+<condition>
+<constant type="character">"Fibonacci cannot be negative"</constant>
+</condition>
+</statement>
+<statement type="ifthen">
+<location>
+<begin tokenIndex="96" line="22" column="4"/>
+<end tokenIndex="111" line="23" column="12"/>
+</location>
+<condition>
+<operator type=".OR.">
+<left>
+<operator type="==">
+<left>
+<reference name="n">
+<location>
+<begin tokenIndex="102" line="22" column="18"/>
+<end tokenIndex="102" line="22" column="19"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">1</constant>
+</right>
+</operator>
+</left>
+<right>
+<operator type="==">
+<left>
+<reference name="n">
+<location>
+<begin tokenIndex="98" line="22" column="8"/>
+<end tokenIndex="98" line="22" column="9"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">0</constant>
+</right>
+</operator>
+</right>
+</operator>
+</condition>
+<block>
+<location>
+<begin tokenIndex="109" line="23" column="7"/>
+<end tokenIndex="111" line="23" column="12"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="109" line="23" column="7"/>
+<end tokenIndex="111" line="23" column="12"/>
+</location>
+<target>
+<reference name="r">
+<location>
+<begin tokenIndex="109" line="23" column="7"/>
+<end tokenIndex="109" line="23" column="8"/>
+</location>
+</reference>
+</target>
+<value>
+<constant type="integer">1</constant>
+</value>
+</statement>
+</block>
+</statement>
+<statement type="else">
+<location>
+<begin tokenIndex="113" line="24" column="4"/>
+<end tokenIndex="133" line="26" column="10"/>
+</location>
+<block>
+<location>
+<begin tokenIndex="116" line="25" column="7"/>
+<end tokenIndex="130" line="25" column="42"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="116" line="25" column="7"/>
+<end tokenIndex="130" line="25" column="42"/>
+</location>
+<target>
+<reference name="r">
+<location>
+<begin tokenIndex="116" line="25" column="7"/>
+<end tokenIndex="116" line="25" column="8"/>
+</location>
+</reference>
+</target>
+<value>
+<operator type="+">
+<left>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="118" line="25" column="11"/>
+<end tokenIndex="123" line="25" column="25"/>
+</location>
+<arguments count="1">
+<argument>
+<operator type="-">
+<left>
+<reference name="n">
+<location>
+<begin tokenIndex="120" line="25" column="21"/>
+<end tokenIndex="120" line="25" column="22"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">1</constant>
+</right>
+</operator>
+</argument>
+</arguments>
+</call>
+</left>
+<right>
+<call name="Fibonacci">
+<location>
+<begin tokenIndex="125" line="25" column="28"/>
+<end tokenIndex="130" line="25" column="42"/>
+</location>
+<arguments count="1">
+<argument>
+<operator type="-">
+<left>
+<reference name="n">
+<location>
+<begin tokenIndex="127" line="25" column="38"/>
+<end tokenIndex="127" line="25" column="39"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">2</constant>
+</right>
+</operator>
+</argument>
+</arguments>
+</call>
+</right>
+</operator>
+</value>
+</statement>
+</block>
+</statement>
+</block>
+</function>
+</program>
+</file>
+</ASTCollection>
