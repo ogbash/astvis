@@ -204,22 +204,37 @@ class ActionManager(object):
 
 manager = None
 
-def generateMenu(actionGroup, menu=None, connectedActions = set()):
+def generateMenu(actionGroup, menu=None, connectedActions = []):
     if menu==None:
         menu = gtk.Menu()
 
     # add menu items for the actions missing from the menu
     LOG.log(FINER, "%s (actionGroup=%s): selecting and adding %s", menu, actionGroup, actionGroup.gtkactions)
-    for name, gtkaction in actionGroup.gtkactions.iteritems():
-        if name in connectedActions:
-            continue
-        menuItem = gtkaction.create_menu_item()
-        menu.append(menuItem)
+    absentNames = set(actionGroup.gtkactions.keys()) - set(connectedActions)
+
+    if absentNames:
+        menu.append(gtk.SeparatorMenuItem())
+        extraMenu = gtk.Menu()
+        extraMenuItem = gtk.MenuItem("extra")
+        extraMenuItem.show_all()
+        extraMenuItem.set_submenu(extraMenu)
+        menu.append(extraMenuItem)
+        for name in absentNames:
+            gtkaction = actionGroup.gtkactions[name]
+            menuItem = gtkaction.create_menu_item()
+            extraMenu.append(menuItem)
     return menu
 
 
 def getMenu(actionGroup, menuName):
     menu=actionGroup.manager.ui.get_widget("/%s"%menuName)
+
+    # add actions that are not in UI description
+    menuActions = filter(lambda x: x!=None,
+                         map(lambda x: x.get_action(),
+                             menu.get_children()))
+    actionNames = map(lambda x: x.get_name(), menuActions)
+    menu = generateMenu(actionGroup, menu, actionNames)
     return menu
 
 def generateMenuFromGlade(actionGroup, wTree=None, templateMenuName=None):

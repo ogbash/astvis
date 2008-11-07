@@ -25,7 +25,6 @@ def registerService(name, component):
 
     action.manager.registerActionService(component)
 
-
 def registerServices(obj):
     "Collect services from the module obj and register them."
     import types

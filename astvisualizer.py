@@ -5,7 +5,7 @@ from astvis.common import FINE, FINER, FINEST
 if __name__=="__main__":
     logging.addLevelName(FINE, "FINE")
     logging.addLevelName(FINER, "FINER")
-    logging.addLevelName(FINEST, "FINEST")    
+    logging.addLevelName(FINEST, "FINEST")
     #logging.basicConfig(level=FINEST)
     import logging.config
     logging.config.fileConfig("logging.conf")
