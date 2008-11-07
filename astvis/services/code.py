@@ -4,10 +4,10 @@ import logging as _logging
 from astvis.common import FINE, FINER, FINEST
 LOG = _logging.getLogger(__name__)
 
-from astvis import action
+from astvis import action, core
 from astvis import widgets
 
-class CodeService(object):
+class CodeService(core.Service):
 
     @action.Action('find-in-ast-tree', 'Find in AST', contextClass=widgets.CodeView)
     def findInASTTree(self, location, context):

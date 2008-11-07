@@ -1,4 +1,3 @@
 
-from project import ProjectService
-from code import CodeService
-from ofp import OFPService
+import code, dataflow, ofp, project, references, \
+       tags

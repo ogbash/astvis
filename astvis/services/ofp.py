@@ -1,10 +1,10 @@
 
 import os
 
-from astvis import action
+from astvis import action, core
 from astvis.widgets.ofp import NewASTXMLDialog
 
-class OFPService(object):
+class OFPService(core.Service):
     "Actions for Open Fortran Parser, eg generate XML from fortran files."
 
     @action.Action('main-generate-ofp-astxml', 'Generate AST XML')

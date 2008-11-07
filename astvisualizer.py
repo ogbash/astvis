@@ -31,7 +31,9 @@ import astvis.stock
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
-from astvis.services import ProjectService, CodeService, OFPService
+#from astvis.services.project import ProjectService
+#from astvis.services.code import CodeService
+#from astvis.services.ofp import OFPService
 from astvis import widgets, diagram
 from astvis.misc import console
 from astvis.model import ast
@@ -400,16 +402,20 @@ class MainWindow(object):
 if __name__ == "__main__":
     ui = gtk.UIManager()
     action.manager = action.ActionManager(ui)
-    from astvis.services import references, tags
-    core.registerService('ASTTreeWalker', references.ASTTreeWalker())
-    core.registerService('ReferenceResolver', references.ReferenceResolver())
-    tagService = tags.TagService()
-    action.manager.registerActionService(tagService)
-    core.registerService('TagService', tagService)
-    action.manager.registerActionService(ProjectService())
-    action.manager.registerActionService(CodeService())
-    action.manager.registerActionService(OFPService())
-    action.manager.registerActionService(widgets)
+
+    import astvis.services
+    core.registerServices(astvis.services)
+    
+    #from astvis.services import references, tags
+    #core.registerService('ASTTreeWalker', references.ASTTreeWalker())
+    #core.registerService('ReferenceResolver', references.ReferenceResolver())
+    #tagService = tags.TagService()
+    #action.manager.registerActionService(tagService)
+    #core.registerService('TagService', tagService)
+    #action.manager.registerActionService(ProjectService())
+    #action.manager.registerActionService(CodeService())
+    #action.manager.registerActionService(OFPService())
+    #action.manager.registerActionService(widgets)
     window = MainWindow(ui)
     
     gtk.main()

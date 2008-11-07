@@ -17,4 +17,3 @@ for iconId, filename in _files:
     #source.set_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
     set.add_source(source)
     _icon_factory.add(iconId, set)
-    print "added"

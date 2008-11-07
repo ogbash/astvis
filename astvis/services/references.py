@@ -6,7 +6,7 @@ LOG = logging.getLogger('references')
 from astvis.model import ast
 from astvis import core
 
-class ReferenceResolver(object):
+class ReferenceResolver(core.Service):
 
     def __init__(self):
         self._caches = {} #: basic model -> reference cache
@@ -68,7 +68,7 @@ class ReferenceResolver(object):
                 self.backReferences[referencedObj][astScope] = set()
             self.backReferences[referencedObj][astScope].add(astObj)
             
-class ASTTreeWalker(object):
+class ASTTreeWalker(core.Service):
     def __init__(self):
         self._caches = {}
 

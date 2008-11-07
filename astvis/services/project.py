@@ -3,9 +3,9 @@ from astvis.project import TagTypeList, DiagramList, TagType, Concepts
 from astvis.calldiagram import CallDiagram
 from astvis.generaldiagram import GeneralDiagram
 from astvis import model
-from astvis import action
+from astvis import action, core
 
-class ProjectService(object):
+class ProjectService(core.Service):
 
     conceptTypes = {'activity':model.concept.Activity,
                     'data':model.concept.Data}
