@@ -1,14 +1,16 @@
 
-import unittest
 from astvis.model import ast
 from astvis import xmltool
+from tests import general
 
-class ASTTestCase(unittest.TestCase):
+class ASTTestCase(general.TestCase):
     "Base class for tests require AST."
 
-    FILENAME="tests/pcg_ast.xml.gz"
+    FILENAME="fortran/SpMtx_aggregation.F90.f90.xml"
 
     def setUp(self):
+        super(ASTTestCase, self).setUp()
+        
         filename = self.FILENAME
         astModel = ast.ASTModel()
         astModel.filename = filename

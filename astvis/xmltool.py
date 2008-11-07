@@ -147,6 +147,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.content = StringIO()
             
     def loadFile(self, filename):
+        LOG.info("Loading AST from file %s", filename)
         f = open(filename, "r")
         try:
             try:

@@ -119,7 +119,7 @@ class ActionGroup(object):
         
 class ActionManager(object):
 
-    def __init__(self, ui):
+    def __init__(self, ui=None):
         self._actions = {} #: name -> gtk action
         self._groups = {} #: name -> list(gtk action group)
         self._services = [] #: list(dict(action -> service method))
