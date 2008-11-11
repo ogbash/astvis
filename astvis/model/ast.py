@@ -3,14 +3,16 @@
 """AST model  classes for the application."""
 
 from astvis.common import OPTIONS
-from astvis.xmlmap import XMLTag, XMLAttribute, PythonObject, Chain, Link
 import itertools
 from StringIO import StringIO
 
 ACTIVE_CHANGED = "active"
 
 class ASTModel(object):
-    "Model that contains AST tree of a code."
+    """Model that contains AST tree of a code.
+
+    @see: L{basic.BasicModel}
+    """
     
     def __init__(self):
         self.project = None
@@ -93,7 +95,14 @@ class ASTModel(object):
 # basic model classes
 
 class ASTObject(object):
-    """Base class for all AST objects."""
+    """Base class for all AST objects.
+
+    @ivar model: L{ASTModel} that this objects belongs.
+    @ivar parent: parent L{ASTObject}.
+    @ivar location: code L{Location} of the object.
+
+    @see: L{ASTModel}
+    """
 
     def _setModel(self, model):
         self._model = model
@@ -141,7 +150,14 @@ class ASTObject(object):
         callback(self)
 
 class File(ASTObject):
-    "AST object class that corresponds to fortran source file."
+    """AST object class that corresponds to fortran source file.
+
+    @ivar name: Name of the file.
+    @ivar units: Fortran program units and modules (see L{ProgramUnit}) that
+        are defined in the file.
+    @ivar subprograms: Fortran global function and procedures (see L{Subprogram}) that
+        are defined in the file.
+    """
     
     def __init__(self, model):
         ASTObject.__init__(self, model)
@@ -166,6 +182,13 @@ class Code(ASTObject):
     @ivar statementBlock: L{Block} of code statements
     """
 
+    def __init__(self, model):
+        ASTObject.__init__(self, model)
+        self.uses = []
+        self.declarationBlock = None
+        self.statementBlock = None
+        self.subprograms = []
+
     def addBlock(self, block, attrs):
         if attrs['type']=='declarations':
             self.declarationBlock=block
@@ -173,16 +196,23 @@ class Code(ASTObject):
             self.statementBlock=block
 
 class ProgramUnit(Code):
+    """AST class that represents fortran program unit or module.
+
+    Program unit and module are distinguished by L{type} variable.
+
+    @type type: string
+    @ivar type: 'program' or 'module'
+    @ivar name: program unit or module name
+
+    @note: Fortran 2008 specs I{11. Program Units}
+    @see: L{Subprogram}
+    """
     
     def __init__(self, model, parent = None):
-        ASTObject.__init__(self, model)
+        Code.__init__(self, model)
         self.parent = parent
         self.type = None
         self.name = '<unknown>'
-        self.uses = []
-        self.declarationBlock = None
-        self.statementBlock = None
-        self.subprograms = []
 
     def getChildren(self):
         children = []
@@ -195,20 +225,23 @@ class ProgramUnit(Code):
         return children
         
     def __str__(self):
-        return "<%s %s>" % (self.type or 'ProgramUnit', self.name)
+        return "<%s %s>" % (self.type or 'program', self.name)
     __repr__=__str__
 
 class Subprogram(Code):
+    """Class that represents fortran subroutine or function.
+
+    @ivar name: function or subroutine name
+
+    @note: Fortran 2008 specs I{12. Procedures}
+    @see: L{ProgramUnit}
+    """
 
     def __init__(self, model, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
-        ASTObject.__init__(self, model)
+        Code.__init__(self, model)
         self.parent = parent
         self.name = '<unknown>'
-        self.uses = []
-        self.declarationBlock = None
-        self.statementBlock = None
-        self.subprograms = []
 
     def getChildren(self):
         children = []
