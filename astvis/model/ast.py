@@ -10,6 +10,8 @@ from StringIO import StringIO
 ACTIVE_CHANGED = "active"
 
 class ASTModel(object):
+    "Model that contains AST tree of a code."
+    
     def __init__(self):
         self.project = None
         self.files = []
@@ -20,11 +22,21 @@ class ASTModel(object):
             f.itertree(callback)
 
     def getScope(self, astObj, original = True):
+        """Return the scope(module,subprogram,type definition) of AST object where it is located.
+        @param astObj: AST object which scope is required
+        @param original: Whether to ignore the I{astObj} in case it is a scope. This is useful
+              to get scope of scopes (e.g. the module where a function is located).
+        @rtype: L{ProgramUnit}, L{Subprogram} or L{Typedef}
+        @return: scope of the I{astObj} or None
+        """
         if not original and isinstance(astObj, (Subprogram, ProgramUnit, Typedef)):
             return astObj
         return astObj.parent!=None and self.getScope(astObj.parent, False) or None
 
     def getStatement(self, astObj):
+        """Return the outer statement where AST object (expression, statement) is located.
+        For statements it returns self, otherwise returns the first parent AST object
+        which is of type ast.Statement."""
         if isinstance(astObj, Statement):
             return astObj
         return astObj.parent and self.getStatement(astObj.parent) or None
@@ -83,8 +95,6 @@ class ASTModel(object):
 class ASTObject(object):
     """Base class for all AST objects."""
 
-    _xmlChildren = [Chain([(XMLTag('location'), PythonObject(ref='location'))])]
-
     def _setModel(self, model):
         self._model = model
     def _getModel(self):
@@ -131,15 +141,8 @@ class ASTObject(object):
         callback(self)
 
 class File(ASTObject):
-    _xmlTags = [XMLTag('file')]
-    _xmlAttributes = [(XMLAttribute('name'), PythonObject(ref='name'))]
-    _xmlChildren = [[(None, PythonObject(list, ref='units')),
-                     (XMLTag('module'), None)],
-                    [(None, PythonObject(list, ref='units')),
-                     (XMLTag('program'), None)]
-                    ]
-    _xmlChildren.extend(ASTObject._xmlChildren)
-
+    "AST object class that corresponds to fortran source file."
+    
     def __init__(self, model):
         ASTObject.__init__(self, model)
         self.name = '<unknown>'
@@ -156,16 +159,12 @@ class File(ASTObject):
         return "<File %s>" % self.name
 
 class Code(ASTObject):
-    _xmlChildren = [[(None, PythonObject(list, ref='subprograms')),
-                     (XMLTag('subroutine'), None)],
-                    [(None, PythonObject(list, ref='subprograms')),
-                     (XMLTag('function'), None)],
-                    [(XMLTag('block', {'type': 'declarations'}), PythonObject(None,ref='declarationBlock'))],
-                    [(XMLTag('block', {'type': 'executions'}), PythonObject(None,ref='statementBlock'))],
-                    [(None, PythonObject(list, ref='uses')),
-                     (XMLTag('use'), None)]
-                    ]
-    _xmlChildren.extend(ASTObject._xmlChildren)
+    """Base class that serves as a base class for L{ProgramUnit} and L{Subprogram}.
+    It contains declaration block and statement block.
+
+    @ivar declarationBlock: L{Block} of code declarations
+    @ivar statementBlock: L{Block} of code statements
+    """
 
     def addBlock(self, block, attrs):
         if attrs['type']=='declarations':
@@ -174,11 +173,6 @@ class Code(ASTObject):
             self.statementBlock=block
 
 class ProgramUnit(Code):
-
-    _xmlTags = [XMLTag("module"), XMLTag("program")]
-    _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name')),
-                      (XMLAttribute('tag',special=True), PythonObject(ref='type'))]
-    _xmlChildren =  list(Code._xmlChildren)
     
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
@@ -206,10 +200,6 @@ class ProgramUnit(Code):
 
 class Subprogram(Code):
 
-    _xmlTags = [XMLTag("subroutine"), XMLTag("function")]
-    _xmlAttributes = [(XMLAttribute('id'), PythonObject(ref='name'))]
-    _xmlChildren = list(Code._xmlChildren)
-    
     def __init__(self, model, parent = None):
         " - parent: program unit or subroutine where this sub belongs"
         ASTObject.__init__(self, model)
@@ -235,14 +225,6 @@ class Subprogram(Code):
     __repr__=__str__
 
 class Block(ASTObject):
-    _xmlTags = [XMLTag("block")]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
-    _xmlChildren =  [[(None, PythonObject(list, ref='statements')),
-                      (XMLTag('statement'), None)],
-                     [(None, PythonObject(list, ref='statements')),
-                      (XMLTag('declaration'), None)]
-                     ]
-    _xmlChildren.extend(ASTObject._xmlChildren)
 
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
@@ -260,13 +242,6 @@ class Block(ASTObject):
         return "{%s}"%(self.type or '')
         
 class Statement(ASTObject):
-    _xmlTags = [XMLTag("statement", priority=0)]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type')), 
-            (XMLAttribute('name'), PythonObject(ref='name'))]
-    _xmlChildren =  [[(None, PythonObject(list, ref='blocks')),
-                      (XMLTag('block'), None)]
-                     ]
-    _xmlChildren.extend(ASTObject._xmlChildren)
     
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
@@ -317,12 +292,6 @@ class Case(ASTObject):
         return c
 
 class Assignment(Statement):
-    _xmlTags = [XMLTag("statement", {'type': 'assignment'})]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
-    _xmlChildren =  [[(XMLTag('target'), None), (XMLTag(), PythonObject(ref='target'))],
-                     [(XMLTag('value'), None), (XMLTag(), PythonObject(ref='value'))]
-                     ]
-    _xmlChildren.extend(Statement._xmlChildren)
 
     def __init__(self, model, parent = None):
         Statement.__init__(self, model, parent)
@@ -353,15 +322,6 @@ class Declaration(ASTObject):
     pass
 
 class Type(ASTObject):
-    _xmlTags = [XMLTag('type')]
-    _xmlAttributes = []
-    _xmlChildren =  [[(XMLTag('name'), PythonObject(ref='name'))]
-                     ]
-    #def _xmlContent(self, childName, value):
-    #    if childName=='name':
-    #        self.name = value.strip()
-    #    elif childName=='kind':
-    #        self.kind = value.strip()
         
     def __init__(self, model):
         self.name = '<unknown type>'
@@ -384,13 +344,6 @@ class Typedef(ASTObject):
         return self.blocks
 
 class Entity(ASTObject):
-    _xmlTags = [XMLTag('entity')]
-    _xmlAttributes = []
-    _xmlChildren =  [[(XMLTag('name'), PythonObject(ref='name'))]
-                     ]
-    #def _xmlContent(self, childName, value):
-    #    if childName=='name':
-    #        self.name = value.strip()
         
     def __init__(self, model):
         ASTObject.__init__(self, model)
@@ -400,12 +353,6 @@ class Entity(ASTObject):
         return self.name
 
 class TypeDeclaration(Declaration):
-    _xmlTags = [XMLTag("declaration", {'type': 'type'})]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='decltype'))]
-    _xmlChildren =  [[(XMLTag('type'), PythonObject(ref='type'))],
-                     [(XMLTag('entities'), PythonObject(list, ref='entities')),
-                      (XMLTag(), None)]
-                     ]
     
     def __init__(self, model):
         Declaration.__init__(self, model)
@@ -425,10 +372,6 @@ class Expression(ASTObject):
         self.parent = parent
 
 class Call(Expression):
-    _xmlTags = [XMLTag("call")]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type')),
-            (XMLAttribute('name'), PythonObject(ref='name'))]
-    _xmlChildren = []
         
     def __init__(self, model, parent = None):
         Expression.__init__(self, model, parent)
@@ -444,11 +387,6 @@ class Call(Expression):
     __repr__=__str__
         
 class Operator(Expression):
-    _xmlTags = [XMLTag("operator")]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
-    _xmlChildren =  [[(XMLTag('left'), None), (XMLTag(), PythonObject(ref='left'))],
-                     [(XMLTag('right'), None), (XMLTag(), PythonObject(ref='right'))]
-                     ]
     
     def __init__(self, model, parent = None):
         Expression.__init__(self, model)
@@ -468,10 +406,6 @@ class Operator(Expression):
 
 class Constant(Expression):
 
-    _xmlTags = [XMLTag("constant")]
-    _xmlAttributes = [(XMLAttribute('type'), PythonObject(ref='type'))]
-    _xmlChildren = [[(XMLTag('__content__'), PythonObject(str,ref='value'))]]
-
     def __init__(self, model, parent = None):
         Expression.__init__(self, model)
         self.parent = parent
@@ -482,10 +416,6 @@ class Constant(Expression):
         return self.value!=None and str(self.value) or '<constant>'
 
 class Reference(Expression):
-    _xmlTags = [XMLTag("reference")]
-    _xmlAttributes = [(XMLAttribute('name'), PythonObject(str,ref='name'))]
-    _xmlChildren =  [[(XMLTag('base'), None), (XMLTag(), PythonObject(str,ref='base'))]
-                     ]
 
     def __init__(self, model, parent = None):
         Expression.__init__(self, model)
@@ -541,9 +471,6 @@ class Entity(ASTObject):
 
 
 class Use(ASTObject):
-    _xmlTags = [XMLTag('use')]
-    _xmlAttributes = [(XMLAttribute('id'), PythonObject(str,ref='name'))]
-    _xmlChildren = []
 
     def __init__(self, model, parent = None):
         ASTObject.__init__(self, model)
@@ -554,11 +481,6 @@ class Use(ASTObject):
         return "<use %s>" % self.name
         
 class Location(object):
-    _xmlTags = [XMLTag("location")]
-    _xmlAttributes = []
-    _xmlChildren =  [[(XMLTag('begin'), PythonObject(ref='begin'))],
-                     [(XMLTag('end'), PythonObject(ref='end'))]
-                     ]
             
     def __init__(self, model):
         super(Location, self).__init__()
@@ -575,10 +497,6 @@ class Location(object):
     __repr__=__str__
         
 class Point(object):    
-    _xmlTags = [XMLTag('begin'), XMLTag('end')]
-    _xmlAttributes = [(XMLAttribute('line'), PythonObject(int, ref='line')),
-            (XMLAttribute('column'), PythonObject(int, ref='column'))]
-    _xmlChildren = []
 
     def __init__(self):
         self.line = -1
