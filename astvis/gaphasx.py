@@ -150,7 +150,7 @@ class EllipseItem(NamedItem):
         cr.stroke()
         cr.restore()
 
-    def point(self, x, y):
+    def point(self, p):
         return 0
         
     def glue(self, item, handle, ix, iy):
@@ -184,7 +184,7 @@ class RectangleItem(NamedItem):
         cr.rectangle(-(self.w+self.PADX)/2, -(self.h+self.PADY)/2, self.w+self.PADX, self.h+self.PADY)
         cr.stroke()
 
-    def point(self, x, y):
+    def point(self, p):
         return 0
         
     def glue(self, item, handle, ix, iy):
