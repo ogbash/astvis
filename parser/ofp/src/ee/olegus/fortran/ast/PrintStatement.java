@@ -60,11 +60,11 @@ public class PrintStatement extends Statement implements XMLGenerator {
 		}
 		
 		if (outputs!=null && outputs.size()>0) {
-			handler.startElement("", "", "values", null);
 			for(int i=0; i<outputs.size(); i++) {
+				handler.startElement("", "", "value", null);
 				outputs.get(i).generateXML(handler);
+				handler.endElement("", "", "value");
 			}
-			handler.endElement("", "", "values");
 		}
 		
 		handler.endElement("", "", "statement");

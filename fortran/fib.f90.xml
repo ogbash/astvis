@@ -164,32 +164,38 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <reference name="e4">
 <location>
 <begin tokenIndex="58" line="12" column="23"/>
 <end tokenIndex="58" line="12" column="25"/>
 </location>
 </reference>
+</value>
+<value>
 <reference name="e3">
 <location>
 <begin tokenIndex="56" line="12" column="19"/>
 <end tokenIndex="56" line="12" column="21"/>
 </location>
 </reference>
+</value>
+<value>
 <reference name="e2">
 <location>
 <begin tokenIndex="54" line="12" column="15"/>
 <end tokenIndex="54" line="12" column="17"/>
 </location>
 </reference>
+</value>
+<value>
 <reference name="e1">
 <location>
 <begin tokenIndex="52" line="12" column="11"/>
 <end tokenIndex="52" line="12" column="13"/>
 </location>
 </reference>
-</values>
+</value>
 </statement>
 </block>
 <function id="Fibonacci">

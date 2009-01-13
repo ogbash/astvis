@@ -295,6 +295,22 @@ class Statement(ASTObject):
         else:
             return self.blocks
 
+class PrintStatement(Statement):
+    def _addValue(self, value): self.values.append(value)
+    value = property(fget=lambda self: None, fset=_addValue)
+    
+    def __init__(self, model,parent=None):
+        Statement.__init__(self, model, parent)
+        self.format = None
+        self.values = []
+    
+    def getChildren(self):
+        c = []
+        if self.format!=None:
+            c.append(self.format)
+        c.extend(self.values)
+        return c
+
 class IfStatement(Statement):
     def __init__(self, model,parent=None):
         Statement.__init__(self, model, parent)

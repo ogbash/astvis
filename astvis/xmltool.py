@@ -6,9 +6,7 @@ from common import FINE, FINER, FINEST
 
 import xml.sax
 from StringIO import StringIO
-from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
-    Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section, \
-    SelectCase, Case, Allocate, Typedef, IfStatement
+from astvis.model.ast import *
 
 class ParseError(Exception):
     
@@ -259,6 +257,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             st = Allocate(self.astModel, block)
         elif _type in ('if', 'ifthen', 'elseifthen', 'else'):
             st = IfStatement(self.astModel, block)
+        elif _type in ('print'):
+            st = PrintStatement(self.astModel, block)
         else:
             st = Statement(self.astModel, block)
         st.type = _type
@@ -382,7 +382,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             expr.type = attrs.get('type', 'op')
         elif name=="reference":
             expr = Reference(self.astModel, parent)
-            expr.name = attrs.get('name', '<none')
+            expr.name = attrs.get('name', '<none>')
         elif name=="constant":
             expr = Constant(self.astModel, parent)
             expr.type = attrs['type']
