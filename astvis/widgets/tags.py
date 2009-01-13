@@ -3,7 +3,7 @@ import gtk.glade
 from astvis import action
 from astvis.model import ast
 
-__all__=['TagTypeDialog','TagDialog','handleTagDialog']
+__all__=['TagTypeDialog','TagDialog']
 
 class TagTypeDialog:
     def __init__(self, tagType):
@@ -28,13 +28,6 @@ class TagTypeDialog:
             
         self.widget.destroy()            
         return res
-
-@action.Action('edit-tags', 'Edit tags', targetClass=ast.ASTObject)
-def handleTagDialog(obj, context):
-    dialog = TagDialog(obj)
-    res = dialog.run()
-    if res>0:
-        pass
 
 class TagDialog:
     def __init__(self, obj):
