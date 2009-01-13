@@ -2,6 +2,7 @@ from astvis import widgets
 from astvis.project import TagTypeList, DiagramList, TagType, Concepts
 from astvis.calldiagram import CallDiagram
 from astvis.generaldiagram import GeneralDiagram
+from astvis.diagrams import ControlFlowDiagram
 from astvis import model
 from astvis import action, core
 
@@ -16,13 +17,15 @@ class ProjectService(core.Service):
 
     @action.Action('project-new-diagram', 'New diagram', targetClass=DiagramList, contextClass=widgets.ProjectTree)
     def newDiagram(self, diagrams, context):
-        dialog = widgets.NewDiagramDialog(['general','call'])
+        dialog = widgets.NewDiagramDialog(['general','call','controlflow'])
         if dialog.run()>0:
             diagramName = dialog.diagramName or "(unnamed)"
             if dialog.diagramType=="general":
                 diagram = GeneralDiagram(diagramName, diagrams.project)
             elif dialog.diagramType=="call":
                 diagram = CallDiagram(diagramName, diagrams.project)
+            elif dialog.diagramType=="controlflow":
+                diagram = ControlFlowDiagram(diagramName, diagrams.project)
             else:
                 raise "Unknown diagram type: %s" % dialog.diagramType
                 

@@ -234,7 +234,7 @@ class TagDict(ObservableDict):
 class Concepts(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()
 
-    name = "concepts"
+    name = "Concepts"
     __gtkmodel__.appendAttribute('name')
 
     def __init__(self, project):

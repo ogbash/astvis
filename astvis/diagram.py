@@ -21,6 +21,8 @@ class Diagram(object):
     "Functions required for diagrams"
     
     def __init__(self, factory):
+        assert isinstance(factory, ItemFactory)
+        
         self._factory = factory
         self._canvas = gaphas.canvas.Canvas()
         self._items = {}
