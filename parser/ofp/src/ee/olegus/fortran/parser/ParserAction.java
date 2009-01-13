@@ -38,6 +38,7 @@ import ee.olegus.fortran.ast.Expression;
 import ee.olegus.fortran.ast.FunctionCall;
 import ee.olegus.fortran.ast.GotoStatement;
 import ee.olegus.fortran.ast.Identifier;
+import ee.olegus.fortran.ast.IfConstruct;
 import ee.olegus.fortran.ast.IfStatement;
 import ee.olegus.fortran.ast.ImplicitStatement;
 import ee.olegus.fortran.ast.ImpliedDo;
@@ -2491,8 +2492,20 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void if_construct() {
-		// TODO Auto-generated method stub
+		IfConstruct construct = new IfConstruct();
 		
+		List<IfStatement> list = new ArrayList<IfStatement>();
+		while(parseStack.peek() instanceof IfStatement) {
+			IfStatement stmt = (IfStatement) parseStack.pop(); 
+			list.add(stmt);
+			if (stmt.getType()==IfStatement.Type.IF || stmt.getType()==IfStatement.Type.IFTHEN)
+				break;			
+		}
+		
+		Collections.reverse(list);
+		construct.setIfStatements(list);
+		
+		parseStack.push(construct);
 	}
 
 	public void if_stmt(Token label, Token ifKeyword) {
@@ -4010,7 +4023,8 @@ public class ParserAction implements IFortranParserAction {
 
 	public void stop_stmt(Token label, Token stopKeyword, Token eos, boolean hasStopCode) {
 		StopStatement stmt = new StopStatement();
-		stmt.setStopCode((Expression) parseStack.pop());
+		if (hasStopCode)
+			stmt.setStopCode((Expression) parseStack.pop());
 		parseStack.push(stmt);
 	}
 

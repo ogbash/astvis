@@ -311,6 +311,15 @@ class PrintStatement(Statement):
         c.extend(self.values)
         return c
 
+class IfConstruct(Statement):
+    
+    def __init__(self, model,parent=None):
+        Statement.__init__(self, model, parent)
+        self.statements = []
+
+    def getChildren(self):
+        return self.statements
+
 class IfStatement(Statement):
     def __init__(self, model,parent=None):
         Statement.__init__(self, model, parent)

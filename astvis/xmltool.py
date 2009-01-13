@@ -54,6 +54,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startTypedef(attrs)
         elif name in ("statement",):
             self.startStatement(attrs)
+        elif name in ("ifconstruct",):
+            self.startIfConstruct(attrs)
         elif name in ("case",):
             self.startCase(attrs)
         elif name in ("arguments",):
@@ -107,6 +109,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endTypedef()
         elif name in ("statement",):
             self.endStatement()
+        elif name in ("ifconstruct",):
+            self.endIfConstruct()
         elif name in ("case",):
             self.endCase()
         elif name in ("arguments",):
@@ -272,6 +276,19 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.statements.append(st)
 
     def endStatement(self):
+        del self.statements[-1]
+
+    def startIfConstruct(self, attrs):
+        block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
+        stmt = IfConstruct(self.astModel, block)
+        stmt.type = 'ifconstruct'
+        block.addStatement(stmt)
+        self.statements.append(stmt)
+
+    def endIfConstruct(self):
+        ifc = self.statements[-1]
+        ifc.statements.extend(ifc.blocks[0].statements)
+        ifc.blocks = None
         del self.statements[-1]
 
     def startCase(self, attrs):
