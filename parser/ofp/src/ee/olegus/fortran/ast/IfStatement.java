@@ -3,6 +3,7 @@
  */
 package ee.olegus.fortran.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.xml.sax.ContentHandler;
@@ -28,9 +29,6 @@ public class IfStatement extends Statement implements XMLGenerator {
 	
 	private Type type;
 	private Expression condition;
-	/** in case of if statement */
-	private Statement action;
-	/** in case of if_then or else statement*/
 	private List<Statement> statements;
 	
 	public IfStatement(Type type) {
@@ -43,11 +41,9 @@ public class IfStatement extends Statement implements XMLGenerator {
 	public void setStatements(List<Statement> statements) {
 		this.statements = statements;
 	}
-	public Statement getAction() {
-		return action;
-	}
 	public void setAction(Statement action) {
-		this.action = action;
+		this.statements = new ArrayList<Statement>();
+		this.statements.add(action);
 	}
 	public Expression getCondition() {
 		return condition;
@@ -58,7 +54,7 @@ public class IfStatement extends Statement implements XMLGenerator {
 	@Override
 	public String toString() {
 		if(type==Type.IF)
-			return "if("+condition+") "+action;
+			return "if("+condition+") ";
 		else if(type==Type.IFTHEN)
 			return "if("+condition+") then";
 		else if(type==Type.ELSE) 
@@ -78,9 +74,6 @@ public class IfStatement extends Statement implements XMLGenerator {
 	public Object astWalk(ASTVisitor visitor) {
 		if(condition!=null) {
 			condition.astWalk(visitor);
-		}
-		if(action!=null) {
-			action.astWalk(visitor);
 		}
 		if(statements!=null)
 		for(Statement statement: statements) {
@@ -102,10 +95,7 @@ public class IfStatement extends Statement implements XMLGenerator {
 			((XMLGenerator)condition).generateXML(handler);
 			handler.endElement("", "", "condition");
 		}
-		
-		if(action instanceof XMLGenerator)
-			((XMLGenerator)action).generateXML(handler);
-		
+				
 		if(statements!=null) {
 			handler.startElement("", "", "block", null);
 			Location location = ASTUtils.calculateBlockLocation(getStatements());

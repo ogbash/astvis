@@ -56,6 +56,7 @@ import ee.olegus.fortran.ast.SectionSubscript;
 import ee.olegus.fortran.ast.SelectCaseStatement;
 import ee.olegus.fortran.ast.SpecialExpression;
 import ee.olegus.fortran.ast.Statement;
+import ee.olegus.fortran.ast.StopStatement;
 import ee.olegus.fortran.ast.Subprogram;
 import ee.olegus.fortran.ast.SubroutineCall;
 import ee.olegus.fortran.ast.Subscript;
@@ -4008,8 +4009,9 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void stop_stmt(Token label, Token stopKeyword, Token eos, boolean hasStopCode) {
-		// TODO Auto-generated method stub
-		
+		StopStatement stmt = new StopStatement();
+		stmt.setStopCode((Expression) parseStack.pop());
+		parseStack.push(stmt);
 	}
 
 	public void structure_constructor(Token id) {

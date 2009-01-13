@@ -740,7 +740,7 @@ endif
                         nunaneigcols(kk)=nunaneigcols(kk)+1
                         if (nunaneigcols(kk)>mnstructneigs) then
                           write(stream,*)'mnstructneigs too small'
-                          stop
+                          stop 'error'
                         endif
                         !nunaneigcolconns(k,kk)=1
                         nunaneigcolconns(k,kk)=dabs(A%val(j))
@@ -751,7 +751,7 @@ endif
                 enddo
               else ! todo remove this
                 print *,'someething wroong...'
-                stop
+                stop 'error'
               endif
             endif 
           enddo
@@ -1247,7 +1247,7 @@ endif
                     ncolsaround=ncolsaround+1
                     if (ncolsaround>mnstructneigs) then
                       write(*,*)'mnstructneigs too small'
-                      stop
+                      stop 'error'
                     endif
                     connweightsums(kk)=dabs(A%val(j))
                     colsaround(kk)=colr

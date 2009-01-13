@@ -8,7 +8,7 @@ import xml.sax
 from StringIO import StringIO
 from astvis.model.ast import File, ProgramUnit, Subprogram, Block, Statement, Assignment, \
     Operator, Reference, Constant, Call, Use, Location, Point, TypeDeclaration, Type, Entity, Section, \
-    SelectCase, Case, Allocate, Typedef
+    SelectCase, Case, Allocate, Typedef, IfStatement
 
 class ParseError(Exception):
     
@@ -82,7 +82,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startBegin(attrs)
         elif name in ("end",):
             self.startEnd(attrs)
-        elif name in ("target", "value", "base", "left", "right"):
+        elif name in ("target", "value", "base", "left", "right", "condition"):
             if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
                 expr = self.expressions[-1]
                 self.startSetter(lambda v: setattr(expr, name, v))
@@ -131,7 +131,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endType()
         elif name in ("location",):
             self.endLocation()
-        elif name in ("target", "value", "base", "left", "right"):
+        elif name in ("target", "value", "base", "left", "right", "condition"):
             if len(self.expressions)>0 and hasattr(self.expressions[-1], name):
                 self.endSetter()
             elif hasattr(self.statements[-1], name):
@@ -257,6 +257,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             st = SelectCase(self.astModel, block)
         elif _type in ("allocate", "deallocate"):
             st = Allocate(self.astModel, block)
+        elif _type in ('if', 'ifthen', 'elseifthen', 'else'):
+            st = IfStatement(self.astModel, block)
         else:
             st = Statement(self.astModel, block)
         st.type = _type

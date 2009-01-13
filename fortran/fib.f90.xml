@@ -159,6 +159,38 @@
 </call>
 </value>
 </statement>
+<statement type="print">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<values>
+<reference name="e4">
+<location>
+<begin tokenIndex="58" line="12" column="23"/>
+<end tokenIndex="58" line="12" column="25"/>
+</location>
+</reference>
+<reference name="e3">
+<location>
+<begin tokenIndex="56" line="12" column="19"/>
+<end tokenIndex="56" line="12" column="21"/>
+</location>
+</reference>
+<reference name="e2">
+<location>
+<begin tokenIndex="54" line="12" column="15"/>
+<end tokenIndex="54" line="12" column="17"/>
+</location>
+</reference>
+<reference name="e1">
+<location>
+<begin tokenIndex="52" line="12" column="11"/>
+<end tokenIndex="52" line="12" column="13"/>
+</location>
+</reference>
+</values>
+</statement>
 </block>
 <function id="Fibonacci">
 <location>
@@ -210,8 +242,35 @@
 <end tokenIndex="94" line="20" column="48"/>
 </location>
 <condition>
-<constant type="character">"Fibonacci cannot be negative"</constant>
+<operator type="&lt;">
+<left>
+<reference name="n">
+<location>
+<begin tokenIndex="89" line="20" column="8"/>
+<end tokenIndex="89" line="20" column="9"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">0</constant>
+</right>
+</operator>
 </condition>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="stop">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<value>
+<constant type="character">"Fibonacci cannot be negative"</constant>
+</value>
+</statement>
+</block>
 </statement>
 <statement type="ifthen">
 <location>

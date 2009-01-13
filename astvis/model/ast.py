@@ -295,10 +295,21 @@ class Statement(ASTObject):
         else:
             return self.blocks
 
+class IfStatement(Statement):
+    def __init__(self, model,parent=None):
+        Statement.__init__(self, model, parent)
+        self.condition = None
+
+    def getChildren(self):
+        c = []
+        if self.condition!=None:
+            c.append(self.condition)
+        c.extend(self.blocks)
+        return c
+
 class SelectCase(Statement):
     def __init__(self, model,parent=None):
-        ASTObject.__init__(self, model)
-        self.parent = parent
+        Statement.__init__(self, model, parent)
         self.value = None    
         self.cases = []
 
