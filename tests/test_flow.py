@@ -37,21 +37,21 @@ class Fib(FlowTest):
         self.assertEqual(self.flowModel.code.name, "Fibonacci")
 
 
-    def testNextBasicBlock(self):
+    def testFinishBlock(self):
         block = self.flowModel.startBlock
 
         blocks = []
         while block!=None:
-            block = block.getNextBasicBlock()
+            block = block.getFinishBlock().getFirstBasicBlock()
             blocks.append(block)
                 
-        self.assertEquals(len(blocks), 3)
+        self.assertEquals(len(blocks), 4)
 
     def testNextBasicBlocks1(self):
         block = self.flowModel.startBlock
         blocks1 = []
         while block!=None:
-            block = block.getNextBasicBlock()
+            block = block.getFinishBlock().getFirstBasicBlock()
             blocks1.append(block)
 
         block = self.flowModel.startBlock

@@ -9,7 +9,9 @@ class Block(object):
         self.parentBlock = parentBlock
         self.subBlocks = list(subBlocks)
         self.firstBlock = self.subBlocks and self.subBlocks[0] or None
-        self.nextBlock = None
+        self.finishBlock = None
+
+        self._nextBasicBlocks = None
 
         self.astObjects = []
 
@@ -22,17 +24,15 @@ class Block(object):
         else:
             return self.firstBlock.getFirstBasicBlock()
 
-    def getNextBasicBlock(self):
-        if self.nextBlock==None and self.parentBlock!=None:
-            return self.parentBlock.getNextBasicBlock()
-
-        if isinstance(self.nextBlock, BasicBlock):
-            return self.nextBlock
-        else:
-            return self.nextBlock.getFirstBasicBlock()
+    def getFinishBlock(self):
+        if self.finishBlock==None and self.parentBlock!=None:
+            return self.parentBlock.getFinishBlock()
+        return self.finishBlock
 
     def getNextBasicBlocks(self):
-        return [self.getNextBasicBlock()]
+        if self._nextBasicBlocks==None:
+            self._nextBasicBlocks = [self.getFinishBlock().getFirstBasicBlock()]
+        return self._nextBasicBlocks
 
     def __str__(self):
         return "<%s(%s)>" % (self.__class__.__name__,
@@ -66,7 +66,7 @@ class Block(object):
             simpleStatements = []
 
         for i in xrange(len(blocks)-1):
-            blocks[i].nextBlock = blocks[i+1]
+            blocks[i].finishBlock = blocks[i+1]
 
         return blocks
 
@@ -92,11 +92,13 @@ class ConditionBlock(BasicBlock):
         self.branchBlocks = []
 
     def getNextBasicBlocks(self):
-        blocks = []
-        for branchBlock in self.branchBlocks:
-            blocks.append(branchBlock.getFirstBasicBlock())
-        blocks.append(self.getNextBasicBlock())
-        return blocks
+        if self._nextBasicBlocks==None:
+            blocks = []
+            for branchBlock in self.branchBlocks:
+                blocks.append(branchBlock.getFirstBasicBlock())
+            blocks.append(self.getFinishBlock().getFirstBasicBlock())
+            self._nextBasicBlocks = blocks
+        return self._nextBasicBlocks
 
 
 class IfBlock(Block):
@@ -130,7 +132,7 @@ class IfConstructBlock(Block):
             ifBlock = IfBlock(self, stmt)
             self.subBlocks.append(ifBlock)
             if len(self.subBlocks)>1:
-                self.subBlocks[-2].subBlocks[0].nextBlock = self.subBlocks[-1] # elseif/else branch
+                self.subBlocks[-2].subBlocks[0].finishBlock = self.subBlocks[-1] # elseif/else branch
 
         self.firstBlock = self.subBlocks[0]
 
@@ -153,5 +155,5 @@ class ControlFlowModel(object):
         self.codeBlock.subBlocks = blocks
         
         self.codeBlock.firstBlock = blocks[0]
-        self.startBlock.nextBlock = self.codeBlock
-        self.codeBlock.nextBlock = self.endBlock
+        self.startBlock.finishBlock = self.codeBlock
+        self.codeBlock.finishBlock = self.endBlock
