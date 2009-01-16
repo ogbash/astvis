@@ -1,6 +1,7 @@
 
 from astvis import action, event
 from astvis.model import concept
+from astvis import gaphasx
 from wrapbox import Wrapbox
 
 import gtk
@@ -66,7 +67,7 @@ class DiagramItemToolbox(object):
         diagram = self.root.getDiagram()
         view = self.root.views[diagram]
             
-        view.tool = gaphas.tool.DefaultTool()
+        view.tool = gaphasx.DefaultTool()
 
 
     @action.Action('toolbox-item-flow', 'flow', icon='flow')

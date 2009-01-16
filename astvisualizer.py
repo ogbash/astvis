@@ -113,13 +113,6 @@ class MainWindow(object):
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
         self.taskHandler = astvis.widgets.task.TaskHandler(self.taskProgressbars, gtklabel)
 
-        tool = gaphas.tool.ToolChain()
-        tool.append(gaphas.tool.HoverTool())
-        tool.append(gaphasx.ConnectingTool())
-        tool.append(gaphas.tool.ItemTool())
-        tool.append(gaphas.tool.RubberbandTool())
-        #self.view.tool = tool
-
         # project tree
         self.projectTree = widgets.ProjectTree(self.projects, root=self)
         leftPanel = self.wTree.get_widget('left_panel_top')
@@ -249,6 +242,7 @@ class MainWindow(object):
         if self.views.has_key(diagram):
             return
         view = gaphas.view.GtkView()
+        view.tool = gaphasx.DefaultTool()
         view.canvas = diagram.getCanvas()
         view.show()
         #outer.set_hadjustment(view.hadjustment)

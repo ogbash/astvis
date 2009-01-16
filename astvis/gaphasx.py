@@ -315,3 +315,10 @@ class ConnectingTool(gaphas.tool.HandleTool):
             #print 'Handle.disconnect', view, item, handle
             view.canvas.solver.remove_constraint(handle._connect_constraint)
 
+def DefaultTool():
+    tool = gaphas.tool.ToolChain()
+    tool.append(gaphas.tool.HoverTool())
+    tool.append(ConnectingTool())
+    tool.append(gaphas.tool.ItemTool())
+    tool.append(gaphas.tool.RubberbandTool())
+    return tool
