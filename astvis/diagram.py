@@ -5,6 +5,7 @@ from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
 from astvis.misc.list import ObservableList
 import gtkx
+from astvis import gaphasx
 
 # ItemFactory is excesive?
 class ItemFactory:
@@ -82,6 +83,9 @@ class Diagram(object):
 
     def setupView(self, view):
         pass
+
+    def getDefaultTool(self):
+        return gaphasx.DefaultTool()
 
 class DiagramList(ObservableList):
     __gtkmodel__ = gtkx.GtkModel()

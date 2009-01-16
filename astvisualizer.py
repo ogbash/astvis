@@ -242,7 +242,7 @@ class MainWindow(object):
         if self.views.has_key(diagram):
             return
         view = gaphas.view.GtkView()
-        view.tool = gaphasx.DefaultTool()
+        view.tool = diagram.getDefaultTool()
         view.canvas = diagram.getCanvas()
         view.show()
         #outer.set_hadjustment(view.hadjustment)
