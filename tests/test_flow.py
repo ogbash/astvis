@@ -37,12 +37,12 @@ class Fib(FlowTest):
         self.assertEqual(self.flowModel.code.name, "Fibonacci")
 
 
-    def testFinishBlock(self):
+    def testEndBlock(self):
         block = self.flowModel.startBlock
 
         blocks = []
         while block!=None:
-            block = block.getFinishBlock().getFirstBasicBlock()
+            block = block.getEndBlock().getFirstBasicBlock()
             blocks.append(block)
                 
         self.assertEquals(len(blocks), 4)
@@ -51,7 +51,7 @@ class Fib(FlowTest):
         block = self.flowModel.startBlock
         blocks1 = []
         while block!=None:
-            block = block.getFinishBlock().getFirstBasicBlock()
+            block = block.getEndBlock().getFirstBasicBlock()
             blocks1.append(block)
 
         block = self.flowModel.startBlock
