@@ -69,6 +69,8 @@ class NamedItem(gaphas.item.Item):
 
     PADX=10
     PADY=10
+    MIN_WIDTH=0
+    MIN_HEIGHT=0
 
     def __init__(self, name):
         gaphas.item.Item.__init__(self)
@@ -181,7 +183,9 @@ class RectangleItem(NamedItem):
             cr.set_source_rgba(0,0,1,1)
         elif context.hovered:
             cr.set_source_rgba(0.5,0.5,1,1)
-        cr.rectangle(-(self.w+self.PADX)/2, -(self.h+self.PADY)/2, self.w+self.PADX, self.h+self.PADY)
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        cr.rectangle(-w/2, -h/2, w, h)
         cr.stroke()
 
     def point(self, p):

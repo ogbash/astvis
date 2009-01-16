@@ -88,7 +88,7 @@ class BasicBlock(Block):
 class ConditionBlock(BasicBlock):
 
     def __init__(self, parentBlock, executions):
-        Block.__init__(self, parentBlock, executions)
+        BasicBlock.__init__(self, parentBlock, executions)
         self.branchBlocks = []
 
     def getNextBasicBlocks(self):

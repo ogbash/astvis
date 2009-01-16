@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+import logging
+LOG=logging.getLogger(__name__)
+from astvis.common import FINE, FINER, FINEST
+
 import gaphas
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 import event
@@ -26,6 +30,7 @@ class Diagram(object):
         
         self._factory = factory
         self._canvas = gaphas.canvas.Canvas()
+        self._canvas.diagram = self
         self._items = {}
         self._connectors = set()
 
@@ -38,6 +43,12 @@ class Diagram(object):
         if item:
             self._items[obj] = item
             self._addItem(item, x, y)
+
+            if hasattr(item, 'children'):
+                LOG.debug("Adding %d children of %s", len(item.children), item)
+                for child in item.children:
+                    self._canvas.add(child,parent=item)
+            
             event.manager.notifyObservers(obj, ADDED_TO_DIAGRAM, (self,))
             return True
         return False
