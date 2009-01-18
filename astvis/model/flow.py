@@ -70,11 +70,6 @@ class Block(object):
 
         return blocks
 
-class StartBlock(Block):
-    pass
-
-class EndBlock(Block):
-    pass
 
 class BasicBlock(Block):
 
@@ -84,6 +79,20 @@ class BasicBlock(Block):
 
         self.astObjects.extend(executions)
 
+    def getFirstBasicBlock(self):
+        return self
+
+
+class StartBlock(BasicBlock):
+    def __init__(self, parentBlock):
+        BasicBlock.__init__(self, parentBlock, [])
+
+class EndBlock(BasicBlock):
+    def __init__(self, parentBlock):
+        BasicBlock.__init__(self, parentBlock, [])
+
+    def getNextBasicBlocks(self):
+        return []
 
 class ConditionBlock(BasicBlock):
 
@@ -157,3 +166,22 @@ class ControlFlowModel(object):
         self.codeBlock.firstBlock = blocks[0]
         self.startBlock.endBlock = self.codeBlock
         self.codeBlock.endBlock = self.endBlock
+
+        self._connections = None
+
+    def getConnections(self):
+        if self._connections==None:
+            connections = set()
+            processed = set()
+            blocks = set()
+            blocks.add(self.startBlock)
+            while blocks:
+                block = blocks.pop()
+                processed.add(block)
+                nextBlocks = block.getNextBasicBlocks()
+                for nextBlock in nextBlocks:
+                    connections.add((block, nextBlock))
+                    if nextBlock!=None and not nextBlock in processed:
+                        blocks.add(nextBlock)
+            self._connections = connections
+        return self._connections

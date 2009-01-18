@@ -42,23 +42,25 @@ class Fib(FlowTest):
 
         blocks = []
         while block!=None:
-            block = block.getEndBlock().getFirstBasicBlock()
             blocks.append(block)
+            block = block.getEndBlock()
                 
-        self.assertEquals(len(blocks), 4)
+        self.assertEquals(len(blocks), 3)
 
     def testNextBasicBlocks1(self):
         block = self.flowModel.startBlock
         blocks1 = []
         while block!=None:
-            block = block.getEndBlock().getFirstBasicBlock()
             blocks1.append(block)
+            endBlock = block.getEndBlock()
+            block = endBlock!=None and endBlock.getFirstBasicBlock() or None
 
         block = self.flowModel.startBlock
         blocks2 = []
         while block!=None:
-            block = block.getNextBasicBlocks()[-1]
             blocks2.append(block)
+            nextBlocks = block.getNextBasicBlocks()
+            block = nextBlocks and nextBlocks[-1] or None
 
         self.assertEquals(blocks1,blocks2)
 
@@ -66,7 +68,14 @@ class Fib(FlowTest):
         block = self.flowModel.startBlock
         blocks = []
         while block!=None:
-            block = block.getNextBasicBlocks()[0]
             blocks.append(block)
+            nextBlocks = block.getNextBasicBlocks()
+            block = nextBlocks and nextBlocks[0] or None
 
-        print map(str,blocks)
+        self.assertEqual(len(blocks), 6)
+
+    def testGetConnections(self):
+        connections = self.flowModel.getConnections()
+        #for f,t in connections:
+        #    print f, "--->", t
+        self.assertEquals(len(connections), 8)
