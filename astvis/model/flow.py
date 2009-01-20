@@ -38,6 +38,11 @@ class Block(object):
         return "<%s(%s)>" % (self.__class__.__name__,
                              (self.astObjects and self.astObjects[-1] or ''))
 
+    def addSubBlocks(self, blocks):
+        self.subBlocks.extend(blocks)
+        if self.subBlocks:
+            self.firstBlock = self.subBlocks[0]
+
     classMap = {}
 
     @staticmethod
@@ -121,10 +126,11 @@ class IfBlock(Block):
             condBlock = ConditionBlock(self, [ifStatement.condition])
             self.subBlocks.append(condBlock)
 
-        thenBlocks = Block.generateBlocks(self, ifStatement.blocks[0].statements)
-        thenBlock = Block(self, thenBlocks)
+        thenBlock = Block(self)
+        thenBlocks = Block.generateBlocks(thenBlock, ifStatement.blocks[0].statements)
+        thenBlock.addSubBlocks(thenBlocks)
         self.subBlocks.append(thenBlock)
-
+        
         if condBlock!=None:
             condBlock.branchBlocks.append(thenBlock)            
             self.firstBlock = condBlock
@@ -157,15 +163,19 @@ class ControlFlowModel(object):
         assert isinstance(astObj, ast.Code)
         
         self.code = astObj
-        self.startBlock = StartBlock(None)
-        self.endBlock = EndBlock(None)
-        self.codeBlock = Block(None)
-        blocks = Block.generateBlocks(self.codeBlock, astObj.statementBlock.statements)
-        self.codeBlock.subBlocks = blocks
+        self.block = Block(None)
+
+        self._startBlock = StartBlock(self.block)
+        self._endBlock = EndBlock(self.block)
+        self._codeBlock = Block(self.block)
+        blocks = Block.generateBlocks(self._codeBlock, astObj.statementBlock.statements)
+        self._codeBlock.subBlocks = blocks
         
-        self.codeBlock.firstBlock = blocks[0]
-        self.startBlock.endBlock = self.codeBlock
-        self.codeBlock.endBlock = self.endBlock
+        self.block.subBlocks = [self._startBlock,self._codeBlock,self._endBlock]
+        self.block.firstBlock = self._startBlock
+        self._codeBlock.firstBlock = blocks[0]
+        self._startBlock.endBlock = self._codeBlock
+        self._codeBlock.endBlock = self._endBlock
 
         self._connections = None
 
@@ -174,7 +184,7 @@ class ControlFlowModel(object):
             connections = set()
             processed = set()
             blocks = set()
-            blocks.add(self.startBlock)
+            blocks.add(self.block.getFirstBasicBlock())
             while blocks:
                 block = blocks.pop()
                 processed.add(block)
@@ -185,3 +195,25 @@ class ControlFlowModel(object):
                         blocks.add(nextBlock)
             self._connections = connections
         return self._connections
+
+    def classifyConnectionsBy(self, connections, blocks):
+        """Takes list of tuples and divides them into classes, where
+        each class is some connection for I{blocks} and its elements
+        are all connections of the subBlocks of I{blocks}.
+        """
+        blockSet = set(blocks)
+
+        def find(block):
+            while not block in blockSet and block!=None:
+                block = block.parentBlock
+            return block
+
+        clConnections = {}
+        for blockFrom, blockTo in connections:
+            clBlockFrom = find(blockFrom)
+            clBlockTo = find(blockTo)
+            if not clConnections.has_key((clBlockFrom,clBlockTo)):
+                clConnections[(clBlockFrom,clBlockTo)] = []
+            clConnections[(clBlockFrom,clBlockTo)].append((blockFrom,blockTo))
+
+        return clConnections

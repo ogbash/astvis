@@ -41,11 +41,13 @@ class Diagram(object):
         if not item:    
             item = self._factory.getDiagramItem(obj)
         if item:
+            
+            LOG.debug("Adding %s to diagram", item)
             self._items[obj] = item
             self._addItem(item, x, y)
 
             if hasattr(item, 'children'):
-                LOG.debug("Adding %d children of %s", len(item.children), item)
+                LOG.log(FINER, "Adding %d children of %s", len(item.children), item)
                 for child in item.children:
                     self._canvas.add(child,parent=item)
             
@@ -63,6 +65,7 @@ class Diagram(object):
     
     def remove(self, obj):
         if self._items.has_key(obj):
+            LOG.debug("Removing %s from diagram", obj)
             self._removeItem(self._items[obj])
             del self._items[obj]
             event.manager.notifyObservers(obj, REMOVED_FROM_DIAGRAM, (self,))    
@@ -78,6 +81,7 @@ class Diagram(object):
     def addConnector(self, connector):
         if connector in self._connectors:
             return False
+        LOG.debug("Adding connector %s to diagram", connector)
         self._connectors.add(connector)
         connector.setup_diagram()
         return True
@@ -85,6 +89,7 @@ class Diagram(object):
     def removeConnector(self, connector):
         if not connector in self._connectors:
             return False
+        LOG.debug("Removing connector %s from diagram", connector)
         connector.teardown_diagram()
         self._connectors.remove(connector)
         return True

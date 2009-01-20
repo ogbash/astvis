@@ -38,7 +38,7 @@ class Fib(FlowTest):
 
 
     def testEndBlock(self):
-        block = self.flowModel.startBlock
+        block = self.flowModel.block.getFirstBasicBlock()
 
         blocks = []
         while block!=None:
@@ -48,14 +48,14 @@ class Fib(FlowTest):
         self.assertEquals(len(blocks), 3)
 
     def testNextBasicBlocks1(self):
-        block = self.flowModel.startBlock
+        block = self.flowModel.block.getFirstBasicBlock()
         blocks1 = []
         while block!=None:
             blocks1.append(block)
             endBlock = block.getEndBlock()
             block = endBlock!=None and endBlock.getFirstBasicBlock() or None
 
-        block = self.flowModel.startBlock
+        block = self.flowModel.block.getFirstBasicBlock()
         blocks2 = []
         while block!=None:
             blocks2.append(block)
@@ -65,7 +65,7 @@ class Fib(FlowTest):
         self.assertEquals(blocks1,blocks2)
 
     def testNextBasicBlocks0(self):
-        block = self.flowModel.startBlock
+        block = self.flowModel.block.getFirstBasicBlock()
         blocks = []
         while block!=None:
             blocks.append(block)
@@ -76,6 +76,51 @@ class Fib(FlowTest):
 
     def testGetConnections(self):
         connections = self.flowModel.getConnections()
-        #for f,t in connections:
-        #    print f, "--->", t
         self.assertEquals(len(connections), 8)
+
+    def testClassifyConnectionsBy(self):
+        connections = self.flowModel.getConnections()
+        block = self.flowModel.block
+        codeBlock = block.subBlocks[1]
+        blocks = [block.subBlocks[0]] + [block.subBlocks[2]] + block.subBlocks[1].subBlocks
+        clConnections = self.flowModel.classifyConnectionsBy(connections, blocks)
+
+        #for key in clConnections.keys():
+        #    print '--', key, ':', map(lambda x: (str(x[0]),str(x[1])), clConnections[key])
+
+        self.assertEquals(len(clConnections), 5)
+        
+        startToIf1 = block.subBlocks[0], codeBlock.subBlocks[0]
+        self.assertEquals(len(clConnections[startToIf1]), 1)
+        
+        if1ToIf2 = codeBlock.subBlocks[0], codeBlock.subBlocks[1]
+        self.assertEquals(len(clConnections[if1ToIf2]), 2)
+        
+        if2ToEnd = codeBlock.subBlocks[1], block.subBlocks[2]
+        self.assertEquals(len(clConnections[if2ToEnd]), 2)
+        
+
+    def testClassifyConnectionsBy2(self):
+        "test with unfolded if1 block"
+        connections = self.flowModel.getConnections()
+        block = self.flowModel.block
+        codeBlock = block.subBlocks[1]
+        if1Block = codeBlock.subBlocks[0]
+        if2Block = codeBlock.subBlocks[1]
+        blocks = [block.subBlocks[0]] + [block.subBlocks[2]] + \
+                 if1Block.subBlocks + [if2Block]
+        clConnections = self.flowModel.classifyConnectionsBy(connections, blocks)
+
+        #for key in clConnections.keys():
+        #    print '--', key, ':', map(lambda x: (str(x[0]),str(x[1])), clConnections[key])
+
+        self.assertEquals(len(clConnections), 6)
+        
+        startToIf1Cond = block.subBlocks[0], if1Block.subBlocks[0]
+        self.assertEquals(len(clConnections[startToIf1Cond]), 1)
+        
+        if1CondToIf2 = if1Block.subBlocks[0], codeBlock.subBlocks[1]
+        self.assertEquals(len(clConnections[if1CondToIf2]), 1)
+        
+        if2ToEnd = codeBlock.subBlocks[1], block.subBlocks[2]
+        self.assertEquals(len(clConnections[if2ToEnd]), 2)
