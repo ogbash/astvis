@@ -8,7 +8,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import *
 from astvis import diagram
 from astvis.model import ast, flow
-from astvis.gaphasx import RectangleItem, MorphBoundaryPort
+from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 
@@ -21,7 +21,9 @@ from gaphas.connector import PointPort, VariablePoint
 
 class ItemFactory(diagram.ItemFactory):
     def getDiagramItem(self, obj):
-        if isinstance(obj, flow.Block):
+        if isinstance(obj, flow.ConditionBlock):
+            return ConditionBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
+        elif isinstance(obj, flow.Block):
             return BlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
 
 class ControlFlowDiagram (diagram.Diagram):
@@ -134,7 +136,19 @@ class BlockItem(RectangleItem):
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
-        #self.port = PointPort(VariablePoint((0.,0.)))
+
+
+class ConditionBlockItem(DiamondItem):
+
+    def __init__(self, block, text):
+        DiamondItem.__init__(self, text)
+        self.block = block
+        if block.subBlocks:
+            self.children = [OpenCloseItem(self)]
+        self.connections = set()
+
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port.connectable = False
 
 class OpenCloseItem(gaphas.item.Item):
 

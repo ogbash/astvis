@@ -10,7 +10,6 @@ from gaphas.matrix import Matrix
 from gaphas.constraint import LineConstraint
 from gaphas.item import NW, NE,SW, SE
 from gaphas.canvas import CanvasProjection
-#from gaphas.geometry import point_on_rectangle
 
 EPSILON = 1e-6
 
@@ -206,6 +205,63 @@ class RectangleItem(NamedItem):
         point = _point_on_rectangle((-w/2, -h/2, w, h), v)
         return (_vec_length(point), point)
 
+
+class DiamondItem(NamedItem):
+    "Diamond item with the name inside."
+
+    PADX = 3.
+    PADY = 3.
+
+    def __init__(self, name):
+        super(DiamondItem, self).__init__(name)
+
+    def draw(self, context):
+        super(DiamondItem, self).draw(context)
+        
+        cr = context.cairo
+        cr.save()
+        if context.selected:
+            cr.set_source_rgba(0,0,1,1)
+        elif context.hovered:
+            cr.set_source_rgba(0.5,0.5,1,1)
+        # w,h - textbox width and height
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        # dw, dh - diamond width and height
+        dw, dh = self._getDiamondSize(w,h)
+        cr.move_to(-dw/2, 0)
+        cr.line_to(0, dh/2)
+        cr.line_to(dw/2, 0)
+        cr.line_to(0, -dh/2)
+        cr.line_to(-dw/2, 0)
+        cr.stroke()
+
+    def _getDiamondSize(self, w, h):
+        dh = h*2
+        # so that diamond lines touch the textbox
+        # the formula: dw * dh = w * dh + h * dw
+        dw = (w * dh)/(dh - h)
+        return dw, dh
+
+    def point(self, p):
+        return 0
+        
+    def glue(self, item, handle, ix, iy):
+        v = (ix, iy) # vector from center
+        vlen, alpha = _get_radial(v)
+        radius, point = self.intersect(alpha)
+        distance = abs(vlen - radius)
+        return (distance, point)
+
+    def intersect(self, alpha):
+        v = (math.cos(alpha), math.sin(alpha))
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        point = _point_on_rectangle((-w/2, -h/2, w, h), v)
+
+        dw, dh = self._getDiamondSize(w,h)
+        dpoint = (point[0]*dw/w, point[1]*dh/h)
+        return (_vec_length(dpoint), dpoint)
 
 class MorphConstraint(gaphas.constraint.Constraint):
     "Keep variable on the outside boundary of the morph (figure)"
