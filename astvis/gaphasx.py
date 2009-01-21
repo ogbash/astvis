@@ -7,9 +7,9 @@ import math
 import gaphas
 import gaphas.util
 from gaphas.matrix import Matrix
-from gaphas.canvas import CanvasProjection
 from gaphas.constraint import LineConstraint
 from gaphas.item import NW, NE,SW, SE
+from gaphas.canvas import CanvasProjection
 #from gaphas.geometry import point_on_rectangle
 
 EPSILON = 1e-6
@@ -77,7 +77,8 @@ class NamedItem(gaphas.item.Item):
         self.name = name
         self.w = 1; self.h = 1
 
-        handle = gaphas.item.Handle(movable=False)
+        handle = gaphas.item.Handle(movable=False,
+                                    strength=gaphas.connector.VERY_STRONG)
         handle.visible = False
         self._handles.append(handle)
         self.center = handle        
@@ -200,28 +201,53 @@ class RectangleItem(NamedItem):
 
     def intersect(self, alpha):
         v = (math.cos(alpha), math.sin(alpha))
-        point = _point_on_rectangle((-(self.w+self.PADX)/2, -(self.h+self.PADY)/2, self.w+self.PADX, self.h+self.PADY), v)
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        point = _point_on_rectangle((-w/2, -h/2, w, h), v)
         return (_vec_length(point), point)
 
 
 class MorphConstraint(gaphas.constraint.Constraint):
     "Keep variable on the outside boundary of the morph (figure)"
     
-    def __init__(self, point, morph, oppositePoint = None):
-        self.center = CanvasProjection(morph.center, morph)
-        self.oppositePoint = oppositePoint
+    def __init__(self, point, morph, oppositePoint = None, line=None):
+        self.center = morph.canvas.project(morph, morph.center)
+        self.line = line
+
+        self.point = point
+        
+        if isinstance(point, CanvasProjection):
+            origPoint = point._point
+        else:
+            origPoint = point
+
+        if oppositePoint!=None:
+            self.oppositePoint = oppositePoint
+        elif line!=None and origPoint in (line._handles[0].pos, line._handles[-1].pos):
+            canvas = line.canvas
+            if origPoint==line._handles[0].pos:
+                self.oppositePoint = canvas.project(line, line._handles[1])
+            elif origPoint==line._handles[-1].pos:
+                self.oppositePoint = canvas.project(line, line._handles[-2])
+        else:
+            self.oppositePoint = None        
+
         variables = [point[0], point[1], self.center[0], self.center[1]]
         if oppositePoint:
             variables.extend((oppositePoint[0], oppositePoint[1]))
         super(MorphConstraint, self).__init__(*variables)
 
-        self.point = point
         self.morph = morph
-        if not oppositePoint:
+        if not self.oppositePoint:
             # remember alpha if there is no opposite morph present
             v = (self.point[0].value-self.center[0].value,
                  self.point[1].value-self.center[1].value)
             vlen, self.alpha = _get_radial(v)
+        else:
+            self.alpha = None
+
+        LOG.log(FINER, "Morph constraint with opposite point %s and angle %s",
+                self.oppositePoint, self.alpha)
         
     def solve_for(self, var):
         c = self.center
@@ -234,6 +260,7 @@ class MorphConstraint(gaphas.constraint.Constraint):
         vlen, v = self.morph.intersect(alpha)
         _update(self.point[0], self.center[0].value+v[0])
         _update(self.point[1], self.center[1].value+v[1])
+
         
 class ConnectingTool(gaphas.tool.HandleTool):
     def glue(self, view, item, handle, wx, wy):
@@ -294,20 +321,21 @@ class ConnectingTool(gaphas.tool.HandleTool):
             handle.disconnect()
 
         if glue_item:
+            canvas = glue_item.canvas
             if isinstance(glue_item, EllipseItem) or isinstance(glue_item, RectangleItem):
 
                 # Make a constraint that keeps point on ellipse
                 handle._connect_constraint = \
-                        MorphConstraint(CanvasProjection(handle.pos, item),
+                        MorphConstraint(canvas.project(handle.pos),
                             glue_item)
             elif isinstance(glue_item, gaphas.examples.Box):
                 h1, h2 = _side(handle, glue_item, view, item)
 
                 # Make a constraint that keeps into account item coordinates.
                 handle._connect_constraint = \
-                        LineConstraint(line=(CanvasProjection(h1.pos, glue_item),
-                            CanvasProjection(h2.pos, glue_item)),
-                            point=CanvasProjection(handle.pos, item))
+                        LineConstraint(line=(canvas.project(glue_item, h1.pos),
+                                             canvas.project(glue_item, h2.pos)),
+                                       point=canvas.project(item, handle.pos))
 
             view.canvas.solver.add_constraint(handle._connect_constraint)
 
@@ -326,3 +354,15 @@ def DefaultTool():
     tool.append(gaphas.tool.ItemTool())
     tool.append(gaphas.tool.RubberbandTool())
     return tool
+
+class MorphBoundaryPort(gaphas.connector.PointPort):
+
+    def __init__(self, pos):
+        super(MorphBoundaryPort, self).__init__(pos)
+
+
+    def constraint(self, canvas, line, handle, glue_item):        
+        c = MorphConstraint(canvas.project(line, handle.pos),
+                            glue_item,
+                            line=line)
+        return c

@@ -8,7 +8,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import *
 from astvis import diagram
 from astvis.model import ast, flow
-from astvis.gaphasx import RectangleItem
+from astvis.gaphasx import RectangleItem, MorphBoundaryPort
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 
@@ -132,7 +132,9 @@ class BlockItem(RectangleItem):
             self.children = [OpenCloseItem(self)]
         self.connections = set()
 
-        self.port = PointPort(VariablePoint((0.,0.)))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port.connectable = False
+        #self.port = PointPort(VariablePoint((0.,0.)))
 
 class OpenCloseItem(gaphas.item.Item):
 
@@ -165,7 +167,7 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
             diagram.remove(ocItem.item.block)
             for subBlock in subBlocks:
                 diagram.add(subBlock, x, y)
-                y += 20
+                y += 50
             diagram.bindConnections()
             return True
 
@@ -175,7 +177,7 @@ class ControlFlowConnector(diagram.Connector, event.Observer):
         self._fromBlock = fromBlock
         self._toBlock = toBlock
         self._diagram = diagram
-        self._line = gaphas.item.Line()
+        self._line = ControlFlowLine()
         self._line.handles()[0].connectable=False
         self._line.handles()[-1].connectable=False
         self.connections = set(connections)
@@ -202,3 +204,11 @@ class ControlFlowConnector(diagram.Connector, event.Observer):
         self.__dict__.update(state)
         event.manager.subscribe(self, self._toBlock)
         event.manager.subscribe(self, self._fromBlock)        
+
+class ControlFlowLine(gaphas.item.Line):
+    def draw_head(self, context):
+        super(ControlFlowLine, self).draw_head(context)
+        cr = context.cairo
+        cr.line_to(6,3)
+        cr.move_to(6,-3)
+        cr.line_to(0,0)
