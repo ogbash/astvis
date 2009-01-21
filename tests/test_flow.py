@@ -124,3 +124,17 @@ class Fib(FlowTest):
         
         if2ToEnd = codeBlock.subBlocks[1], block.subBlocks[2]
         self.assertEquals(len(clConnections[if2ToEnd]), 2)
+
+
+class Loop(FlowTest):
+
+    FILENAME="fortran/loop.f90.xml"
+
+    def setUp(self):
+        super(Loop, self).setUp()
+        sumSubprogram = self.astModel.files[0].units[0].subprograms[0]
+        self.flowModel = flow.ControlFlowModel(sumSubprogram)        
+
+    def testCreate(self):
+        self.assertEqual(self.flowModel.code.name, "Sum")
+        self.assertEqual(len(self.flowModel.code.statementBlock.statements), 2)

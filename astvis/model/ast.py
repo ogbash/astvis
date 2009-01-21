@@ -332,6 +332,21 @@ class IfStatement(Statement):
         c.extend(self.blocks)
         return c
 
+class DoStatement(Statement):
+    def __init__(self, model,parent=None):
+        Statement.__init__(self, model, parent)
+        self.first = None
+        self.last = None
+        self.step = None
+
+    def getChildren(self):
+        c = []
+        if self.first!=None: c.append(self.first)
+        if self.last!=None: c.append(self.last)
+        if self.step!=None: c.append(self.step)
+        c.extend(self.blocks)
+        return c
+
 class SelectCase(Statement):
     def __init__(self, model,parent=None):
         Statement.__init__(self, model, parent)

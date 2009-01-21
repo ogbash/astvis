@@ -261,6 +261,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             st = Allocate(self.astModel, block)
         elif _type in ('if', 'ifthen', 'elseifthen', 'else'):
             st = IfStatement(self.astModel, block)
+        elif _type in ('do'):
+            st = DoStatement(self.astModel, block)
         elif _type in ('print'):
             st = PrintStatement(self.astModel, block)
         else:

@@ -127,7 +127,7 @@ class IfBlock(Block):
             self.subBlocks.append(condBlock)
 
         thenBlock = Block(self)
-        thenBlocks = Block.generateBlocks(thenBlock, ifStatement.blocks[0].statements)
+        thenBlocks = Block.generateBlocks(thenBlock, list(ifStatement.blocks[0].statements))
         thenBlock.addSubBlocks(thenBlocks)
         self.subBlocks.append(thenBlock)
         
@@ -168,7 +168,7 @@ class ControlFlowModel(object):
         self._startBlock = StartBlock(self.block)
         self._endBlock = EndBlock(self.block)
         self._codeBlock = Block(self.block)
-        blocks = Block.generateBlocks(self._codeBlock, astObj.statementBlock.statements)
+        blocks = Block.generateBlocks(self._codeBlock, list(astObj.statementBlock.statements))
         self._codeBlock.subBlocks = blocks
         
         self.block.subBlocks = [self._startBlock,self._codeBlock,self._endBlock]
