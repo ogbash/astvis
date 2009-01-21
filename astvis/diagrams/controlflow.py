@@ -21,7 +21,9 @@ from gaphas.connector import PointPort, VariablePoint
 
 class ItemFactory(diagram.ItemFactory):
     def getDiagramItem(self, obj):
-        if isinstance(obj, flow.ConditionBlock):
+        if isinstance(obj, (flow.StartBlock, flow.EndBlock)):
+            return EntryExitItem(obj)
+        elif isinstance(obj, flow.ConditionBlock):
             return ConditionBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
         elif isinstance(obj, flow.Block):
             return BlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
@@ -149,6 +151,33 @@ class ConditionBlockItem(DiamondItem):
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
+
+class EntryExitItem(RectangleItem):
+
+    def __init__(self, block):
+        RectangleItem.__init__(self, "")
+        self.block = block
+        if block.subBlocks:
+            self.children = [OpenCloseItem(self)]
+        self.connections = set()
+
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port.connectable = False
+
+    def draw(self, context):
+        super(EntryExitItem, self).draw(context)
+        cr = context.cairo
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        cr.move_to(-w/2, h/4)
+        cr.line_to(-w/4, h/2)
+        cr.move_to(w/4, h/2)
+        cr.line_to(w/2, h/4)
+        cr.move_to(w/2, -h/4)
+        cr.line_to(w/4, -h/2)
+        cr.move_to(-w/4, -h/2)
+        cr.line_to(-w/2, -h/4)
+        cr.stroke()
 
 class OpenCloseItem(gaphas.item.Item):
 
