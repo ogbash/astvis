@@ -148,7 +148,11 @@ class EllipseItem(NamedItem):
             cr.set_source_rgba(0.5,0.5,1,1)
         else:
             cr.set_source_rgba(*self.color)
-        gaphas.util.path_ellipse(cr, 0, 0, self.w+self.PADX, self.h+self.PADY)
+        
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+
+        gaphas.util.path_ellipse(cr, 0, 0, w, h)
         cr.stroke()
         cr.restore()
 
@@ -163,7 +167,9 @@ class EllipseItem(NamedItem):
         return (distance, point)
 
     def intersect(self, alpha):
-        radius = math.pow(math.cos(alpha)/((self.w+20)/2.), 2) + math.pow(math.sin(alpha)/((self.h+20)/2.), 2)
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        radius = math.pow(math.cos(alpha)/(w/2.), 2) + math.pow(math.sin(alpha)/(h/2.), 2)
         radius = 1/math.pow(radius, 0.5)
         point = (math.cos(alpha)*radius, math.sin(alpha)*radius)
         return (radius, point)

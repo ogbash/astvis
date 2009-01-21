@@ -137,6 +137,58 @@ class IfBlock(Block):
         else:
             self.firstBlock = thenBlock
 
+class DoHeaderBlock(Block):
+
+    def __init__(self, parentBlock, doStatement):
+        Block.__init__(self, parentBlock)
+        self.astObjects.append(doStatement)
+
+        
+        if doStatement.type=='for':
+            self._initForBlocks(doStatement)
+        elif doStatement.type=='while':
+            self._initWhileBlocks(doStatement)
+            
+    def _initWhileBlocks(self, doStatement):
+        self.conditionBlock = ConditionBlock(self, [doStatement.condition])
+        self.initBlock = None
+        self.stepBlock = None
+        self.firstBlock = self.conditionBlock
+        self.subBlocks.append(self.conditionBlock)
+
+    def _initForBlocks(self, doStatement):
+        astModel = doStatement.model
+        self.initBlock = BasicBlock(self, [ast.Assignment(astModel,
+                                                          target=ast.Reference(astModel,
+                                                                               name=doStatement.variable),
+                                                          value=doStatement.first)])
+        self.conditionBlock = ConditionBlock(self, [ast.Operator(doStatement.model,
+                                                                 type='.NEQ.',
+                                                                 left=ast.Reference(astModel,
+                                                                                    name=doStatement.variable),
+                                                                 right=doStatement.last)])
+        # @todo: use step from doStatement
+        statements = [ast.Assignment(astModel,
+                                     target=ast.Reference(astModel,
+                                                          name=doStatement.variable),
+                                     value=ast.Operator(astModel,
+                                                        type='+',
+                                                        left=ast.Reference(astModel,
+                                                                           name=doStatement.variable),
+                                                        right=ast.Constant(astModel,
+                                                                           value=1)))
+                      ]
+        self.stepBlock = BasicBlock(self, statements)
+
+        self.firstBlock = self.initBlock
+
+        self.subBlocks.append(self.initBlock)
+        self.subBlocks.append(self.conditionBlock)
+        self.subBlocks.append(self.stepBlock)
+
+        self.initBlock.endBlock = self.conditionBlock
+        self.stepBlock.endBlock = self.conditionBlock
+
 class IfConstructBlock(Block):
 
     def __init__(self, parentBlock, ifConstruct):
@@ -151,8 +203,30 @@ class IfConstructBlock(Block):
 
         self.firstBlock = self.subBlocks[0]
 
+class DoBlock(Block):
+
+    def __init__(self, parentBlock, doStatement):
+        Block.__init__(self, parentBlock)
+        self.astObjects.append(doStatement)
+
+        headerBlock = DoHeaderBlock(self, doStatement)
+        self.subBlocks.append(headerBlock)
+
+        block = Block(self)
+        blocks = Block.generateBlocks(block, list(doStatement.blocks[0].statements))
+        block.addSubBlocks(blocks)
+        if headerBlock.stepBlock!=None: # for
+            block.endBlock = headerBlock.stepBlock
+        else: # while
+            block.endBlock = headerBlock.conditionBlock
+        self.subBlocks.append(block)
+        
+        headerBlock.conditionBlock.branchBlocks.append(block)            
+        self.firstBlock = headerBlock
+
 Block.classMap = {ast.IfStatement: IfBlock,
-                  ast.IfConstruct: IfConstructBlock}
+                  ast.IfConstruct: IfConstructBlock,
+                  ast.DoStatement: DoBlock}
 
 
 class ControlFlowModel(object):

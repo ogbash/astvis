@@ -782,8 +782,14 @@
 </block>
 <block type="executions">
 <location>
-<begin tokenIndex="499" line="236" column="4"/>
-<end tokenIndex="7718" line="1469" column="9"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -837,6 +843,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="518" line="239" column="4"/>
@@ -884,6 +892,8 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="529" line="241" column="4"/>
@@ -978,6 +988,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="554" line="246" column="4"/>
@@ -1054,6 +1068,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="579" line="250" column="4"/>
@@ -1145,6 +1163,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="allocate">
 <location>
 <begin tokenIndex="603" line="255" column="4"/>
@@ -1249,6 +1269,8 @@
 </call>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="634" line="259" column="4"/>
@@ -1302,8 +1324,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="648" line="260" column="6"/>
+<begin tokenIndex="-1"/>
 <end tokenIndex="5606" line="1144" column="22"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -1338,8 +1366,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="660" line="261" column="8"/>
-<end tokenIndex="732" line="269" column="13"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -1561,7 +1595,13 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="736" line="271" column="6"/>
@@ -1603,8 +1643,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="748" line="272" column="8"/>
-<end tokenIndex="775" line="276" column="13"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -1649,7 +1695,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="780" line="278" column="6"/>
@@ -1756,6 +1806,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="813" line="283" column="6"/>
@@ -1798,7 +1850,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="826" line="285" column="8"/>
 <end tokenIndex="966" line="305" column="13"/>
@@ -1816,8 +1868,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="833" line="286" column="10"/>
-<end tokenIndex="964" line="304" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -1851,8 +1909,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="844" line="287" column="12"/>
-<end tokenIndex="962" line="303" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -2034,7 +2098,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="893" line="292" column="14"/>
 <end tokenIndex="960" line="302" column="19"/>
@@ -2053,7 +2117,7 @@
 <block>
 <location>
 <begin tokenIndex="901" line="293" column="16"/>
-<end tokenIndex="958" line="301" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -2097,6 +2161,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="911" line="294" column="16"/>
@@ -2270,13 +2340,19 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="969" line="307" column="8"/>
@@ -2294,7 +2370,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="973" line="308" column="8"/>
 <end tokenIndex="1036" line="317" column="13"/>
@@ -2320,8 +2396,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="982" line="309" column="10"/>
-<end tokenIndex="1034" line="316" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -2355,8 +2437,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="993" line="310" column="12"/>
-<end tokenIndex="1032" line="315" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -2511,9 +2599,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="1039" line="319" column="8"/>
@@ -2531,7 +2623,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1043" line="320" column="8"/>
 <end tokenIndex="1102" line="329" column="13"/>
@@ -2550,7 +2642,7 @@
 <block>
 <location>
 <begin tokenIndex="1051" line="321" column="10"/>
-<end tokenIndex="1100" line="328" column="15"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -2581,6 +2673,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1057" line="323" column="10"/>
@@ -2741,7 +2839,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1104" line="330" column="8"/>
@@ -2765,7 +2867,7 @@
 <block>
 <location>
 <begin tokenIndex="-1"/>
-<end tokenIndex="1222" line="357" column="15"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="call" name="SpMtx_arrange">
 <location>
@@ -2816,7 +2918,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1139" line="335" column="10"/>
 <end tokenIndex="1202" line="354" column="15"/>
@@ -2835,7 +2937,7 @@
 <block>
 <location>
 <begin tokenIndex="1147" line="347" column="12"/>
-<end tokenIndex="1200" line="353" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -2866,6 +2968,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1153" line="348" column="12"/>
@@ -2996,7 +3104,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1204" line="355" column="10"/>
@@ -3025,7 +3141,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="elseifthen">
@@ -3070,6 +3190,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1249" line="362" column="8"/>
@@ -3156,6 +3278,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1272" line="367" column="8"/>
@@ -3215,8 +3341,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="1288" line="370" column="10"/>
-<end tokenIndex="1310" line="374" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -3309,7 +3441,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="1315" line="376" column="8"/>
@@ -3368,12 +3504,12 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="1334" line="379" column="8"/>
 <end tokenIndex="1633" line="432" column="19"/>
 </location>
-<first>
+<condition>
 <operator type="&lt;=">
 <left>
 <reference name="firstwocol">
@@ -3392,13 +3528,13 @@
 </reference>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="1344" line="381" column="10"/>
-<end tokenIndex="1630" line="431" column="15"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1344" line="381" column="10"/>
 <end tokenIndex="1377" line="387" column="24"/>
@@ -3417,7 +3553,7 @@
 <block>
 <location>
 <begin tokenIndex="1352" line="382" column="12"/>
-<end tokenIndex="1374" line="386" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -3451,6 +3587,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1359" line="383" column="12"/>
@@ -3489,7 +3631,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1379" line="388" column="10"/>
@@ -3537,12 +3683,12 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="1392" line="392" column="12"/>
 <end tokenIndex="1428" line="396" column="17"/>
 </location>
-<first>
+<condition>
 <operator type=".OR.">
 <left>
 <operator type="==">
@@ -3595,7 +3741,7 @@
 </operator>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="1412" line="394" column="14"/>
@@ -3663,7 +3809,7 @@
 </block>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="1431" line="397" column="12"/>
@@ -3688,6 +3834,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="call" name="lets_colour2">
 <location>
 <begin tokenIndex="1437" line="400" column="10"/>
@@ -3792,6 +3940,12 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1465" line="402" column="10"/>
@@ -3927,7 +4081,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="1502" line="408" column="12"/>
 <end tokenIndex="1588" line="421" column="17"/>
@@ -3946,7 +4100,7 @@
 <block>
 <location>
 <begin tokenIndex="1510" line="409" column="14"/>
-<end tokenIndex="1586" line="420" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -3990,6 +4144,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1520" line="410" column="14"/>
@@ -4248,7 +4408,9 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
 <statement type="else">
@@ -4288,7 +4450,7 @@
 <constant type="integer">3</constant>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="1601" line="426" column="12"/>
 <end tokenIndex="1628" line="430" column="17"/>
@@ -4379,11 +4541,13 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="1635" line="433" column="8"/>
@@ -4415,7 +4579,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1645" line="436" column="8"/>
 <end tokenIndex="1708" line="445" column="13"/>
@@ -4441,8 +4605,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="1654" line="437" column="10"/>
-<end tokenIndex="1706" line="444" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -4476,8 +4646,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="1665" line="438" column="12"/>
-<end tokenIndex="1704" line="443" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -4632,9 +4808,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="1711" line="447" column="8"/>
@@ -4652,7 +4832,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1715" line="448" column="8"/>
 <end tokenIndex="1774" line="457" column="13"/>
@@ -4671,7 +4851,7 @@
 <block>
 <location>
 <begin tokenIndex="1723" line="449" column="10"/>
-<end tokenIndex="1772" line="456" column="15"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -4702,6 +4882,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1729" line="451" column="10"/>
@@ -4862,7 +5048,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1776" line="458" column="8"/>
@@ -4886,7 +5076,7 @@
 <block>
 <location>
 <begin tokenIndex="-1"/>
-<end tokenIndex="1894" line="474" column="15"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="call" name="SpMtx_arrange">
 <location>
@@ -4937,7 +5127,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="1811" line="463" column="10"/>
 <end tokenIndex="1874" line="471" column="15"/>
@@ -4956,7 +5146,7 @@
 <block>
 <location>
 <begin tokenIndex="1819" line="464" column="12"/>
-<end tokenIndex="1872" line="470" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -4987,6 +5177,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1825" line="465" column="12"/>
@@ -5117,7 +5313,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1876" line="472" column="10"/>
@@ -5146,7 +5350,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="elseifthen">
@@ -5172,7 +5380,7 @@
 <block>
 <location>
 <begin tokenIndex="1916" line="481" column="8"/>
-<end tokenIndex="4506" line="951" column="13"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="allocate">
 <location>
@@ -5232,6 +5440,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1934" line="490" column="8"/>
@@ -5318,6 +5528,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="1957" line="495" column="8"/>
@@ -5377,8 +5591,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="1973" line="498" column="10"/>
-<end tokenIndex="2001" line="502" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -5480,7 +5700,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2006" line="504" column="8"/>
@@ -5556,12 +5780,12 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="2030" line="508" column="8"/>
 <end tokenIndex="2936" line="698" column="19"/>
 </location>
-<first>
+<condition>
 <operator type="&lt;=">
 <left>
 <reference name="firstwocol">
@@ -5580,11 +5804,17 @@
 </reference>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
-<begin tokenIndex="2038" line="510" column="10"/>
-<end tokenIndex="2933" line="697" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -5628,7 +5858,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="2051" line="512" column="12"/>
 <end tokenIndex="2102" line="519" column="17"/>
@@ -5646,8 +5876,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2058" line="513" column="14"/>
-<end tokenIndex="2100" line="518" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -5697,7 +5933,7 @@
 <block>
 <location>
 <begin tokenIndex="2073" line="514" column="16"/>
-<end tokenIndex="2098" line="517" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -5728,6 +5964,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2079" line="515" column="16"/>
@@ -5803,9 +6045,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2105" line="520" column="12"/>
@@ -5830,6 +6076,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2111" line="522" column="10"/>
@@ -5855,12 +6105,12 @@
 <begin tokenIndex="2119" line="523" column="12"/>
 <end tokenIndex="2152" line="527" column="32"/>
 </location>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="2119" line="523" column="12"/>
 <end tokenIndex="2147" line="526" column="17"/>
 </location>
-<first>
+<condition>
 <operator type="&gt;=">
 <left>
 <reference name="stat">
@@ -5889,7 +6139,7 @@
 </reference>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="2131" line="524" column="14"/>
@@ -5957,7 +6207,7 @@
 </block>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2150" line="527" column="12"/>
@@ -5990,7 +6240,7 @@
 <block>
 <location>
 <begin tokenIndex="2157" line="565" column="12"/>
-<end tokenIndex="2227" line="577" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -6009,7 +6259,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="2163" line="566" column="12"/>
 <end tokenIndex="2209" line="573" column="21"/>
@@ -6030,7 +6280,7 @@
 <begin tokenIndex="2170" line="567" column="14"/>
 <end tokenIndex="2206" line="572" column="19"/>
 </location>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2170" line="567" column="14"/>
 <end tokenIndex="2206" line="572" column="19"/>
@@ -6055,8 +6305,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2179" line="568" column="16"/>
-<end tokenIndex="2204" line="571" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -6143,9 +6399,17 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
-</statement>
+</do>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2211" line="574" column="12"/>
@@ -6201,7 +6465,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2232" line="579" column="10"/>
@@ -6344,6 +6612,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2266" line="582" column="10"/>
@@ -6415,6 +6689,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2286" line="585" column="12"/>
@@ -6553,7 +6829,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2325" line="600" column="14"/>
 <end tokenIndex="2382" line="605" column="19"/>
@@ -6762,7 +7038,7 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2385" line="606" column="14"/>
@@ -6831,7 +7107,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2401" line="608" column="14"/>
 <end tokenIndex="2436" line="613" column="19"/>
@@ -6861,8 +7137,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2410" line="609" column="16"/>
-<end tokenIndex="2434" line="612" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -6961,7 +7243,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2438" line="614" column="0"/>
@@ -6977,8 +7263,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="2444" line="615" column="2"/>
-<end tokenIndex="2643" line="642" column="7"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -7006,9 +7298,9 @@
 <block>
 <location>
 <begin tokenIndex="2453" line="616" column="4"/>
-<end tokenIndex="2551" line="627" column="9"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="2453" line="616" column="4"/>
 <end tokenIndex="2499" line="622" column="9"/>
@@ -7034,8 +7326,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2462" line="617" column="6"/>
-<end tokenIndex="2497" line="621" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -7171,7 +7469,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2501" line="623" column="4"/>
@@ -7330,6 +7636,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="else">
 <location>
@@ -7339,9 +7647,9 @@
 <block>
 <location>
 <begin tokenIndex="2555" line="629" column="4"/>
-<end tokenIndex="2641" line="641" column="9"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="2555" line="629" column="4"/>
 <end tokenIndex="2601" line="635" column="9"/>
@@ -7367,8 +7675,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2564" line="630" column="6"/>
-<end tokenIndex="2599" line="634" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -7504,7 +7818,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2603" line="637" column="4"/>
@@ -7615,9 +7937,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</statement>
+</block>
+</ifconstruct>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="2647" line="645" column="14"/>
@@ -7634,7 +7962,9 @@
 </statement>
 </block>
 </statement>
-<statement type="do" variable="j">
+</block>
+</ifconstruct>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2654" line="649" column="12"/>
 <end tokenIndex="2767" line="669" column="17"/>
@@ -7653,7 +7983,7 @@
 <block>
 <location>
 <begin tokenIndex="2662" line="650" column="14"/>
-<end tokenIndex="2765" line="668" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -7687,6 +8017,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2669" line="651" column="14"/>
@@ -7858,8 +8194,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="2712" line="656" column="16"/>
-<end tokenIndex="2763" line="667" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -7898,8 +8240,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="2723" line="657" column="18"/>
+<begin tokenIndex="-1"/>
 <end tokenIndex="2761" line="662" column="49"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -7975,6 +8323,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="2745" line="661" column="18"/>
@@ -8058,9 +8408,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2769" line="670" column="12"/>
@@ -8086,7 +8442,7 @@
 <begin tokenIndex="2777" line="672" column="14"/>
 <end tokenIndex="2826" line="677" column="19"/>
 </location>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2777" line="672" column="14"/>
 <end tokenIndex="2826" line="677" column="19"/>
@@ -8104,8 +8460,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="2784" line="673" column="16"/>
-<end tokenIndex="2824" line="676" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -8269,10 +8631,14 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
-<statement type="do" variable="j">
+</block>
+</ifconstruct>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2830" line="681" column="12"/>
 <end tokenIndex="2887" line="689" column="17"/>
@@ -8291,7 +8657,7 @@
 <block>
 <location>
 <begin tokenIndex="2838" line="682" column="14"/>
-<end tokenIndex="2885" line="688" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -8325,6 +8691,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2845" line="683" column="14"/>
@@ -8363,7 +8735,7 @@
 <block>
 <location>
 <begin tokenIndex="2857" line="684" column="16"/>
-<end tokenIndex="2883" line="687" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -8392,6 +8764,12 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2864" line="685" column="16"/>
@@ -8462,9 +8840,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
 <statement type="else">
@@ -8506,7 +8888,7 @@
 </operator>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="2898" line="692" column="12"/>
 <end tokenIndex="2931" line="696" column="17"/>
@@ -8631,11 +9013,13 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="2938" line="699" column="8"/>
@@ -8664,6 +9048,12 @@
 </reference>
 </designator>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="2948" line="701" column="8"/>
@@ -8847,7 +9237,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="3004" line="711" column="10"/>
 <end tokenIndex="3299" line="757" column="15"/>
@@ -8873,8 +9263,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="3013" line="712" column="12"/>
-<end tokenIndex="3297" line="756" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -8908,8 +9304,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="3024" line="713" column="14"/>
-<end tokenIndex="3295" line="755" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -9135,7 +9537,7 @@
 </operator>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="3078" line="721" column="16"/>
 <end tokenIndex="3283" line="751" column="21"/>
@@ -9159,7 +9561,7 @@
 <block>
 <location>
 <begin tokenIndex="3086" line="723" column="18"/>
-<end tokenIndex="3281" line="750" column="23"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -9201,6 +9603,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3095" line="724" column="18"/>
@@ -9229,7 +9637,7 @@
 <block>
 <location>
 <begin tokenIndex="3104" line="725" column="20"/>
-<end tokenIndex="3279" line="749" column="25"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -9263,6 +9671,8 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3111" line="728" column="20"/>
@@ -9334,6 +9744,14 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3134" line="731" column="20"/>
@@ -9362,9 +9780,9 @@
 <block>
 <location>
 <begin tokenIndex="3145" line="732" column="22"/>
-<end tokenIndex="3277" line="748" column="27"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="k">
+<do type="FOR" variable="k">
 <location>
 <begin tokenIndex="3145" line="732" column="22"/>
 <end tokenIndex="3199" line="738" column="37"/>
@@ -9392,8 +9810,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="3155" line="733" column="24"/>
-<end tokenIndex="3196" line="737" column="29"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -9544,7 +9968,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3201" line="739" column="22"/>
@@ -9634,6 +10066,8 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3225" line="741" column="24"/>
@@ -9685,6 +10119,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="3250" line="746" column="24"/>
@@ -9796,11 +10232,17 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
 <statement type="else">
@@ -9818,9 +10260,9 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <constant type="character">'someething wroong...'</constant>
-</values>
+</value>
 </statement>
 <statement type="stop">
 <location>
@@ -9834,9 +10276,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="3302" line="759" column="10"/>
@@ -9936,7 +10382,7 @@
 </reference>
 </designator>
 </statement>
-<statement type="do" variable="kk">
+<do type="FOR" variable="kk">
 <location>
 <begin tokenIndex="3332" line="764" column="10"/>
 <end tokenIndex="3608" line="818" column="15"/>
@@ -9954,8 +10400,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="3339" line="765" column="12"/>
-<end tokenIndex="3606" line="817" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -9990,7 +10442,7 @@
 <block>
 <location>
 <begin tokenIndex="3351" line="769" column="14"/>
-<end tokenIndex="3586" line="813" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -10026,7 +10478,7 @@
 <constant type="real" kind="rk">0.0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="3364" line="771" column="14"/>
 <end tokenIndex="3449" line="789" column="19"/>
@@ -10054,8 +10506,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="3374" line="773" column="16"/>
-<end tokenIndex="3447" line="784" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -10097,8 +10555,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="3387" line="775" column="18"/>
-<end tokenIndex="3415" line="778" column="23"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -10213,7 +10677,17 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3419" line="781" column="16"/>
@@ -10327,7 +10801,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3451" line="791" column="14"/>
@@ -10483,6 +10961,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3492" line="801" column="14"/>
@@ -10773,6 +11255,14 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3568" line="811" column="14"/>
@@ -10839,6 +11329,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="else">
@@ -10915,7 +11407,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3610" line="819" column="10"/>
@@ -10943,6 +11439,10 @@
 </location>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3632" line="823" column="10"/>
@@ -10970,6 +11470,8 @@
 </location>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="3655" line="827" column="10"/>
@@ -10987,7 +11489,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="kk">
+<do type="FOR" variable="kk">
 <location>
 <begin tokenIndex="3659" line="829" column="10"/>
 <end tokenIndex="3998" line="875" column="15"/>
@@ -11005,8 +11507,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="3666" line="830" column="12"/>
-<end tokenIndex="3996" line="874" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -11040,8 +11548,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="3677" line="831" column="14"/>
-<end tokenIndex="3994" line="873" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -11081,7 +11595,7 @@
 <block>
 <location>
 <begin tokenIndex="3690" line="832" column="16"/>
-<end tokenIndex="3990" line="871" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -11159,12 +11673,12 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="3713" line="835" column="16"/>
 <end tokenIndex="3785" line="846" column="26"/>
 </location>
-<first>
+<condition>
 <operator type=".AND.">
 <left>
 <operator>
@@ -11212,11 +11726,17 @@
 </operator>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
-<begin tokenIndex="3728" line="836" column="18"/>
-<end tokenIndex="3782" line="845" column="23"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -11277,6 +11797,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="3751" line="840" column="18"/>
@@ -11338,6 +11860,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3766" line="842" column="18"/>
@@ -11383,7 +11911,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="3787" line="847" column="16"/>
@@ -11524,12 +12060,12 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="3847" line="854" column="18"/>
 <end tokenIndex="3915" line="860" column="29"/>
 </location>
-<first>
+<condition>
 <operator type=".AND.">
 <left>
 <operator>
@@ -11577,7 +12113,7 @@
 </operator>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="3863" line="855" column="20"/>
@@ -11714,7 +12250,7 @@
 </block>
 </statement>
 </block>
-</statement>
+</do>
 </block>
 </statement>
 <statement type="elseifthen">
@@ -11831,12 +12367,12 @@
 </reference>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="3957" line="866" column="18"/>
 <end tokenIndex="3988" line="870" column="23"/>
 </location>
-<first>
+<condition>
 <operator type="&lt;">
 <left>
 <reference name="j">
@@ -11850,7 +12386,7 @@
 <constant type="integer">0</constant>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="3966" line="867" column="20"/>
@@ -11943,9 +12479,11 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 </block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="else">
@@ -11956,9 +12494,13 @@
 <block/>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4001" line="876" column="10"/>
@@ -11976,12 +12518,12 @@
 <constant type="logical"/>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="4007" line="877" column="10"/>
 <end tokenIndex="4349" line="924" column="20"/>
 </location>
-<first>
+<condition>
 <operator type=".AND.">
 <left>
 <reference name="reduced">
@@ -12007,7 +12549,7 @@
 </operator>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="4018" line="878" column="12"/>
@@ -12030,7 +12572,7 @@
 <constant type="logical"/>
 </value>
 </statement>
-<statement type="do" variable="kk">
+<do type="FOR" variable="kk">
 <location>
 <begin tokenIndex="4022" line="879" column="12"/>
 <end tokenIndex="4334" line="921" column="17"/>
@@ -12048,8 +12590,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="4029" line="880" column="14"/>
-<end tokenIndex="4332" line="920" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12083,8 +12631,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="4040" line="881" column="16"/>
-<end tokenIndex="4330" line="919" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12202,7 +12756,7 @@
 <block>
 <location>
 <begin tokenIndex="4089" line="889" column="18"/>
-<end tokenIndex="4328" line="918" column="23"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -12221,7 +12775,7 @@
 <constant type="real" kind="rk">0.0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="4095" line="890" column="18"/>
 <end tokenIndex="4197" line="903" column="23"/>
@@ -12249,8 +12803,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="4105" line="892" column="20"/>
-<end tokenIndex="4195" line="902" column="25"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12292,8 +12852,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="4118" line="893" column="22"/>
-<end tokenIndex="4146" line="896" column="27"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12408,6 +12974,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="elseifthen">
 <location>
@@ -12459,8 +13027,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="4165" line="898" column="22"/>
-<end tokenIndex="4193" line="901" column="27"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12575,9 +13149,19 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4199" line="904" column="18"/>
@@ -12600,8 +13184,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="4209" line="905" column="20"/>
-<end tokenIndex="4312" line="915" column="25"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -12863,6 +13453,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="else">
 <location>
@@ -12877,14 +13469,20 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
-<statement type="do" variable="i">
+</block>
+</ifconstruct>
+</block>
+</do>
+</block>
+</do>
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="4351" line="926" column="10"/>
 <end tokenIndex="4418" line="933" column="15"/>
@@ -12910,8 +13508,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="4360" line="927" column="12"/>
-<end tokenIndex="4416" line="932" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -13133,7 +13737,9 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="4420" line="934" column="10"/>
@@ -13204,6 +13810,8 @@
 </reference>
 </designator>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4445" line="939" column="10"/>
@@ -13231,6 +13839,10 @@
 </location>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4467" line="943" column="10"/>
@@ -13258,6 +13870,8 @@
 </location>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4490" line="947" column="10"/>
@@ -13328,6 +13942,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="elseifthen">
@@ -13413,6 +14029,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4534" line="962" column="8"/>
@@ -13499,6 +14117,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4557" line="967" column="8"/>
@@ -13558,8 +14180,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="4573" line="970" column="10"/>
-<end tokenIndex="4601" line="974" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -13661,7 +14289,13 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4605" line="976" column="8"/>
@@ -13781,6 +14415,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4638" line="985" column="8"/>
@@ -13840,6 +14478,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4660" line="993" column="8"/>
@@ -13915,12 +14555,12 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="4684" line="997" column="8"/>
 <end tokenIndex="5579" line="1138" column="19"/>
 </location>
-<first>
+<condition>
 <operator type="&lt;=">
 <left>
 <reference name="firstwocol">
@@ -13939,11 +14579,17 @@
 </reference>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
-<begin tokenIndex="4692" line="999" column="10"/>
-<end tokenIndex="5576" line="1137" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -13987,7 +14633,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="4705" line="1001" column="12"/>
 <end tokenIndex="4756" line="1008" column="17"/>
@@ -14005,8 +14651,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="4712" line="1002" column="14"/>
-<end tokenIndex="4754" line="1007" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -14056,7 +14708,7 @@
 <block>
 <location>
 <begin tokenIndex="4727" line="1003" column="16"/>
-<end tokenIndex="4752" line="1006" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -14087,6 +14739,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4733" line="1004" column="16"/>
@@ -14162,9 +14820,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4759" line="1009" column="12"/>
@@ -14189,6 +14851,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4765" line="1011" column="10"/>
@@ -14214,12 +14880,12 @@
 <begin tokenIndex="4773" line="1012" column="12"/>
 <end tokenIndex="4806" line="1016" column="32"/>
 </location>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="4773" line="1012" column="12"/>
 <end tokenIndex="4801" line="1015" column="17"/>
 </location>
-<first>
+<condition>
 <operator type="&gt;=">
 <left>
 <reference name="stat">
@@ -14248,7 +14914,7 @@
 </reference>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="4785" line="1013" column="14"/>
@@ -14316,7 +14982,7 @@
 </block>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4804" line="1016" column="12"/>
@@ -14349,7 +15015,7 @@
 <block>
 <location>
 <begin tokenIndex="4811" line="1022" column="12"/>
-<end tokenIndex="4881" line="1034" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -14368,7 +15034,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="4817" line="1023" column="12"/>
 <end tokenIndex="4863" line="1030" column="21"/>
@@ -14389,7 +15055,7 @@
 <begin tokenIndex="4824" line="1024" column="14"/>
 <end tokenIndex="4860" line="1029" column="19"/>
 </location>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="4824" line="1024" column="14"/>
 <end tokenIndex="4860" line="1029" column="19"/>
@@ -14414,8 +15080,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="4833" line="1025" column="16"/>
-<end tokenIndex="4858" line="1028" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -14502,9 +15174,17 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
-</statement>
+</do>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4865" line="1031" column="12"/>
@@ -14560,7 +15240,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="4886" line="1036" column="10"/>
@@ -14703,6 +15387,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4920" line="1039" column="10"/>
@@ -14774,6 +15464,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4940" line="1042" column="12"/>
@@ -14871,6 +15563,8 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="4970" line="1046" column="14"/>
@@ -14932,7 +15626,9 @@
 </statement>
 </block>
 </statement>
-<statement type="do" variable="j">
+</block>
+</ifconstruct>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="4988" line="1049" column="14"/>
 <end tokenIndex="5045" line="1054" column="19"/>
@@ -15141,7 +15837,7 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="5048" line="1055" column="14"/>
@@ -15210,7 +15906,7 @@
 </reference>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="5064" line="1057" column="14"/>
 <end tokenIndex="5099" line="1062" column="19"/>
@@ -15240,8 +15936,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="5073" line="1058" column="16"/>
-<end tokenIndex="5097" line="1061" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -15340,7 +16042,11 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5101" line="1063" column="0"/>
@@ -15356,8 +16062,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="5107" line="1064" column="2"/>
-<end tokenIndex="5306" line="1091" column="7"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -15385,9 +16097,9 @@
 <block>
 <location>
 <begin tokenIndex="5116" line="1065" column="4"/>
-<end tokenIndex="5214" line="1076" column="9"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="5116" line="1065" column="4"/>
 <end tokenIndex="5162" line="1071" column="9"/>
@@ -15413,8 +16125,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="5125" line="1066" column="6"/>
-<end tokenIndex="5160" line="1070" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -15550,7 +16268,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5164" line="1072" column="4"/>
@@ -15709,6 +16435,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="else">
 <location>
@@ -15718,9 +16446,9 @@
 <block>
 <location>
 <begin tokenIndex="5218" line="1078" column="4"/>
-<end tokenIndex="5304" line="1090" column="9"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="5218" line="1078" column="4"/>
 <end tokenIndex="5264" line="1084" column="9"/>
@@ -15746,8 +16474,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="5227" line="1079" column="6"/>
-<end tokenIndex="5262" line="1083" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -15883,7 +16617,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5266" line="1086" column="4"/>
@@ -15994,9 +16736,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</statement>
+</block>
+</ifconstruct>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="5310" line="1094" column="14"/>
@@ -16036,7 +16784,7 @@
 <block>
 <location>
 <begin tokenIndex="5324" line="1096" column="14"/>
-<end tokenIndex="5346" line="1099" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -16067,6 +16815,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5330" line="1097" column="14"/>
@@ -16129,6 +16883,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="else">
 <location>
@@ -16159,7 +16915,9 @@
 </statement>
 </block>
 </statement>
-<statement type="do" variable="j">
+</block>
+</ifconstruct>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="5357" line="1103" column="12"/>
 <end tokenIndex="5470" line="1119" column="17"/>
@@ -16178,7 +16936,7 @@
 <block>
 <location>
 <begin tokenIndex="5365" line="1104" column="14"/>
-<end tokenIndex="5468" line="1118" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -16212,6 +16970,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5372" line="1105" column="14"/>
@@ -16383,8 +17147,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="5415" line="1110" column="16"/>
-<end tokenIndex="5466" line="1117" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -16423,8 +17193,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="5426" line="1111" column="18"/>
+<begin tokenIndex="-1"/>
 <end tokenIndex="5464" line="1116" column="49"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -16500,6 +17276,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="5448" line="1115" column="18"/>
@@ -16583,10 +17361,14 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
-<statement type="do" variable="j">
+</block>
+</ifconstruct>
+</block>
+</do>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="5472" line="1121" column="12"/>
 <end tokenIndex="5521" line="1126" column="17"/>
@@ -16604,8 +17386,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="5479" line="1122" column="14"/>
-<end tokenIndex="5519" line="1125" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -16769,8 +17557,10 @@
 </block>
 </statement>
 </block>
-</statement>
-<statement type="do" variable="j">
+</ifconstruct>
+</block>
+</do>
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="5523" line="1128" column="12"/>
 <end tokenIndex="5567" line="1134" column="17"/>
@@ -16789,7 +17579,7 @@
 <block>
 <location>
 <begin tokenIndex="5531" line="1129" column="14"/>
-<end tokenIndex="5565" line="1133" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -16823,6 +17613,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5538" line="1130" column="14"/>
@@ -16920,7 +17716,9 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
 <statement type="else">
@@ -16938,14 +17736,16 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <constant type="character">'something wrong!'</constant>
-</values>
+</value>
 </statement>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="5581" line="1139" column="8"/>
@@ -16976,6 +17776,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="5593" line="1142" column="6"/>
@@ -17100,7 +17902,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="5636" line="1149" column="6"/>
 <end tokenIndex="5691" line="1156" column="11"/>
@@ -17121,7 +17923,7 @@
 <begin tokenIndex="5643" line="1150" column="8"/>
 <end tokenIndex="5689" line="1153" column="13"/>
 </location>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="5643" line="1150" column="8"/>
 <end tokenIndex="5689" line="1153" column="13"/>
@@ -17297,9 +18099,9 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="5694" line="1157" column="6"/>
@@ -17351,6 +18153,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5708" line="1160" column="4"/>
@@ -17403,7 +18209,7 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="5839" line="1176" column="20"/>
 </location>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="5796" line="1169" column="6"/>
 <end tokenIndex="5816" line="1172" column="11"/>
@@ -17425,7 +18231,7 @@
 <end tokenIndex="-1"/>
 </location>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="5824" line="1174" column="6"/>
@@ -17499,6 +18305,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5843" line="1178" column="4"/>
@@ -17556,8 +18366,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="5860" line="1179" column="6"/>
-<end tokenIndex="5951" line="1188" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -17676,6 +18492,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="call" name="Form_Aggr">
 <location>
 <begin tokenIndex="5895" line="1183" column="6"/>
@@ -17740,6 +18558,12 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="5913" line="1185" column="6"/>
@@ -17872,6 +18696,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="elseifthen">
 <location>
@@ -17951,7 +18777,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="5976" line="1193" column="6"/>
 <end tokenIndex="6004" line="1196" column="11"/>
@@ -18054,7 +18880,7 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6007" line="1199" column="6"/>
@@ -18154,7 +18980,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="6034" line="1202" column="6"/>
 <end tokenIndex="6075" line="1206" column="11"/>
@@ -18307,7 +19133,7 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6078" line="1210" column="6"/>
@@ -18482,7 +19308,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="6128" line="1219" column="6"/>
 <end tokenIndex="6980" line="1353" column="11"/>
@@ -18500,8 +19326,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="6135" line="1220" column="8"/>
-<end tokenIndex="6978" line="1352" column="13"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -18541,7 +19373,7 @@
 <block>
 <location>
 <begin tokenIndex="6147" line="1222" column="10"/>
-<end tokenIndex="6976" line="1351" column="15"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -18606,7 +19438,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="k">
+<do type="FOR" variable="k">
 <location>
 <begin tokenIndex="6163" line="1225" column="10"/>
 <end tokenIndex="6369" line="1258" column="15"/>
@@ -18771,7 +19603,7 @@
 </operator>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="6207" line="1234" column="12"/>
 <end tokenIndex="6367" line="1257" column="17"/>
@@ -18795,7 +19627,7 @@
 <block>
 <location>
 <begin tokenIndex="6215" line="1236" column="14"/>
-<end tokenIndex="6365" line="1256" column="19"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -18837,6 +19669,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6224" line="1237" column="14"/>
@@ -18865,7 +19703,7 @@
 <block>
 <location>
 <begin tokenIndex="6233" line="1238" column="16"/>
-<end tokenIndex="6363" line="1255" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -18899,6 +19737,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6240" line="1239" column="16"/>
@@ -18946,9 +19790,9 @@
 <block>
 <location>
 <begin tokenIndex="6254" line="1240" column="18"/>
-<end tokenIndex="6361" line="1254" column="23"/>
+<end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="kk">
+<do type="FOR" variable="kk">
 <location>
 <begin tokenIndex="6254" line="1240" column="18"/>
 <end tokenIndex="6299" line="1245" column="33"/>
@@ -18966,8 +19810,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="6261" line="1241" column="20"/>
-<end tokenIndex="6296" line="1244" column="25"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -19094,7 +19944,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6301" line="1246" column="18"/>
@@ -19154,6 +20012,8 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6316" line="1248" column="20"/>
@@ -19195,6 +20055,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6338" line="1252" column="20"/>
@@ -19290,13 +20152,19 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6372" line="1260" column="10"/>
@@ -19331,7 +20199,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="6383" line="1262" column="10"/>
 <end tokenIndex="6440" line="1272" column="15"/>
@@ -19349,8 +20217,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="6390" line="1264" column="12"/>
-<end tokenIndex="6438" line="1271" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -19389,8 +20263,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="6401" line="1266" column="14"/>
-<end tokenIndex="6436" line="1270" column="19"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -19531,9 +20411,15 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6442" line="1273" column="0"/>
@@ -19567,14 +20453,18 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <reference name="maxconnweightsum">
 <location>
 <begin tokenIndex="6467" line="1274" column="67"/>
 <end tokenIndex="6467" line="1274" column="83"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">' maxcw_sum:'</constant>
+</value>
+<value>
 <reference name="aggrsize">
 <location>
 <begin tokenIndex="6460" line="1274" column="41"/>
@@ -19591,18 +20481,32 @@
 </subscript>
 </sections>
 </reference>
+</value>
+<value>
 <constant type="character">' of size:'</constant>
+</value>
+<value>
 <reference name="i">
 <location>
 <begin tokenIndex="6456" line="1274" column="27"/>
 <end tokenIndex="6456" line="1274" column="28"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">'too small aggr '</constant>
-</values>
+</value>
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6471" line="1276" column="10"/>
@@ -19679,7 +20583,7 @@
 <begin tokenIndex="6490" line="1277" column="12"/>
 <end tokenIndex="-1"/>
 </location>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="6490" line="1277" column="12"/>
 <end tokenIndex="6544" line="1283" column="17"/>
@@ -19878,7 +20782,7 @@
 </value>
 </statement>
 </block>
-</statement>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6547" line="1284" column="12"/>
@@ -19969,22 +20873,28 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <reference name="eater">
 <location>
 <begin tokenIndex="6577" line="1287" column="29"/>
 <end tokenIndex="6577" line="1287" column="34"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">' is:'</constant>
+</value>
+<value>
 <reference name="i">
 <location>
 <begin tokenIndex="6573" line="1287" column="20"/>
 <end tokenIndex="6573" line="1287" column="21"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">'eater of '</constant>
-</values>
+</value>
 </statement>
 </block>
 </statement>
@@ -19995,8 +20905,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="6581" line="1289" column="0"/>
-<end tokenIndex="6974" line="1350" column="17"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -20031,12 +20947,14 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <constant type="character">' ...not eaten... '</constant>
-</values>
+</value>
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6598" line="1292" column="12"/>
@@ -20086,12 +21004,12 @@
 <constant type="logical"/>
 </value>
 </statement>
-<statement type="do">
+<do type="WHILE">
 <location>
 <begin tokenIndex="6610" line="1294" column="12"/>
 <end tokenIndex="6829" line="1332" column="17"/>
 </location>
-<first>
+<condition>
 <operator type=".AND.">
 <left>
 <reference name="reduced">
@@ -20117,7 +21035,7 @@
 </operator>
 </right>
 </operator>
-</first>
+</condition>
 <block>
 <location>
 <begin tokenIndex="6621" line="1295" column="14"/>
@@ -20140,7 +21058,7 @@
 <constant type="logical"/>
 </value>
 </statement>
-<statement type="do" variable="k">
+<do type="FOR" variable="k">
 <location>
 <begin tokenIndex="6625" line="1296" column="14"/>
 <end tokenIndex="6827" line="1331" column="19"/>
@@ -20172,7 +21090,7 @@
 <block>
 <location>
 <begin tokenIndex="6639" line="1297" column="16"/>
-<end tokenIndex="6825" line="1330" column="21"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -20214,6 +21132,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6648" line="1298" column="16"/>
@@ -20333,7 +21257,7 @@
 </operator>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="6682" line="1302" column="18"/>
 <end tokenIndex="6823" line="1329" column="31"/>
@@ -20357,7 +21281,7 @@
 <block>
 <location>
 <begin tokenIndex="6690" line="1303" column="20"/>
-<end tokenIndex="6820" line="1328" column="25"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -20399,6 +21323,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6699" line="1304" column="20"/>
@@ -20427,7 +21357,7 @@
 <block>
 <location>
 <begin tokenIndex="6708" line="1305" column="22"/>
-<end tokenIndex="6818" line="1327" column="27"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -20461,6 +21391,12 @@
 </reference>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6715" line="1306" column="22"/>
@@ -20488,8 +21424,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="6723" line="1315" column="24"/>
-<end tokenIndex="6816" line="1326" column="29"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -20834,17 +21776,31 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
+</block>
+</do>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6831" line="1333" column="12"/>
@@ -20921,7 +21877,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="j">
+<do type="FOR" variable="j">
 <location>
 <begin tokenIndex="6851" line="1335" column="14"/>
 <end tokenIndex="6912" line="1342" column="19"/>
@@ -20949,8 +21905,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="6861" line="1336" column="16"/>
-<end tokenIndex="6910" line="1341" column="21"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -20993,7 +21955,7 @@
 <block>
 <location>
 <begin tokenIndex="6875" line="1337" column="18"/>
-<end tokenIndex="6908" line="1340" column="23"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
@@ -21024,6 +21986,12 @@
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="6881" line="1338" column="18"/>
@@ -21134,9 +22102,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6915" line="1343" column="14"/>
@@ -21174,23 +22146,31 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <constant type="character">'@@@@@'</constant>
+</value>
+<value>
 <reference name="nleft">
 <location>
 <begin tokenIndex="6931" line="1344" column="63"/>
 <end tokenIndex="6931" line="1344" column="68"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">' remained as small as '</constant>
+</value>
+<value>
 <reference name="i">
 <location>
 <begin tokenIndex="6927" line="1344" column="36"/>
 <end tokenIndex="6927" line="1344" column="37"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">'    ========== aggregate '</constant>
-</values>
+</value>
 </statement>
 </block>
 </statement>
@@ -21224,16 +22204,20 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
-<values>
+<value>
 <constant type="character">' got removed node by node ============'</constant>
+</value>
+<value>
 <reference name="i">
 <location>
 <begin tokenIndex="6948" line="1346" column="36"/>
 <end tokenIndex="6948" line="1346" column="37"/>
 </location>
 </reference>
+</value>
+<value>
 <constant type="character">'    ========== aggregate '</constant>
-</values>
+</value>
 </statement>
 <statement type="assignment">
 <location>
@@ -21323,11 +22307,17 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</do>
 <statement type="assignment">
 <location>
 <begin tokenIndex="6983" line="1354" column="6"/>
@@ -21444,6 +22434,8 @@
 </call>
 </value>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7013" line="1360" column="6"/>
@@ -21532,7 +22524,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="7039" line="1364" column="8"/>
 <end tokenIndex="7119" line="1375" column="13"/>
@@ -21550,8 +22542,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="7046" line="1365" column="10"/>
-<end tokenIndex="7117" line="1374" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -21585,8 +22583,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="7057" line="1366" column="12"/>
+<begin tokenIndex="-1"/>
 <end tokenIndex="7115" line="1373" column="30"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -21782,6 +22786,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="assignment">
 <location>
 <begin tokenIndex="7110" line="1373" column="12"/>
@@ -21817,7 +22823,9 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="7121" line="1376" column="8"/>
@@ -21834,6 +22842,10 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7128" line="1382" column="6"/>
@@ -21987,7 +22999,7 @@
 <constant type="logical"/>
 </value>
 </statement>
-<statement type="do" variable="i">
+<do type="FOR" variable="i">
 <location>
 <begin tokenIndex="7168" line="1388" column="8"/>
 <end tokenIndex="7216" line="1395" column="13"/>
@@ -22005,8 +23017,14 @@
 </last>
 <block>
 <location>
-<begin tokenIndex="7175" line="1389" column="10"/>
-<end tokenIndex="7214" line="1394" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -22161,9 +23179,13 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
+</block>
+</do>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="call" name="Form_Aggr">
 <location>
 <begin tokenIndex="7220" line="1397" column="6"/>
@@ -22240,6 +23262,8 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7252" line="1403" column="6"/>
@@ -22383,6 +23407,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="deallocate">
 <location>
 <begin tokenIndex="7306" line="1412" column="6"/>
@@ -22463,6 +23489,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="call" name="Form_Aggr">
 <location>
 <begin tokenIndex="7359" line="1421" column="4"/>
@@ -22555,6 +23583,8 @@
 </reference>
 </designator>
 </statement>
+<ifconstruct>
+<block>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7399" line="1430" column="4"/>
@@ -22596,8 +23626,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="7411" line="1431" column="6"/>
-<end tokenIndex="7701" line="1465" column="11"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -22621,8 +23657,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="7419" line="1432" column="8"/>
-<end tokenIndex="7499" line="1440" column="13"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -22708,6 +23750,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 <statement type="call" name="Integer_Vect_Gather">
 <location>
 <begin tokenIndex="7450" line="1436" column="8"/>
@@ -22764,6 +23808,12 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7466" line="1437" column="8"/>
@@ -22850,6 +23900,8 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
 <statement type="else">
 <location>
@@ -22858,8 +23910,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="7503" line="1442" column="8"/>
-<end tokenIndex="7699" line="1464" column="13"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -22886,8 +23944,14 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="7513" line="1443" column="10"/>
-<end tokenIndex="7594" line="1452" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -22975,7 +24039,7 @@
 <block>
 <location>
 <begin tokenIndex="-1"/>
-<end tokenIndex="7592" line="1451" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="call" name="color_print_aggrs">
 <location>
@@ -23025,6 +24089,12 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7563" line="1448" column="12"/>
@@ -23094,7 +24164,11 @@
 </block>
 </statement>
 </block>
+</ifconstruct>
+</block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </statement>
 <statement type="else">
@@ -23104,8 +24178,14 @@
 </location>
 <block>
 <location>
-<begin tokenIndex="7598" line="1454" column="10"/>
-<end tokenIndex="7697" line="1463" column="15"/>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="ifthen">
 <location>
@@ -23217,7 +24297,7 @@
 <block>
 <location>
 <begin tokenIndex="-1"/>
-<end tokenIndex="7695" line="1462" column="17"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="call" name="color_print_aggrs">
 <location>
@@ -23291,6 +24371,12 @@
 </argument>
 </arguments>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7660" line="1459" column="12"/>
@@ -23384,13 +24470,29 @@
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
 </block>
-</statement>
+</ifconstruct>
 </block>
 </statement>
+</block>
+</ifconstruct>
+</block>
+</statement>
+</block>
+</ifconstruct>
+</block>
+</statement>
+</block>
+</ifconstruct>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
 <statement type="ifthen">
 <location>
 <begin tokenIndex="7705" line="1467" column="4"/>
@@ -23432,6 +24534,8 @@
 </statement>
 </block>
 </statement>
+</block>
+</ifconstruct>
 </block>
 </subroutine>
 </module>

@@ -54,6 +54,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startTypedef(attrs)
         elif name in ("statement",):
             self.startStatement(attrs)
+        elif name in ("do",):
+            self.startDo(attrs)
         elif name in ("ifconstruct",):
             self.startIfConstruct(attrs)
         elif name in ("case",):
@@ -68,7 +70,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startSections(attrs)
         elif name in ("section",):
             self.startSection(attrs)
-        elif name in ("first","last","stride"):
+        elif name in ("first","last","stride","step"):
             self.startSectionValue(name,attrs)
         elif name in ("subscript",):
             self.startSubscript(attrs)
@@ -109,6 +111,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endTypedef()
         elif name in ("statement",):
             self.endStatement()
+        elif name in ("do",):
+            self.endDo()
         elif name in ("ifconstruct",):
             self.endIfConstruct()
         elif name in ("case",):
@@ -123,7 +127,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endSections()
         elif name in ("section",):
             self.endSection()
-        elif name in ("first","last","stride"):
+        elif name in ("first","last","stride","step"):
             self.endSectionValue(name)
         elif name in ("subscript",):
             self.endSubscript()
@@ -261,8 +265,6 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             st = Allocate(self.astModel, block)
         elif _type in ('if', 'ifthen', 'elseifthen', 'else'):
             st = IfStatement(self.astModel, block)
-        elif _type in ('do'):
-            st = DoStatement(self.astModel, block)
         elif _type in ('print'):
             st = PrintStatement(self.astModel, block)
         else:
@@ -278,6 +280,19 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         self.statements.append(st)
 
     def endStatement(self):
+        del self.statements[-1]
+
+    def startDo(self, attrs):
+        block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
+        st = DoStatement(self.astModel, block)
+        st.type = attrs["type"].lower()
+        if attrs.has_key('variable'):
+            st.variable = attrs['variable']
+        
+        block.addStatement(st)
+        self.statements.append(st)
+
+    def endDo(self):
         del self.statements[-1]
 
     def startIfConstruct(self, attrs):
@@ -344,7 +359,7 @@ class XMLLoader(xml.sax.handler.ContentHandler):
         obj = len(self.expressions)>0 and self.expressions[-1] or \
               self.statements[-1]
 
-        if isinstance(obj, Statement) and obj.type=="do":
+        if isinstance(obj, DoStatement) and obj.type=="for":
             setattr(obj, name, self._last)
         else:
             setattr(obj.sections[-1], name, self._last)

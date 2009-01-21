@@ -8,7 +8,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import *
 from astvis import diagram
 from astvis.model import ast, flow
-from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort
+from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, EllipseItem
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 
@@ -21,10 +21,14 @@ from gaphas.connector import PointPort, VariablePoint
 
 class ItemFactory(diagram.ItemFactory):
     def getDiagramItem(self, obj):
-        if isinstance(obj, (flow.StartBlock, flow.EndBlock)):
-            return EntryExitItem(obj)
+        if isinstance(obj, flow.StartBlock):
+            return EntryExitItem(obj, 'start') 
+        if isinstance(obj, flow.EndBlock):
+            return EntryExitItem(obj, 'end')
         elif isinstance(obj, flow.ConditionBlock):
             return ConditionBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
+        elif isinstance(obj, flow.DoHeaderBlock):
+            return DoItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
         elif isinstance(obj, flow.Block):
             return BlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
 
@@ -152,10 +156,22 @@ class ConditionBlockItem(DiamondItem):
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
 
+class DoItem(EllipseItem):
+
+    def __init__(self, block, text):
+        EllipseItem.__init__(self, text)
+        self.block = block
+        if block.subBlocks:
+            self.children = [OpenCloseItem(self)]
+        self.connections = set()
+
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port.connectable = False
+
 class EntryExitItem(RectangleItem):
 
-    def __init__(self, block):
-        RectangleItem.__init__(self, "")
+    def __init__(self, block, text):
+        RectangleItem.__init__(self, text)
         self.block = block
         if block.subBlocks:
             self.children = [OpenCloseItem(self)]

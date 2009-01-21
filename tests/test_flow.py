@@ -137,4 +137,9 @@ class Loop(FlowTest):
 
     def testCreate(self):
         self.assertEqual(self.flowModel.code.name, "Sum")
-        self.assertEqual(len(self.flowModel.code.statementBlock.statements), 2)
+        self.assertEqual(len(self.flowModel.code.statementBlock.statements), 4)
+
+    def testGetConnections(self):
+        connections = self.flowModel.getConnections()
+        self.assertEquals(len(connections), 14)
+

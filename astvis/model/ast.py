@@ -335,15 +335,19 @@ class IfStatement(Statement):
 class DoStatement(Statement):
     def __init__(self, model,parent=None):
         Statement.__init__(self, model, parent)
+        self.variable = None
+        self.type = None # 'for' or 'while'
         self.first = None
         self.last = None
         self.step = None
+        self.condition = None
 
     def getChildren(self):
         c = []
         if self.first!=None: c.append(self.first)
         if self.last!=None: c.append(self.last)
         if self.step!=None: c.append(self.step)
+        if self.condition!=None: c.append(self.condition)
         c.extend(self.blocks)
         return c
 
@@ -377,10 +381,10 @@ class Case(ASTObject):
 
 class Assignment(Statement):
 
-    def __init__(self, model, parent = None):
+    def __init__(self, model, parent = None, target=None, value=None):
         Statement.__init__(self, model, parent)
-        self.target = None
-        self.value = None
+        self.target = target
+        self.value = value
         
     def getChildren(self):
         children = []
@@ -472,12 +476,12 @@ class Call(Expression):
         
 class Operator(Expression):
     
-    def __init__(self, model, parent = None):
+    def __init__(self, model, parent = None, type="(op)", left=None, right=None):
         Expression.__init__(self, model)
         self.parent = parent
-        self.type = "(op)"
-        self.left = None
-        self.right = None
+        self.type = type
+        self.left = left
+        self.right = right
         
     def getChildren(self):
         children = []
@@ -490,21 +494,21 @@ class Operator(Expression):
 
 class Constant(Expression):
 
-    def __init__(self, model, parent = None):
+    def __init__(self, model, parent = None, type=None, value=None):
         Expression.__init__(self, model)
         self.parent = parent
-        self.type = None
-        self.value = None
+        self.type = type
+        self.value = value
 
     def __str__(self):
         return self.value!=None and str(self.value) or '<constant>'
 
 class Reference(Expression):
 
-    def __init__(self, model, parent = None):
+    def __init__(self, model, parent = None, name=None):
         Expression.__init__(self, model)
         self.parent = parent
-        self.name = None
+        self.name = name
         self.base = None
         self.sections = None
         

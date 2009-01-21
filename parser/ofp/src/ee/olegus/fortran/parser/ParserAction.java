@@ -1653,7 +1653,7 @@ public class ParserAction implements IFortranParserAction {
 				
 			} else { // while do
 				stmt = new DoStatement(DoStatement.Type.WHILE);
-				stmt.setFirst(expr);
+				stmt.setCondition(expr);
 			}
 		
 		} else { // no loop control

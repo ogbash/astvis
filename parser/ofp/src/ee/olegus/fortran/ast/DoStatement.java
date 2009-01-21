@@ -31,6 +31,7 @@ public class DoStatement extends Statement implements XMLGenerator {
 	private Expression first;
 	private Expression last;
 	private Expression step;
+	private Expression condition;
 	private String doLabel;
 	
 	private List<Statement> statements;
@@ -80,6 +81,14 @@ public class DoStatement extends Statement implements XMLGenerator {
 		this.type = type;
 	}
 
+	public Expression getCondition() {
+		return condition;
+	}
+
+	public void setCondition(Expression condition) {
+		this.condition = condition;
+	}
+
 	public DataReference getVariable() {
 		return variable;
 	}
@@ -125,10 +134,10 @@ public class DoStatement extends Statement implements XMLGenerator {
 	
 	public void generateXML(ContentHandler handler) throws SAXException {
 		AttributesImpl attrs = new AttributesImpl();
-		attrs.addAttribute("", "", "type", "", "do");
+		attrs.addAttribute("", "", "type", "", type.name());
 		if(variable!=null)
 			attrs.addAttribute("", "", "variable", "", variable.getId().getName());
-		handler.startElement("", "", "statement", attrs);
+		handler.startElement("", "", "do", attrs);
 
 		super.generateXML(handler);
 		
@@ -147,6 +156,11 @@ public class DoStatement extends Statement implements XMLGenerator {
 			((XMLGenerator)step).generateXML(handler);
 			handler.endElement("", "", "step");
 		}
+		if(condition instanceof XMLGenerator) {
+			handler.startElement("", "", "condition", null);
+			((XMLGenerator)condition).generateXML(handler);
+			handler.endElement("", "", "condition");
+		}
 		
 		if(statements!=null) {
 			handler.startElement("", "", "block", null);	
@@ -160,6 +174,6 @@ public class DoStatement extends Statement implements XMLGenerator {
 			handler.endElement("", "", "block");			
 		}
 		
-		handler.endElement("", "", "statement");
+		handler.endElement("", "", "do");
 	}	
 }

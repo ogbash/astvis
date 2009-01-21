@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ASTCollection>
+<file name="loop.f90">
+<program id="Loop">
+<location>
+<begin tokenIndex="0" line="1" column="0"/>
+<end tokenIndex="124" line="32" column="16"/>
+</location>
+<block type="declarations">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="10" line="5" column="11"/>
+</location>
+<declaration type="type">
+<location>
+<begin tokenIndex="6" line="4" column="2"/>
+<end tokenIndex="7" line="4" column="11"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="1">
+<entity>
+<name>n</name>
+</entity>
+</entities>
+</declaration>
+<declaration type="type">
+<location>
+<begin tokenIndex="9" line="5" column="2"/>
+<end tokenIndex="10" line="5" column="11"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="1">
+<entity>
+<name>r</name>
+</entity>
+</entities>
+</declaration>
+</block>
+<block type="executions">
+<location>
+<begin tokenIndex="13" line="7" column="2"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="13" line="7" column="2"/>
+<end tokenIndex="15" line="7" column="7"/>
+</location>
+<target>
+<reference name="n">
+<location>
+<begin tokenIndex="13" line="7" column="2"/>
+<end tokenIndex="13" line="7" column="3"/>
+</location>
+</reference>
+</target>
+<value>
+<constant type="integer">5</constant>
+</value>
+</statement>
+<statement type="assignment">
+<location>
+<begin tokenIndex="18" line="8" column="2"/>
+<end tokenIndex="23" line="8" column="12"/>
+</location>
+<target>
+<reference name="r">
+<location>
+<begin tokenIndex="18" line="8" column="2"/>
+<end tokenIndex="18" line="8" column="3"/>
+</location>
+</reference>
+</target>
+<value>
+<call name="Sum">
+<location>
+<begin tokenIndex="20" line="8" column="6"/>
+<end tokenIndex="23" line="8" column="12"/>
+</location>
+<arguments count="1">
+<argument>
+<reference name="n">
+<location>
+<begin tokenIndex="22" line="8" column="10"/>
+<end tokenIndex="22" line="8" column="11"/>
+</location>
+</reference>
+</argument>
+</arguments>
+</call>
+</value>
+</statement>
+<statement type="print">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<value>
+<reference name="r">
+<location>
+<begin tokenIndex="28" line="10" column="11"/>
+<end tokenIndex="28" line="10" column="12"/>
+</location>
+</reference>
+</value>
+</statement>
+</block>
+<function id="Sum">
+<location>
+<begin tokenIndex="32" line="14" column="2"/>
+<end tokenIndex="120" line="31" column="18"/>
+</location>
+<block type="declarations">
+<location>
+<begin tokenIndex="42" line="15" column="4"/>
+<end tokenIndex="55" line="16" column="19"/>
+</location>
+<declaration type="type">
+<location>
+<begin tokenIndex="42" line="15" column="4"/>
+<end tokenIndex="49" line="15" column="28"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="1">
+<entity>
+<name>n</name>
+</entity>
+</entities>
+</declaration>
+<declaration type="type">
+<location>
+<begin tokenIndex="51" line="16" column="4"/>
+<end tokenIndex="55" line="16" column="19"/>
+</location>
+<type>
+<name>INTEGER</name>
+</type>
+<entities count="2">
+<entity>
+<name>i</name>
+</entity>
+<entity>
+<name>s</name>
+</entity>
+</entities>
+</declaration>
+</block>
+<block type="executions">
+<location>
+<begin tokenIndex="58" line="18" column="4"/>
+<end tokenIndex="116" line="29" column="10"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="58" line="18" column="4"/>
+<end tokenIndex="60" line="18" column="9"/>
+</location>
+<target>
+<reference name="s">
+<location>
+<begin tokenIndex="58" line="18" column="4"/>
+<end tokenIndex="58" line="18" column="5"/>
+</location>
+</reference>
+</target>
+<value>
+<constant type="integer">0</constant>
+</value>
+</statement>
+<do type="FOR" variable="i">
+<location>
+<begin tokenIndex="62" line="19" column="4"/>
+<end tokenIndex="93" line="24" column="10"/>
+</location>
+<first>
+<constant type="integer">1</constant>
+</first>
+<last>
+<reference name="n">
+<location>
+<begin tokenIndex="67" line="19" column="11"/>
+<end tokenIndex="67" line="19" column="12"/>
+</location>
+</reference>
+</last>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="90" line="23" column="14"/>
+</location>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="ifthen">
+<location>
+<begin tokenIndex="69" line="20" column="7"/>
+<end tokenIndex="83" line="22" column="13"/>
+</location>
+<condition>
+<operator type="==">
+<left>
+<reference name="i">
+<location>
+<begin tokenIndex="71" line="20" column="11"/>
+<end tokenIndex="71" line="20" column="12"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">1</constant>
+</right>
+</operator>
+</condition>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="print">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<value>
+<reference name="i">
+<location>
+<begin tokenIndex="80" line="21" column="19"/>
+<end tokenIndex="80" line="21" column="20"/>
+</location>
+</reference>
+</value>
+</statement>
+</block>
+</statement>
+</block>
+</ifconstruct>
+<statement type="assignment">
+<location>
+<begin tokenIndex="86" line="23" column="7"/>
+<end tokenIndex="90" line="23" column="14"/>
+</location>
+<target>
+<reference name="s">
+<location>
+<begin tokenIndex="86" line="23" column="7"/>
+<end tokenIndex="86" line="23" column="8"/>
+</location>
+</reference>
+</target>
+<value>
+<operator type="+">
+<left>
+<reference name="s">
+<location>
+<begin tokenIndex="88" line="23" column="11"/>
+<end tokenIndex="88" line="23" column="12"/>
+</location>
+</reference>
+</left>
+<right>
+<reference name="i">
+<location>
+<begin tokenIndex="90" line="23" column="13"/>
+<end tokenIndex="90" line="23" column="14"/>
+</location>
+</reference>
+</right>
+</operator>
+</value>
+</statement>
+</block>
+</do>
+<statement type="assignment">
+<location>
+<begin tokenIndex="96" line="26" column="4"/>
+<end tokenIndex="98" line="26" column="7"/>
+</location>
+<target>
+<reference name="i">
+<location>
+<begin tokenIndex="96" line="26" column="4"/>
+<end tokenIndex="96" line="26" column="5"/>
+</location>
+</reference>
+</target>
+<value>
+<constant type="integer">0</constant>
+</value>
+</statement>
+<do type="WHILE">
+<location>
+<begin tokenIndex="100" line="27" column="4"/>
+<end tokenIndex="116" line="29" column="10"/>
+</location>
+<condition>
+<operator type="&lt;">
+<left>
+<reference name="i">
+<location>
+<begin tokenIndex="103" line="27" column="13"/>
+<end tokenIndex="103" line="27" column="14"/>
+</location>
+</reference>
+</left>
+<right>
+<reference name="n">
+<location>
+<begin tokenIndex="105" line="27" column="15"/>
+<end tokenIndex="105" line="27" column="16"/>
+</location>
+</reference>
+</right>
+</operator>
+</condition>
+<block>
+<location>
+<begin tokenIndex="109" line="28" column="7"/>
+<end tokenIndex="113" line="28" column="14"/>
+</location>
+<statement type="assignment">
+<location>
+<begin tokenIndex="109" line="28" column="7"/>
+<end tokenIndex="113" line="28" column="14"/>
+</location>
+<target>
+<reference name="s">
+<location>
+<begin tokenIndex="109" line="28" column="7"/>
+<end tokenIndex="109" line="28" column="8"/>
+</location>
+</reference>
+</target>
+<value>
+<operator type="+">
+<left>
+<reference name="s">
+<location>
+<begin tokenIndex="111" line="28" column="11"/>
+<end tokenIndex="111" line="28" column="12"/>
+</location>
+</reference>
+</left>
+<right>
+<reference name="i">
+<location>
+<begin tokenIndex="113" line="28" column="13"/>
+<end tokenIndex="113" line="28" column="14"/>
+</location>
+</reference>
+</right>
+</operator>
+</value>
+</statement>
+</block>
+</do>
+</block>
+</function>
+</program>
+</file>
+</ASTCollection>
