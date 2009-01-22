@@ -30,7 +30,7 @@ class ItemFactory(diagram.ItemFactory):
         elif isinstance(obj, flow.DoHeaderBlock):
             return DoItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
         elif isinstance(obj, flow.Block):
-            return BlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
+            return GeneralBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
 
 class ControlFlowDiagram (diagram.Diagram):
 
@@ -108,6 +108,7 @@ class ControlFlowDiagram (diagram.Diagram):
     def getDefaultTool(self):
         tool = gaphas.tool.ToolChain()
         tool.append(gaphas.tool.HoverTool())
+        tool.append(ContextMenuTool())
         tool.append(OpenCloseBlockTool())
         tool.append(gaphas.tool.ItemTool())
         tool.append(gaphas.tool.RubberbandTool())
@@ -127,15 +128,20 @@ class ControlFlowDiagram (diagram.Diagram):
 
         self._connectTool.connect_handle(connectorItem, handles[0], items[0], items[0].port)
         self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
+
+
+class BlockItem(object):
+    def __init__(self, block):
+        self.block = block
         
-class BlockItem(RectangleItem):
+class GeneralBlockItem(RectangleItem, BlockItem):
 
     MIN_WIDTH=30
     MIN_HEIGHT=30
 
     def __init__(self, block, text):
         RectangleItem.__init__(self, text)
-        self.block = block
+        BlockItem.__init__(self, block)
         if block.subBlocks:
             self.children = [OpenCloseItem(self)]
         self.connections = set()
@@ -144,11 +150,11 @@ class BlockItem(RectangleItem):
         self.port.connectable = False
 
 
-class ConditionBlockItem(DiamondItem):
+class ConditionBlockItem(DiamondItem, BlockItem):
 
     def __init__(self, block, text):
         DiamondItem.__init__(self, text)
-        self.block = block
+        BlockItem.__init__(self, block)
         if block.subBlocks:
             self.children = [OpenCloseItem(self)]
         self.connections = set()
@@ -156,11 +162,11 @@ class ConditionBlockItem(DiamondItem):
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
 
-class DoItem(EllipseItem):
+class DoItem(EllipseItem, BlockItem):
 
     def __init__(self, block, text):
         EllipseItem.__init__(self, text)
-        self.block = block
+        BlockItem.__init__(self, block)
         if block.subBlocks:
             self.children = [OpenCloseItem(self)]
         self.connections = set()
@@ -168,11 +174,11 @@ class DoItem(EllipseItem):
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
 
-class EntryExitItem(RectangleItem):
+class EntryExitItem(RectangleItem, BlockItem):
 
     def __init__(self, block, text):
         RectangleItem.__init__(self, text)
-        self.block = block
+        BlockItem.__init__(self, block)
         if block.subBlocks:
             self.children = [OpenCloseItem(self)]
         self.connections = set()
@@ -230,6 +236,24 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
             diagram.bindConnections()
             return True
 
+class ContextMenuTool(gaphas.tool.Tool):
+    def on_button_press(self, context, event):
+
+        ocItem = context.view.hovered_item
+
+        if event.button==3:
+            if isinstance(ocItem, BlockItem):
+                # at the moment just open item in AST tree
+                if ocItem.block!=None:
+                    block=ocItem.block
+                    if block!=None and block.astObjects:
+                        astObj = block.astObjects[0]
+                        print astObj
+                        from astvis import action
+                        action.manager.activate('show-ast-object', astObj, None)
+                return True
+
+
 class ControlFlowConnector(diagram.Connector, event.Observer):
 
     def __init__(self, fromBlock, toBlock, diagram, connections):
@@ -271,3 +295,4 @@ class ControlFlowLine(gaphas.item.Line):
         cr.line_to(6,3)
         cr.move_to(6,-3)
         cr.line_to(0,0)
+
