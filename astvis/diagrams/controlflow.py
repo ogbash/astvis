@@ -63,6 +63,10 @@ class ControlFlowDiagram (diagram.Diagram):
                 # add item
                 obj = self.project.astModel.getObjectByPath(path)
                 self.flowModel = flow.ControlFlowModel(obj)
+                self.astObjects = self.flowModel.collectASTObjects()
+                LOG.debug("Number of AST objects in code is %d",
+                          len(self.astObjects[self.flowModel.block]))
+                
                 self.add(self.flowModel.block, cx,cy)
                 self._unboundConnections = self.flowModel.getConnections()
                 self.bindConnections()
@@ -152,6 +156,14 @@ class GeneralBlockItem(RectangleItem, BlockItem):
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
+
+    def draw(self, context):
+        super(GeneralBlockItem, self).draw(context)
+        cr = context.cairo
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        cr.move_to(-w/2,-h/2+10)
+        cr.show_text(u"%d" % len(self.canvas.diagram.astObjects[self.block]))
 
 
 class ConditionBlockItem(DiamondItem, BlockItem):

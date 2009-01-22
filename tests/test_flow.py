@@ -143,3 +143,11 @@ class Loop(FlowTest):
         connections = self.flowModel.getConnections()
         self.assertEquals(len(connections), 17)
 
+    def testCollectASTObjects(self):
+        astObjects = self.flowModel.collectASTObjects()
+
+        #for block, objs in astObjects.items():
+        #    print block, len(objs)
+
+        # statements in total
+        self.assertEquals(len(astObjects[self.flowModel.block]), 19)

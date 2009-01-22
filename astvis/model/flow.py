@@ -324,3 +324,17 @@ class ControlFlowModel(object):
             clConnections[(clBlockFrom,clBlockTo)].append((blockFrom,blockTo))
 
         return clConnections
+
+    def collectASTObjects(self):
+        "Returns AST objects for each block."
+
+        astObjects = {} # block -> astObjects
+
+        def collect(block):
+            astObjsForSubBlocks = map(lambda b: astObjects[b], block.subBlocks)
+            objs = reduce(set.union, astObjsForSubBlocks, set(block.astObjects))
+            astObjects[block] = objs
+
+        self.block.itertree(collect)
+
+        return astObjects

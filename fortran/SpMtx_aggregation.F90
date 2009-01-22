@@ -1,7 +1,3 @@
-# 1 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90"
-# 1 "<built-in>"
-# 1 "<command-line>"
-# 1 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90"
 ! DOUG - Domain decomposition On Unstructured Grids
 ! Copyright (C) 1998-2006 Faculty of Computer Science, University of Tartu and
 ! Department of Mathematics, University of Bath
@@ -38,143 +34,14 @@ Module SpMtx_aggregation
   
   Implicit None
 
-
-# 1 "/home/olegus/work/doug/doug_ompi-gfortran/src/doug_config.h" 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 38 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90" 2
+#include<doug_config.h>
 
 ! "on-the-fly" real/complex picking
-
-
-
-
-
+#ifdef D_COMPLEX
+#define float complex
+#else
+#define float real
+#endif
 
 CONTAINS
 
@@ -192,7 +59,7 @@ CONTAINS
       !            ==-1 free but in neighood
       !            ==-2 aggregated
     integer,intent(in),optional :: minaggrsize,maxaggrsize
-    real(kind=rk),intent(in) :: alpha
+    float(kind=rk),intent(in) :: alpha
     Type(SpMtx),intent(inout),optional :: Afine ! fine level matrix
     !type(CoarseData),optional :: cdat !coarse data
     type(Mesh),optional     :: M  ! Mesh
@@ -215,17 +82,17 @@ CONTAINS
     integer,dimension(:),pointer :: nextgoodstart,layerlen
     integer,dimension(:,:),pointer :: unaneigcols
     !integer,dimension(:,:),pointer :: nunaneigcolconns
-    real(kind=rk),dimension(:,:),pointer :: nunaneigcolconns ! used inversion 3 only
-    real(kind=rk) :: maxconnweightsum,fullmaxconnweightsum
+    float(kind=rk),dimension(:,:),pointer :: nunaneigcolconns ! used inversion 3 only
+    float(kind=rk) :: maxconnweightsum,fullmaxconnweightsum
     integer,dimension(:),pointer :: nunaneigcols,structcol,fullstructcol
     logical :: reduced,isloop
-    real(kind=rk) :: beta=1.0E-5_rk
+    float(kind=rk) :: beta=1.0E-5_rk
     logical :: track_print=.false.
     !logical :: track_print=.true.
     logical :: aggrarefull
     ! for version 4:
     logical :: toosmall
-    real(kind=rk),dimension(:),pointer :: connweightsums ! used in version 4
+    float(kind=rk),dimension(:),pointer :: connweightsums ! used in version 4
     integer :: ncolsaround,agrisize,maxstructlen,eater,nleft
     integer :: nagrs_new,full_nagrs_new,naggregatednodes,maxasizelargest
     integer :: ntoosmall,neaten,noccupied
