@@ -133,6 +133,9 @@ class ControlFlowDiagram (diagram.Diagram):
 class BlockItem(object):
     def __init__(self, block):
         self.block = block
+        if block.subBlocks:
+            self.children = [OpenItem(self)]
+        self.connections = set()
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
@@ -142,9 +145,6 @@ class GeneralBlockItem(RectangleItem, BlockItem):
     def __init__(self, block, text):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block)
-        if block.subBlocks:
-            self.children = [OpenCloseItem(self)]
-        self.connections = set()
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
@@ -155,9 +155,6 @@ class ConditionBlockItem(DiamondItem, BlockItem):
     def __init__(self, block, text):
         DiamondItem.__init__(self, text)
         BlockItem.__init__(self, block)
-        if block.subBlocks:
-            self.children = [OpenCloseItem(self)]
-        self.connections = set()
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
@@ -167,9 +164,6 @@ class DoItem(EllipseItem, BlockItem):
     def __init__(self, block, text):
         EllipseItem.__init__(self, text)
         BlockItem.__init__(self, block)
-        if block.subBlocks:
-            self.children = [OpenCloseItem(self)]
-        self.connections = set()
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
@@ -179,9 +173,6 @@ class EntryExitItem(RectangleItem, BlockItem):
     def __init__(self, block, text):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block)
-        if block.subBlocks:
-            self.children = [OpenCloseItem(self)]
-        self.connections = set()
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
         self.port.connectable = False
@@ -201,11 +192,11 @@ class EntryExitItem(RectangleItem, BlockItem):
         cr.line_to(-w/2, -h/4)
         cr.stroke()
 
-class OpenCloseItem(gaphas.item.Item):
+class OpenItem(gaphas.item.Item):
 
-    def __init__(self, openCloseItem):
+    def __init__(self, openItem):
         gaphas.item.Item.__init__(self)
-        self.item = openCloseItem
+        self.item = openItem
     
     def draw(self, context):
         item = self.item
