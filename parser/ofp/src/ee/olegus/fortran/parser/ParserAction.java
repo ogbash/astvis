@@ -1660,6 +1660,12 @@ public class ParserAction implements IFortranParserAction {
 			stmt = new DoStatement(DoStatement.Type.NONE);
 		}
 		
+		if(label!=null)
+			stmt.setLabel(label.getText());
+		
+		if(id!=null)
+			stmt.setDoId(id.getText());
+
 		if(digitString!=null)
 			stmt.setDoLabel(digitString.getText());
 		
@@ -2141,7 +2147,10 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void exit_stmt(Token label, Token exitKeyword, Token id, Token eos) {
-		parseStack.push(new ExitStatement());
+		ExitStatement stmt = new ExitStatement();
+		if (id!=null)
+			stmt.setKeyword(id.getText());
+		parseStack.push(stmt);
 	}
 
 	public void explicit_co_shape_spec() {

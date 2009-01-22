@@ -3504,7 +3504,7 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="outer">
 <location>
 <begin tokenIndex="1334" line="379" column="8"/>
 <end tokenIndex="1633" line="432" column="19"/>
@@ -3534,7 +3534,7 @@
 <begin tokenIndex="1344" line="381" column="10"/>
 <end tokenIndex="-1"/>
 </location>
-<do type="FOR" variable="i">
+<do type="FOR" variable="i" doId="goodloop">
 <location>
 <begin tokenIndex="1344" line="381" column="10"/>
 <end tokenIndex="1377" line="387" column="24"/>
@@ -3628,6 +3628,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="goodloop">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -3806,6 +3812,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="outer">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -5780,7 +5792,7 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="color">
 <location>
 <begin tokenIndex="2030" line="508" column="8"/>
 <end tokenIndex="2936" line="698" column="19"/>
@@ -6204,6 +6216,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="color">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -6259,7 +6277,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<do type="FOR" variable="i">
+<do type="FOR" variable="i" doId="ngs">
 <location>
 <begin tokenIndex="2163" line="566" column="12"/>
 <end tokenIndex="2209" line="573" column="21"/>
@@ -6396,6 +6414,12 @@
 </reference>
 </value>
 </statement>
+<exit exitId="ngs">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -6986,6 +7010,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 <statement type="assignment">
@@ -9782,7 +9812,7 @@
 <begin tokenIndex="3145" line="732" column="22"/>
 <end tokenIndex="-1"/>
 </location>
-<do type="FOR" variable="k">
+<do type="FOR" variable="k" doId="colsearch">
 <location>
 <begin tokenIndex="3145" line="732" column="22"/>
 <end tokenIndex="3199" line="738" column="37"/>
@@ -9965,6 +9995,12 @@
 </operator>
 </value>
 </statement>
+<exit exitId="colsearch">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -11673,7 +11709,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="loop">
 <location>
 <begin tokenIndex="3713" line="835" column="16"/>
 <end tokenIndex="3785" line="846" column="26"/>
@@ -11795,6 +11831,12 @@
 <constant type="logical"/>
 </value>
 </statement>
+<exit exitId="loop">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -11908,6 +11950,12 @@
 <constant type="logical"/>
 </value>
 </statement>
+<exit exitId="loop">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -12060,7 +12108,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="loop2">
 <location>
 <begin tokenIndex="3847" line="854" column="18"/>
 <end tokenIndex="3915" line="860" column="29"/>
@@ -12159,6 +12207,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="loop2">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 <statement type="assignment">
@@ -12247,6 +12301,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="loop2">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -12518,7 +12578,7 @@
 <constant type="logical"/>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="full">
 <location>
 <begin tokenIndex="4007" line="877" column="10"/>
 <end tokenIndex="4349" line="924" column="20"/>
@@ -14555,7 +14615,7 @@
 <constant type="integer">1</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="colo4">
 <location>
 <begin tokenIndex="4684" line="997" column="8"/>
 <end tokenIndex="5579" line="1138" column="19"/>
@@ -14979,6 +15039,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit exitId="colo4">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -15034,7 +15100,7 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<do type="FOR" variable="i">
+<do type="FOR" variable="i" doId="ng4">
 <location>
 <begin tokenIndex="4817" line="1023" column="12"/>
 <end tokenIndex="4863" line="1030" column="21"/>
@@ -15171,6 +15237,12 @@
 </reference>
 </value>
 </statement>
+<exit exitId="ng4">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -15785,6 +15857,12 @@
 <begin tokenIndex="-1"/>
 <end tokenIndex="-1"/>
 </location>
+<exit>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 <statement type="assignment">
@@ -19792,7 +19870,7 @@
 <begin tokenIndex="6254" line="1240" column="18"/>
 <end tokenIndex="-1"/>
 </location>
-<do type="FOR" variable="kk">
+<do type="FOR" variable="kk" doId="colsearc4">
 <location>
 <begin tokenIndex="6254" line="1240" column="18"/>
 <end tokenIndex="6299" line="1245" column="33"/>
@@ -19941,6 +20019,12 @@
 </operator>
 </value>
 </statement>
+<exit exitId="colsearc4">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>
@@ -21257,7 +21341,7 @@
 </operator>
 </value>
 </statement>
-<do type="FOR" variable="j">
+<do type="FOR" variable="j" doId="looking">
 <location>
 <begin tokenIndex="6682" line="1302" column="18"/>
 <end tokenIndex="6823" line="1329" column="31"/>
@@ -21773,6 +21857,12 @@
 <constant type="logical"/>
 </value>
 </statement>
+<exit exitId="looking">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
 </block>
 </statement>
 </block>

@@ -141,5 +141,5 @@ class Loop(FlowTest):
 
     def testGetConnections(self):
         connections = self.flowModel.getConnections()
-        self.assertEquals(len(connections), 14)
+        self.assertEquals(len(connections), 17)
 

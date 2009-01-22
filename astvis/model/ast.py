@@ -336,6 +336,7 @@ class DoStatement(Statement):
     def __init__(self, model,parent=None):
         Statement.__init__(self, model, parent)
         self.variable = None
+        self.doId = None
         self.type = None # 'for' or 'while'
         self.first = None
         self.last = None
@@ -405,6 +406,13 @@ class Allocate(Statement):
 
     def getChildren(self):
         return self.designators
+
+
+class Exit(Statement):
+
+    def __init__(self, model, parent = None):
+        Statement.__init__(self, model, parent)
+        self.exitId = None
         
 class Declaration(ASTObject):
     pass

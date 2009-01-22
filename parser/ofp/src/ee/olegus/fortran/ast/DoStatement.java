@@ -33,6 +33,7 @@ public class DoStatement extends Statement implements XMLGenerator {
 	private Expression step;
 	private Expression condition;
 	private String doLabel;
+	private String doId;
 	
 	private List<Statement> statements;
 
@@ -137,10 +138,13 @@ public class DoStatement extends Statement implements XMLGenerator {
 		attrs.addAttribute("", "", "type", "", type.name());
 		if(variable!=null)
 			attrs.addAttribute("", "", "variable", "", variable.getId().getName());
+		if(doId!=null) {
+			attrs.addAttribute("", "", "doId", "", doId);
+		}
 		handler.startElement("", "", "do", attrs);
 
 		super.generateXML(handler);
-		
+					
 		if(first instanceof XMLGenerator) {
 			handler.startElement("", "", "first", null);
 			((XMLGenerator)first).generateXML(handler);
@@ -175,5 +179,13 @@ public class DoStatement extends Statement implements XMLGenerator {
 		}
 		
 		handler.endElement("", "", "do");
+	}
+
+	public String getDoId() {
+		return doId;
+	}
+
+	public void setDoId(String doId) {
+		this.doId = doId;
 	}	
 }

@@ -4,7 +4,7 @@
 <program id="Loop">
 <location>
 <begin tokenIndex="0" line="1" column="0"/>
-<end tokenIndex="124" line="32" column="16"/>
+<end tokenIndex="146" line="36" column="16"/>
 </location>
 <block type="declarations">
 <location>
@@ -112,7 +112,7 @@
 <function id="Sum">
 <location>
 <begin tokenIndex="32" line="14" column="2"/>
-<end tokenIndex="120" line="31" column="18"/>
+<end tokenIndex="142" line="35" column="18"/>
 </location>
 <block type="declarations">
 <location>
@@ -154,7 +154,7 @@
 <block type="executions">
 <location>
 <begin tokenIndex="58" line="18" column="4"/>
-<end tokenIndex="116" line="29" column="10"/>
+<end tokenIndex="138" line="33" column="18"/>
 </location>
 <statement type="assignment">
 <location>
@@ -296,26 +296,26 @@
 <constant type="integer">0</constant>
 </value>
 </statement>
-<do type="WHILE">
+<do type="WHILE" doId="sumloop">
 <location>
-<begin tokenIndex="100" line="27" column="4"/>
-<end tokenIndex="116" line="29" column="10"/>
+<begin tokenIndex="102" line="27" column="12"/>
+<end tokenIndex="138" line="33" column="18"/>
 </location>
 <condition>
 <operator type="&lt;">
 <left>
 <reference name="i">
 <location>
-<begin tokenIndex="103" line="27" column="13"/>
-<end tokenIndex="103" line="27" column="14"/>
+<begin tokenIndex="105" line="27" column="21"/>
+<end tokenIndex="105" line="27" column="22"/>
 </location>
 </reference>
 </left>
 <right>
 <reference name="n">
 <location>
-<begin tokenIndex="105" line="27" column="15"/>
-<end tokenIndex="105" line="27" column="16"/>
+<begin tokenIndex="107" line="27" column="23"/>
+<end tokenIndex="107" line="27" column="24"/>
 </location>
 </reference>
 </right>
@@ -323,19 +323,19 @@
 </condition>
 <block>
 <location>
-<begin tokenIndex="109" line="28" column="7"/>
-<end tokenIndex="113" line="28" column="14"/>
+<begin tokenIndex="111" line="28" column="7"/>
+<end tokenIndex="-1"/>
 </location>
 <statement type="assignment">
 <location>
-<begin tokenIndex="109" line="28" column="7"/>
-<end tokenIndex="113" line="28" column="14"/>
+<begin tokenIndex="111" line="28" column="7"/>
+<end tokenIndex="115" line="28" column="14"/>
 </location>
 <target>
 <reference name="s">
 <location>
-<begin tokenIndex="109" line="28" column="7"/>
-<end tokenIndex="109" line="28" column="8"/>
+<begin tokenIndex="111" line="28" column="7"/>
+<end tokenIndex="111" line="28" column="8"/>
 </location>
 </reference>
 </target>
@@ -344,22 +344,72 @@
 <left>
 <reference name="s">
 <location>
-<begin tokenIndex="111" line="28" column="11"/>
-<end tokenIndex="111" line="28" column="12"/>
+<begin tokenIndex="113" line="28" column="11"/>
+<end tokenIndex="113" line="28" column="12"/>
 </location>
 </reference>
 </left>
 <right>
 <reference name="i">
 <location>
-<begin tokenIndex="113" line="28" column="13"/>
-<end tokenIndex="113" line="28" column="14"/>
+<begin tokenIndex="115" line="28" column="13"/>
+<end tokenIndex="115" line="28" column="14"/>
 </location>
 </reference>
 </right>
 </operator>
 </value>
 </statement>
+<ifconstruct>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="ifthen">
+<location>
+<begin tokenIndex="117" line="29" column="7"/>
+<end tokenIndex="134" line="32" column="13"/>
+</location>
+<condition>
+<operator type="==">
+<left>
+<reference name="i">
+<location>
+<begin tokenIndex="119" line="29" column="11"/>
+<end tokenIndex="119" line="29" column="12"/>
+</location>
+</reference>
+</left>
+<right>
+<constant type="integer">7</constant>
+</right>
+</operator>
+</condition>
+<block>
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<statement type="print">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+<value>
+<constant type="character">"exiting loop due to 7"</constant>
+</value>
+</statement>
+<exit exitId="sumloop">
+<location>
+<begin tokenIndex="-1"/>
+<end tokenIndex="-1"/>
+</location>
+</exit>
+</block>
+</statement>
+</block>
+</ifconstruct>
 </block>
 </do>
 </block>

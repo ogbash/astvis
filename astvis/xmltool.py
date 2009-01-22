@@ -54,6 +54,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startTypedef(attrs)
         elif name in ("statement",):
             self.startStatement(attrs)
+        elif name in ("exit",):
+            self.startExit(attrs)
         elif name in ("do",):
             self.startDo(attrs)
         elif name in ("ifconstruct",):
@@ -111,6 +113,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endTypedef()
         elif name in ("statement",):
             self.endStatement()
+        elif name in ("exit",):
+            self.endExit()
         elif name in ("do",):
             self.endDo()
         elif name in ("ifconstruct",):
@@ -282,12 +286,26 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endStatement(self):
         del self.statements[-1]
 
+    def startExit(self, attrs):
+        block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
+        st = Exit(self.astModel, block)
+        st.type = 'exit'
+        if attrs.has_key('exitId'):
+            st.exitId = attrs['exitId']
+        block.addStatement(st)
+        self.statements.append(st)
+
+    def endExit(self):
+        del self.statements[-1]
+
     def startDo(self, attrs):
         block = len(self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
         st = DoStatement(self.astModel, block)
         st.type = attrs["type"].lower()
         if attrs.has_key('variable'):
             st.variable = attrs['variable']
+        if attrs.has_key('doId'):
+            st.doId = attrs['doId']
         
         block.addStatement(st)
         self.statements.append(st)

@@ -24,9 +24,13 @@ contains
     end do
 
     i=0
-    do while(i<n)
+    sumloop:do while(i<n)
        s = s+i
-    end do
+       if (i==7) then
+          print *, "exiting loop due to 7"
+          exit sumloop
+       end if
+    end do sumloop
 
   end function Sum
 end program Loop

@@ -15,6 +15,15 @@ import ee.olegus.fortran.ast.text.Location;
  */
 public abstract class Statement extends Construct {
 	private Location location;
+	private String label;
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
 
 	public Location getLocation() {
 		if(location==null)
@@ -27,8 +36,13 @@ public abstract class Statement extends Construct {
 	}
 	
 	public void generateXML(ContentHandler handler) throws SAXException {
+		if(label!=null) {
+			handler.startElement("", "", "label", null);
+			handler.characters(label.toCharArray(), 0, label.length());
+			handler.endElement("", "", "label");
+		}
 		if(location!=null) {
-			location.generateXML(handler);			
+			location.generateXML(handler);
 		}
 	}	
 }

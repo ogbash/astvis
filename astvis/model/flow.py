@@ -5,7 +5,8 @@ import ast
 
 class Block(object):
 
-    def __init__(self, parentBlock, subBlocks = []):
+    def __init__(self, model, parentBlock, subBlocks = []):
+        self.model = model # control flow model
         self.parentBlock = parentBlock
         self.subBlocks = list(subBlocks)
         self.firstBlock = self.subBlocks and self.subBlocks[0] or None
@@ -43,43 +44,16 @@ class Block(object):
         if self.subBlocks:
             self.firstBlock = self.subBlocks[0]
 
-    classMap = {}
-
-    @staticmethod
-    def generateBlocks(parentBlock, statements):        
-        blocks = []
-        
-        simpleStatements = []
-        while len(statements)>0:
-            stmt = statements[0]
-            if stmt.__class__ in Block.classMap.keys():
-                BlockClass = Block.classMap[stmt.__class__]
-                if simpleStatements:
-                   blocks.append(BasicBlock(parentBlock, simpleStatements))
-                   simpleStatements = []
-    
-                subBlock = BlockClass(parentBlock, stmt)
-                blocks.append(subBlock)
-
-            else:
-                simpleStatements.append(stmt)
-
-            del statements[0]
-            
-        if simpleStatements:
-            blocks.append(BasicBlock(parentBlock, simpleStatements))
-            simpleStatements = []
-
-        for i in xrange(len(blocks)-1):
-            blocks[i].endBlock = blocks[i+1]
-
-        return blocks
+    def itertree(self, callback):
+        for b in self.subBlocks:
+            b.itertree(callback)
+        callback(self)
 
 
 class BasicBlock(Block):
 
-    def __init__(self, parentBlock, executions):
-        Block.__init__(self, parentBlock)
+    def __init__(self, model, parentBlock, executions):
+        Block.__init__(self, model, parentBlock)
         self.executions = executions
 
         self.astObjects.extend(executions)
@@ -89,20 +63,20 @@ class BasicBlock(Block):
 
 
 class StartBlock(BasicBlock):
-    def __init__(self, parentBlock):
-        BasicBlock.__init__(self, parentBlock, [])
+    def __init__(self, model, parentBlock):
+        BasicBlock.__init__(self, model, parentBlock, [])
 
 class EndBlock(BasicBlock):
-    def __init__(self, parentBlock):
-        BasicBlock.__init__(self, parentBlock, [])
+    def __init__(self, model, parentBlock):
+        BasicBlock.__init__(self, model, parentBlock, [])
 
     def getNextBasicBlocks(self):
         return []
 
 class ConditionBlock(BasicBlock):
 
-    def __init__(self, parentBlock, executions):
-        BasicBlock.__init__(self, parentBlock, executions)
+    def __init__(self, model, parentBlock, executions):
+        BasicBlock.__init__(self, model, parentBlock, executions)
         self.branchBlocks = []
 
     def getNextBasicBlocks(self):
@@ -117,17 +91,17 @@ class ConditionBlock(BasicBlock):
 
 class IfBlock(Block):
 
-    def __init__(self, parentBlock, ifStatement):
-        Block.__init__(self, parentBlock)
+    def __init__(self, model, parentBlock, ifStatement):
+        Block.__init__(self, model, parentBlock)
         self.astObjects.append(ifStatement)
 
         condBlock = None
         if ifStatement.condition!=None:
-            condBlock = ConditionBlock(self, [ifStatement.condition])
+            condBlock = ConditionBlock(self.model, self, [ifStatement.condition])
             self.subBlocks.append(condBlock)
 
-        thenBlock = Block(self)
-        thenBlocks = Block.generateBlocks(thenBlock, list(ifStatement.blocks[0].statements))
+        thenBlock = Block(self.model, self)
+        thenBlocks = self.model.generateBlocks(thenBlock, list(ifStatement.blocks[0].statements))
         thenBlock.addSubBlocks(thenBlocks)
         self.subBlocks.append(thenBlock)
         
@@ -139,8 +113,8 @@ class IfBlock(Block):
 
 class DoHeaderBlock(Block):
 
-    def __init__(self, parentBlock, doStatement):
-        Block.__init__(self, parentBlock)
+    def __init__(self, model, parentBlock, doStatement):
+        Block.__init__(self, model, parentBlock)
         self.astObjects.append(doStatement)
 
         
@@ -150,7 +124,7 @@ class DoHeaderBlock(Block):
             self._initWhileBlocks(doStatement)
             
     def _initWhileBlocks(self, doStatement):
-        self.conditionBlock = ConditionBlock(self, [doStatement.condition])
+        self.conditionBlock = ConditionBlock(self.model, self, [doStatement.condition])
         self.initBlock = None
         self.stepBlock = None
         self.firstBlock = self.conditionBlock
@@ -158,11 +132,13 @@ class DoHeaderBlock(Block):
 
     def _initForBlocks(self, doStatement):
         astModel = doStatement.model
-        self.initBlock = BasicBlock(self, [ast.Assignment(astModel,
+        self.initBlock = BasicBlock(self.model,
+                                    self, [ast.Assignment(astModel,
                                                           target=ast.Reference(astModel,
                                                                                name=doStatement.variable),
                                                           value=doStatement.first)])
-        self.conditionBlock = ConditionBlock(self, [ast.Operator(doStatement.model,
+        self.conditionBlock = ConditionBlock(self.model,
+                                             self, [ast.Operator(doStatement.model,
                                                                  type='.NEQ.',
                                                                  left=ast.Reference(astModel,
                                                                                     name=doStatement.variable),
@@ -178,7 +154,7 @@ class DoHeaderBlock(Block):
                                                         right=ast.Constant(astModel,
                                                                            value=1)))
                       ]
-        self.stepBlock = BasicBlock(self, statements)
+        self.stepBlock = BasicBlock(self.model, self, statements)
 
         self.firstBlock = self.initBlock
 
@@ -191,12 +167,12 @@ class DoHeaderBlock(Block):
 
 class IfConstructBlock(Block):
 
-    def __init__(self, parentBlock, ifConstruct):
-        Block.__init__(self, parentBlock)
+    def __init__(self, model, parentBlock, ifConstruct):
+        Block.__init__(self, model, parentBlock)
         self.astObjects.append(ifConstruct)
 
         for stmt in ifConstruct.statements:
-            ifBlock = IfBlock(self, stmt)
+            ifBlock = IfBlock(self.model, self, stmt)
             self.subBlocks.append(ifBlock)
             if len(self.subBlocks)>1:
                 self.subBlocks[-2].subBlocks[0].endBlock = self.subBlocks[-1] # elseif/else branch
@@ -205,15 +181,16 @@ class IfConstructBlock(Block):
 
 class DoBlock(Block):
 
-    def __init__(self, parentBlock, doStatement):
-        Block.__init__(self, parentBlock)
+    def __init__(self, model, parentBlock, doStatement):
+        Block.__init__(self, model, parentBlock)
+        self.doId = doStatement.doId
         self.astObjects.append(doStatement)
 
-        headerBlock = DoHeaderBlock(self, doStatement)
+        headerBlock = DoHeaderBlock(self.model, self, doStatement)
         self.subBlocks.append(headerBlock)
 
-        block = Block(self)
-        blocks = Block.generateBlocks(block, list(doStatement.blocks[0].statements))
+        block = Block(self.model, self)
+        blocks = self.model.generateBlocks(block, list(doStatement.blocks[0].statements))
         block.addSubBlocks(blocks)
         if headerBlock.stepBlock!=None: # for
             block.endBlock = headerBlock.stepBlock
@@ -237,12 +214,12 @@ class ControlFlowModel(object):
         assert isinstance(astObj, ast.Code)
         
         self.code = astObj
-        self.block = Block(None)
+        self.block = Block(self, None)
 
-        self._startBlock = StartBlock(self.block)
-        self._endBlock = EndBlock(self.block)
-        self._codeBlock = Block(self.block)
-        blocks = Block.generateBlocks(self._codeBlock, list(astObj.statementBlock.statements))
+        self._startBlock = StartBlock(self, self.block)
+        self._endBlock = EndBlock(self, self.block)
+        self._codeBlock = Block(self, self.block)
+        blocks = self.generateBlocks(self._codeBlock, list(astObj.statementBlock.statements))
         self._codeBlock.subBlocks = blocks
         
         self.block.subBlocks = [self._startBlock,self._codeBlock,self._endBlock]
@@ -252,6 +229,62 @@ class ControlFlowModel(object):
         self._codeBlock.endBlock = self._endBlock
 
         self._connections = None
+
+        self._resolveJumpStatements()
+
+
+    classMap = {}
+    JUMP_STATEMENT_CLASSES = (ast.Exit,)
+
+    def generateBlocks(self, parentBlock, statements):        
+        blocks = []
+        
+        simpleStatements = []
+        while len(statements)>0:
+            stmt = statements[0]
+            if stmt.__class__ in Block.classMap.keys():
+                BlockClass = Block.classMap[stmt.__class__]
+                if simpleStatements:
+                   blocks.append(BasicBlock(self, parentBlock, simpleStatements))
+                   simpleStatements = []
+    
+                subBlock = BlockClass(self, parentBlock, stmt)
+                blocks.append(subBlock)
+                del statements[0]
+
+            else:
+                simpleStatements.append(stmt)
+                del statements[0]
+                if isinstance(stmt, self.JUMP_STATEMENT_CLASSES):
+                    break
+
+        if simpleStatements:
+            blocks.append(BasicBlock(self, parentBlock, simpleStatements))
+            simpleStatements = []
+
+        for i in xrange(len(blocks)-1):
+            blocks[i].endBlock = blocks[i+1]
+
+        return blocks
+
+    def _resolveJumpStatements(self):
+        def resolve(block):
+            if isinstance(block, BasicBlock) and \
+                   isinstance(block.executions[-1], self.JUMP_STATEMENT_CLASSES):
+                stmt = block.executions[-1]
+
+                if isinstance(stmt, ast.Exit):
+                    # find do block for exit statement
+                    exitId = stmt.exitId
+                    jumpBlock = block.parentBlock
+                    while jumpBlock!=None:
+                        if isinstance(jumpBlock,DoBlock) and jumpBlock.doId==exitId:
+                            # found
+                            block.endBlock = jumpBlock.getEndBlock()
+                            break
+                        jumpBlock = jumpBlock.parentBlock
+                          
+        self._codeBlock.itertree(resolve)
 
     def getConnections(self):
         if self._connections==None:
