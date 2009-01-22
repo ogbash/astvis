@@ -1,7 +1,7 @@
-# 1 "/home/olegus/uni/master/workspace/vispy/astvisualizer/fortran/SpMtx_aggregation.F90"
+# 1 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90"
 # 1 "<built-in>"
 # 1 "<command-line>"
-# 1 "/home/olegus/uni/master/workspace/vispy/astvisualizer/fortran/SpMtx_aggregation.F90"
+# 1 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90"
 ! DOUG - Domain decomposition On Unstructured Grids
 ! Copyright (C) 1998-2006 Faculty of Computer Science, University of Tartu and
 ! Department of Mathematics, University of Bath
@@ -39,7 +39,7 @@ Module SpMtx_aggregation
   Implicit None
 
 
-# 1 "/home/olegus/uni/master/workspace/doug_trunk/src/doug_config.h" 1
+# 1 "/home/olegus/work/doug/doug_ompi-gfortran/src/doug_config.h" 1
 
 
 
@@ -164,7 +164,10 @@ Module SpMtx_aggregation
 
 
 
-# 38 "/home/olegus/uni/master/workspace/vispy/astvisualizer/fortran/SpMtx_aggregation.F90" 2
+
+
+
+# 38 "/home/olegus/uni/research/astvisualizer/fortran/SpMtx_aggregation.F90" 2
 
 ! "on-the-fly" real/complex picking
 
@@ -740,7 +743,7 @@ endif
                         nunaneigcols(kk)=nunaneigcols(kk)+1
                         if (nunaneigcols(kk)>mnstructneigs) then
                           write(stream,*)'mnstructneigs too small'
-                          stop 'error'
+                          stop
                         endif
                         !nunaneigcolconns(k,kk)=1
                         nunaneigcolconns(k,kk)=dabs(A%val(j))
@@ -751,7 +754,7 @@ endif
                 enddo
               else ! todo remove this
                 print *,'someething wroong...'
-                stop 'error'
+                stop
               endif
             endif 
           enddo
@@ -1247,7 +1250,7 @@ endif
                     ncolsaround=ncolsaround+1
                     if (ncolsaround>mnstructneigs) then
                       write(*,*)'mnstructneigs too small'
-                      stop 'error'
+                      stop
                     endif
                     connweightsums(kk)=dabs(A%val(j))
                     colsaround(kk)=colr

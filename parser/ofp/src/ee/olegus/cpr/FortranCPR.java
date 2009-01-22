@@ -5,6 +5,7 @@ package ee.olegus.cpr;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.transform.OutputKeys;
@@ -69,6 +70,13 @@ public class FortranCPR {
 		withArgName("xmlfile").
 		create('X');
 		options.addOption(option);
+
+		option = OptionBuilder.withLongOpt("includedirs").
+		withDescription("coma separated include directories for CPP").
+		hasArg().
+		withArgName("includedirs").
+		create('P');
+		options.addOption(option);
 	}	
 	
 	/**
@@ -88,8 +96,13 @@ public class FortranCPR {
 			System.exit(0);
 		}
 
+		String includeDirs[] = null;
+		if(commandLine.hasOption('P')) {
+			includeDirs = commandLine.getOptionValue('P').split(",");
+		}
+
 		File inDir = new File(commandLine.getOptionValue('I', ""));
-		FortranCPR fortranCPR = new FortranCPR(inDir, commandLine.getArgList(), args);
+		FortranCPR fortranCPR = new FortranCPR(inDir, commandLine.getArgList(), args, includeDirs);
 		
 		if(commandLine.hasOption("X")) {
 			try {
@@ -135,7 +148,7 @@ public class FortranCPR {
 	private List<String> files;
 	private Parser parser;
 	
-	public FortranCPR(File inDir, List<String> files, String[] args) {
+	public FortranCPR(File inDir, List<String> files, String[] args, String[] includeDirs) {
 		this.inDir = inDir;
 		this.files = files;
 		this.parser = new Parser();
@@ -145,7 +158,7 @@ public class FortranCPR {
 		for(String file: files) {
 			try {
 				if(file.endsWith("F90"))
-					file = preprocess(file);
+					file = preprocess(file, includeDirs);
 				parser.feed(this.inDir, file, args);
 			} catch (Exception e) {
 				LOG.error("Error parsing "+file, e);
@@ -156,10 +169,29 @@ public class FortranCPR {
 		parser.postProcess();
 	}	
 	
-	private String preprocess(String file) {
+	private String preprocess(String file, String[] includeDirs) {
 		try {
-			Process process = Runtime.getRuntime().exec(new String[]{"cpp","-traditional-cpp","-o",file+".f90",
-					"-I/home/olegus/uni/master/workspace/doug_trunk/src", file});
+			ArrayList<String> command = new ArrayList<String>();
+			String absFilename;
+			if (new File(file).isAbsolute()) {
+				absFilename = file;
+			} else {
+				absFilename = new File(this.inDir, file).getAbsolutePath();
+			}
+			command.add("cpp");
+			command.add("-traditional-cpp");
+			command.add("-o");
+			command.add(absFilename+".f90");
+			if (includeDirs!=null) {
+				for (String dir: includeDirs) {
+					command.add("-I"+dir);
+				}
+			}
+			command.add(absFilename);
+			
+			LOG.info("Running "+command.toString());
+			String[] commandArray = new String[command.size()]; 
+			Process process = Runtime.getRuntime().exec(command.toArray(commandArray));
 			int exitValue = process.waitFor();
 			if(exitValue != 0)
 				throw new RuntimeException("cpp execution error, return code "+exitValue);

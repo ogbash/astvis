@@ -1,3 +1,6 @@
+import logging
+LOG = logging.getLogger("services.ofp")
+from astvis.common import FINE, FINER, FINEST
 
 import os
 
@@ -11,13 +14,29 @@ class OFPService(core.Service):
     def generateASTXML(self, target, context):
         dialog=NewASTXMLDialog()
         if dialog.run()>0:
-            filepath = dialog.filename
-            filename = os.path.basename(filepath)
-            xmlname = "%s.xml" % filename
-            dirpath = os.path.dirname(filepath)
-            os.spawnlp(os.P_WAIT, 'java', 'java', '-jar', 'parser/ofp/FortranCPR.jar',
-                       filename,
-                       '-X', os.path.join(dirpath,xmlname),
-                       '-I', dirpath,
-                       '-O', dirpath)
+            dirpath = dialog.directoryName
+            xmlFilename = dialog.xmlFilename
+            fortranFiles = list(dialog.filenames)
+            if not xmlFilename:
+                xmlFilename="%s.xml" % fortranFiles[0]
+            relFortranFiles = []
+            for name in fortranFiles:
+                if name.startswith(dirpath):
+                    name = name[len(dirpath):]
+                    if name[0]==os.path.sep:
+                        name = name[1:]
+                    relFortranFiles.append(name)
+            dirnames = list(dialog.dirnames)
+
+            commandLine = ['java', '-jar', 'parser/ofp/FortranCPR.jar',
+                       '-X', os.path.join(dirpath,xmlFilename),
+                       '-O', dirpath,
+                       '-I', dirpath]
+            if dirnames:
+                commandLine.append("-P")
+                commandLine.append(",".join(dirnames))
+            commandLine.extend(relFortranFiles)
+
+            LOG.info("Running %s", " ".join(commandLine))
+            os.spawnvp(os.P_WAIT, 'java', commandLine)
 
