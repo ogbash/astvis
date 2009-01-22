@@ -133,8 +133,12 @@ class ControlFlowDiagram (diagram.Diagram):
 class BlockItem(object):
     def __init__(self, block):
         self.block = block
+        children = []
         if block.subBlocks:
-            self.children = [OpenItem(self)]
+            children.append(OpenItem(self))
+        if block.parentBlock!=None:
+            children.append(CloseItem(self))
+        self.children = children
         self.connections = set()
         
 class GeneralBlockItem(RectangleItem, BlockItem):
@@ -211,11 +215,27 @@ class OpenItem(gaphas.item.Item):
         cr.line_to(x+9, y+5)
         cr.stroke()
 
+class CloseItem(gaphas.item.Item):
+
+    def __init__(self, closeItem):
+        gaphas.item.Item.__init__(self)
+        self.item = closeItem
+    
+    def draw(self, context):
+        item = self.item
+        cr = context.cairo
+        w,h = max((item.w+item.PADX*2),item.MIN_WIDTH), \
+              max((item.h+item.PADY*2),item.MIN_HEIGHT)
+        x,y = -w/2+10, -h/2-10
+        cr.move_to(x+1, y+5)
+        cr.line_to(x+9, y+5)
+        cr.stroke()
+
 class OpenCloseBlockTool(gaphas.tool.Tool):
 
     def on_button_press(self, context, event):
         ocItem = context.view.hovered_item
-        if isinstance(ocItem, OpenCloseItem):
+        if isinstance(ocItem, OpenItem):
             diagram = ocItem.canvas.diagram
             matrix = ocItem.item.matrix
             x,y = matrix[4], matrix[5]
@@ -226,6 +246,28 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
                 y += 50
             diagram.bindConnections()
             return True
+
+        elif isinstance(ocItem, CloseItem):
+            diagram = ocItem.canvas.diagram
+            matrix = ocItem.item.matrix
+            x,y = matrix[4], matrix[5]
+            parentBlock = ocItem.item.block.parentBlock
+            self.closeBlock(parentBlock, diagram)
+
+            diagram.add(parentBlock, x, y)
+            diagram.bindConnections()
+            return True
+
+    def closeBlock(self, block, diagram):
+        blockItem = diagram.getItem(block)
+        if blockItem==None:
+            # item is opened, close subBlocks
+            for subBlock in block.subBlocks:
+                self.closeBlock(subBlock, diagram)
+                
+        else:
+            # item is not open, remove it
+            diagram.remove(block)
 
 class ContextMenuTool(gaphas.tool.Tool):
     def on_button_press(self, context, event):
