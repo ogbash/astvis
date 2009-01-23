@@ -1,8 +1,6 @@
 from astvis import widgets
 from astvis.project import TagTypeList, DiagramList, TagType, Concepts
-from astvis.calldiagram import CallDiagram
-from astvis.generaldiagram import GeneralDiagram
-from astvis.diagrams import ControlFlowDiagram
+from astvis.diagrams import ControlFlowDiagram, CallDiagram, GeneralDiagram
 from astvis import model
 from astvis import action, core
 

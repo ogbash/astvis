@@ -9,7 +9,6 @@ from model import ast, basic
 from astvis.misc.list import ObservableList, ObservableDict
 from astvis.diagram import DiagramList
 from astvis.widgets.tags import TaggedObjectsList
-from astvis.calldiagram import CallDiagram
 from astvis.transfer import externalize, internalize
 
 import gtk

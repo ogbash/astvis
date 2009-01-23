@@ -1,13 +1,13 @@
 import logging
 LOG=logging.getLogger(__name__)
-from common import FINE, FINER, FINEST
+from astvis.common import FINE, FINER, FINEST
 
-from common import INFO_PROJECTS_ATTRPATH
+from astvis.common import INFO_PROJECTS_ATTRPATH
 from astvis import diagram
 from astvis import gtkx
 from astvis import event
 from astvis.model import concept
-from gaphasx import RoundedRectangleItem, RectangleItem
+from astvis.gaphasx import RoundedRectangleItem, RectangleItem
 from astvis.transfer import internalize
 from gaphas.item import Line
 from gaphas.connector import PointPort, LinePort, Handle

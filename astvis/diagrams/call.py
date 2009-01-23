@@ -2,15 +2,15 @@
 
 import logging
 LOG=logging.getLogger(__name__)
-from common import FINE, FINER, FINEST
+from astvis.common import FINE, FINER, FINEST
 
-from model import ast, basic
-from model.ast import ACTIVE_CHANGED
-from common import *
-from gaphasx import EllipseItem, RectangleItem, MorphConstraint
-import diagram
-import event
-from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
+from astvis.model import ast, basic
+from astvis.model.ast import ACTIVE_CHANGED
+from astvis.common import *
+from astvis.gaphasx import EllipseItem, RectangleItem, MorphConstraint
+from astvis import diagram
+from astvis import event
+from astvis.event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 from astvis import core
 from astvis import gtkx
 
