@@ -95,9 +95,24 @@ class NamedItem(gaphas.item.Item):
         gaphas.util.text_center(cr, 0, 0, self.name)
 
 
-class RoundedRectangleItem(NamedItem):
+class MorphItem:
+
+    def intersect(self, alpha):
+        "Implement in subclass"
+        raise NotImplemented
+
+
+class RoundedRectangleItem(NamedItem,MorphItem):
 
     RADIUS=8
+
+    def intersect(self, alpha):
+        # currently rectange item intersection
+        v = (math.cos(alpha), math.sin(alpha))
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        point = _point_on_rectangle((-w/2, -h/2, w, h), v)
+        return (_vec_length(point), point)
 
     def draw(self, context):
         super(RoundedRectangleItem, self).draw(context)
@@ -112,8 +127,8 @@ class RoundedRectangleItem(NamedItem):
             c.set_source_rgba(0.,0.,0.)
 
         d = self.RADIUS
-        w = self.w+self.PADX
-        h = self.h+self.PADY
+        w = self.w+self.PADX*2
+        h = self.h+self.PADY*2
 
         pi = math.pi
         c.move_to(-w/2, -h/2+d)
@@ -128,7 +143,7 @@ class RoundedRectangleItem(NamedItem):
 
         c.stroke()
 
-class EllipseItem(NamedItem):
+class EllipseItem(NamedItem, MorphItem):
     "Ellipse item with the name inside."
 
     def __init__(self, name):
@@ -158,13 +173,6 @@ class EllipseItem(NamedItem):
 
     def point(self, p):
         return 0
-        
-    def glue(self, item, handle, ix, iy):
-        v = (ix,iy) # vector from center
-        vlen, alpha = _get_radial(v)
-        radius, point = self.intersect(alpha)
-        distance = abs(vlen - radius)
-        return (distance, point)
 
     def intersect(self, alpha):
         w = max((self.w+self.PADX*2), self.MIN_WIDTH)
@@ -174,7 +182,7 @@ class EllipseItem(NamedItem):
         point = (math.cos(alpha)*radius, math.sin(alpha)*radius)
         return (radius, point)
 
-class RectangleItem(NamedItem):
+class RectangleItem(NamedItem,MorphItem):
     "Rectangle item with the name inside."
 
     def __init__(self, name):
@@ -196,13 +204,6 @@ class RectangleItem(NamedItem):
 
     def point(self, p):
         return 0
-        
-    def glue(self, item, handle, ix, iy):
-        v = (ix, iy) # vector from center
-        vlen, alpha = _get_radial(v)
-        radius, point = self.intersect(alpha)
-        distance = abs(vlen - radius)
-        return (distance, point)
 
     def intersect(self, alpha):
         v = (math.cos(alpha), math.sin(alpha))
@@ -212,7 +213,7 @@ class RectangleItem(NamedItem):
         return (_vec_length(point), point)
 
 
-class DiamondItem(NamedItem):
+class DiamondItem(NamedItem,MorphItem):
     "Diamond item with the name inside."
 
     PADX = 3.
@@ -251,13 +252,6 @@ class DiamondItem(NamedItem):
 
     def point(self, p):
         return 0
-        
-    def glue(self, item, handle, ix, iy):
-        v = (ix, iy) # vector from center
-        vlen, alpha = _get_radial(v)
-        radius, point = self.intersect(alpha)
-        distance = abs(vlen - radius)
-        return (distance, point)
 
     def intersect(self, alpha):
         v = (math.cos(alpha), math.sin(alpha))
@@ -323,104 +317,22 @@ class MorphConstraint(gaphas.constraint.Constraint):
         _update(self.point[0], self.center[0].value+v[0])
         _update(self.point[1], self.center[1].value+v[1])
 
-        
-class ConnectingTool(gaphas.tool.HandleTool):
-    def glue(self, view, item, handle, wx, wy):
-        """
-        It allows the tool to glue to a Box or (other) Line item.
-        The distance from the item to the handle is determined in canvas
-        coordinates, using a 10 pixel glue distance.
-        """
-        if not handle.connectable:
-            return
-
-        # Make glue distance depend on the zoom ratio (should be about 10 pixels)
-        inverse = Matrix(*view.matrix)
-        inverse.invert()
-        #glue_distance, dummy = inverse.transform_distance(10, 0)
-        glue_distance = 10
-        glue_point = None
-        glue_item = None
-        for i in view.canvas.get_all_items():
-            if not i is item:
-                v2i = view.get_matrix_v2i(i).transform_point
-                ix, iy = v2i(wx, wy)
-                try:
-                    distance, point = i.glue(item, handle, ix, iy)
-                    # Transform distance to world coordinates
-                    #distance, dumy = matrix_i2w(i).transform_distance(distance, 0)
-                    if distance <= glue_distance:
-                        glue_distance = distance
-                        i2v = view.get_matrix_i2v(i).transform_point
-                        glue_point = i2v(*point)
-                        glue_item = i
-                except AttributeError, e:
-                    LOG.warn(e)
-        if glue_point:
-            v2i = view.get_matrix_v2i(item).transform_point
-            handle.x, handle.y = v2i(*glue_point)
-        return glue_item
-
-    def connect(self, view, item, handle, wx, wy):
-        def handle_disconnect():
-            try:
-                view.canvas.solver.remove_constraint(handle._connect_constraint)
-            except KeyError:
-                LOG.warn('constraint was already removed for', item, handle)
-                pass # constraint was alreasy removed
-            else:
-                LOG.debug('constraint removed for', item, handle)
-            handle._connect_constraint = None
-            handle.connected_to = None
-            # Remove disconnect handler:
-            handle.disconnect = lambda: 0
-
-        #print 'Handle.connect', view, item, handle, wx, wy
-        glue_item = self.glue(view, item, handle, wx, wy)
-
-        # drop old connection
-        if handle.connected_to:
-            handle.disconnect()
-
-        if glue_item:
-            canvas = glue_item.canvas
-            if isinstance(glue_item, EllipseItem) or isinstance(glue_item, RectangleItem):
-
-                # Make a constraint that keeps point on ellipse
-                handle._connect_constraint = \
-                        MorphConstraint(canvas.project(handle.pos),
-                            glue_item)
-            elif isinstance(glue_item, gaphas.examples.Box):
-                h1, h2 = _side(handle, glue_item, view, item)
-
-                # Make a constraint that keeps into account item coordinates.
-                handle._connect_constraint = \
-                        LineConstraint(line=(canvas.project(glue_item, h1.pos),
-                                             canvas.project(glue_item, h2.pos)),
-                                       point=canvas.project(item, handle.pos))
-
-            view.canvas.solver.add_constraint(handle._connect_constraint)
-
-            handle.connected_to = glue_item
-            handle.disconnect = handle_disconnect
-
-    def disconnect(self, view, item, handle):
-        if handle.connected_to:
-            #print 'Handle.disconnect', view, item, handle
-            view.canvas.solver.remove_constraint(handle._connect_constraint)
 
 def DefaultTool():
     tool = gaphas.tool.ToolChain()
     tool.append(gaphas.tool.HoverTool())
-    tool.append(ConnectingTool())
+    tool.append(gaphas.tool.ConnectHandleTool())
     tool.append(gaphas.tool.ItemTool())
     tool.append(gaphas.tool.RubberbandTool())
     return tool
 
 class MorphBoundaryPort(gaphas.connector.PointPort):
 
-    def __init__(self, pos):
+    def __init__(self, pos, morphItem):
+        assert isinstance(morphItem, MorphItem)
+        
         super(MorphBoundaryPort, self).__init__(pos)
+        self.item = morphItem
 
 
     def constraint(self, canvas, line, handle, glue_item):        
@@ -428,3 +340,9 @@ class MorphBoundaryPort(gaphas.connector.PointPort):
                             glue_item,
                             line=line)
         return c
+
+    def glue(self, pos):
+        vlen, alpha = _get_radial(pos)
+        radius, point = self.item.intersect(alpha)
+        distance = abs(vlen - radius)
+        return point, distance

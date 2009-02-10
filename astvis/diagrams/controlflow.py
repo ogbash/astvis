@@ -154,7 +154,7 @@ class GeneralBlockItem(RectangleItem, BlockItem):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
     def draw(self, context):
@@ -172,7 +172,7 @@ class ConditionBlockItem(DiamondItem, BlockItem):
         DiamondItem.__init__(self, text)
         BlockItem.__init__(self, block)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
 class DoItem(EllipseItem, BlockItem):
@@ -181,7 +181,7 @@ class DoItem(EllipseItem, BlockItem):
         EllipseItem.__init__(self, text)
         BlockItem.__init__(self, block)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
 class EntryExitItem(RectangleItem, BlockItem):
@@ -190,7 +190,7 @@ class EntryExitItem(RectangleItem, BlockItem):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
     def draw(self, context):

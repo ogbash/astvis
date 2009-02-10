@@ -7,10 +7,10 @@ from astvis import diagram
 from astvis import gtkx
 from astvis import event
 from astvis.model import concept
-from astvis.gaphasx import RoundedRectangleItem, RectangleItem
+from astvis.gaphasx import RoundedRectangleItem, RectangleItem, MorphBoundaryPort
 from astvis.transfer import internalize
 from gaphas.item import Line
-from gaphas.connector import PointPort, LinePort, Handle
+from gaphas.connector import PointPort, LinePort, Handle, VariablePoint
 
 import gtk
 import pickle
@@ -84,49 +84,19 @@ class ActivityItem(RoundedRectangleItem):
         RoundedRectangleItem.__init__(self, obj.name)
         self.object = obj
 
-        for hname in ['left','right','top','bottom']:
-            h_from = Handle(movable=False)
-            h_from.x=-10
-            self._handles.append(h_from)
-            setattr(self,'_%s_from'%hname,h_from)
-            h_to = Handle(movable=False)
-            self._handles.append(h_to)
-            setattr(self,'_%s_to'%hname,h_to)
-            self._ports.append(LinePort(h_from, h_to))
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
+        self._ports.append(self.port)
 
     def draw(self, context):
         super(ActivityItem, self).draw(context)
-
-    def pre_update(self, context):
-        super(ActivityItem, self).pre_update(context)
-        for hname, fx, fy, tx, ty in \
-            [('left', -1, -1, -1, 1),
-             ('right', 1, -1, 1, 1),
-             ('top', -1, -1, 1, -1),
-             ('bottom', -1, 1, 1, 1)]:
-            getattr(self, '_%s_from'%hname).x = fx*(self.w+self.PADX)/2.0
-            getattr(self, '_%s_from'%hname).y = fy*(self.h+self.PADY)/2.0
-            getattr(self, '_%s_to'%hname).x = tx*(self.w+self.PADX)/2.0
-            getattr(self, '_%s_to'%hname).y = ty*(self.h+self.PADY)/2.0
 
 class DataItem(RectangleItem):
 
     def __init__(self, label):
         RectangleItem.__init__(self, label)
 
-        for hname in ['left','right','top','bottom']:
-            h = Handle()
-            h.movable=False
-            self._handles.append(h)
-            setattr(self,'_%s'%hname,h)
-            self._ports.append(PointPort(h))
-
-    def pre_update(self, context):
-        super(DataItem, self).pre_update(context)
-        self._left.x = -(self.w+self.PADX)/2.0
-        self._right.x = (self.w+self.PADX)/2.0
-        self._top.y = -(self.h+self.PADY)/2.0
-        self._bottom.y = (self.h+self.PADY)/2.0
+        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
+        self._ports.append(self.port)
 
 class FlowLine(Line):
 

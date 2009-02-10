@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ASTCollection>
-<file name="/home/olegus/uni/research/astvisualizer/fortran/fib.f90">
+<file name="fortran/fib.f90">
 <program id="Fib">
 <location>
 <begin tokenIndex="0" line="1" column="0"/>
