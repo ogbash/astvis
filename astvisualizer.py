@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import astvis.misc.trace
+
 import logging
 from astvis.common import FINE, FINER, FINEST
 if __name__=="__main__":
@@ -57,6 +59,7 @@ class MainWindow(object):
 
       <menu action="tools">
         <menuitem action="main-generate-ofp-astxml"/>
+        <menuitem action="main-toggle-tracing"/>
       </menu>
     </menubar>
     <toolbar name="Toolbar">
@@ -392,6 +395,11 @@ class MainWindow(object):
         if target==None:
             target=self.projects
         self._objectBrowser = Browser('browser', target)
+
+    @Action('main-toggle-tracing', 'Toggle tracing')
+    def toggleTracing(self, target, context):
+        from astvis.misc import trace
+        trace.toggle()
 
 if __name__ == "__main__":
     ui = gtk.UIManager()
