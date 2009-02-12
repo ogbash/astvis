@@ -11,12 +11,13 @@ import types
 
 class Action(object):
     "Logical action that is used as a template for the GTK actions."
-    def __init__(self, name, label = None, tooltip = None, icon = None,
+    def __init__(self, name, label = None, tooltip = None, icon = None, accel=None,
                  targetClass=None, contextClass=None, sensitivePredicate=None):
         self.name = name
         self.label = label or name
         self.tooltip = tooltip
         self.icon = icon
+        self.accel = accel
 
         self.targetClass = targetClass #: required target class
         self.contextClass = contextClass #: required context class
@@ -94,7 +95,7 @@ class ActionGroup(object):
         gtkaction.connect("activate", self._activate)
         if LOG.isEnabledFor(FINEST):
             LOG.log(FINEST, "Adding gtk instance of %s with context %s" % (action, self.context))
-        self.gtkgroup.add_action(gtkaction)
+        self.gtkgroup.add_action_with_accel(gtkaction, action.accel)
         self.gtkactions[action.name] = gtkaction
 
 

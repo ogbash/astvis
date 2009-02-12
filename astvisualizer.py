@@ -402,7 +402,7 @@ class MainWindow(object):
             target=self.projects
         self._objectBrowser = Browser('browser', target)
 
-    @Action('main-toggle-tracing', 'Toggle tracing')
+    @Action('main-toggle-tracing', 'Toggle tracing', accel="<Control>t")
     def toggleTracing(self, target, context):
         from astvis.misc import trace
         trace.toggle()
@@ -414,17 +414,9 @@ if __name__ == "__main__":
     import astvis.services
     core.registerServices(astvis.services)
     
-    #from astvis.services import references, tags
-    #core.registerService('ASTTreeWalker', references.ASTTreeWalker())
-    #core.registerService('ReferenceResolver', references.ReferenceResolver())
-    #tagService = tags.TagService()
-    #action.manager.registerActionService(tagService)
-    #core.registerService('TagService', tagService)
-    #action.manager.registerActionService(ProjectService())
-    #action.manager.registerActionService(CodeService())
-    #action.manager.registerActionService(OFPService())
-    #action.manager.registerActionService(widgets)
     window = MainWindow(ui)
-    
+    accelgroup = ui.get_accel_group()
+    window.mainWindow.add_accel_group(accelgroup)
+
     gtk.main()
 
