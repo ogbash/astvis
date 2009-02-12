@@ -114,6 +114,8 @@ class ControlFlowDiagram (diagram.Diagram):
         tool.append(gaphas.tool.HoverTool())
         tool.append(ContextMenuTool())
         tool.append(OpenCloseBlockTool())
+        tool.append(gaphas.tool.PanTool())
+        tool.append(gaphas.tool.ZoomTool())
         tool.append(gaphas.tool.ItemTool())
         tool.append(gaphas.tool.RubberbandTool())
         return tool

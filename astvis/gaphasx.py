@@ -322,6 +322,7 @@ def DefaultTool():
     tool = gaphas.tool.ToolChain()
     tool.append(gaphas.tool.HoverTool())
     tool.append(gaphas.tool.ConnectHandleTool())
+    tool.append(gaphas.tool.ZoomTool())
     tool.append(gaphas.tool.ItemTool())
     tool.append(gaphas.tool.RubberbandTool())
     return tool

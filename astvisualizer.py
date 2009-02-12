@@ -247,13 +247,18 @@ class MainWindow(object):
         view = gaphas.view.GtkView()
         view.tool = diagram.getDefaultTool()
         view.canvas = diagram.getCanvas()
-        view.show()
+        window = gtk.ScrolledWindow(view.hadjustment, view.vadjustment)
+        #window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        window.add_with_viewport(view)
+        window.show_all()
+        
         #outer.set_hadjustment(view.hadjustment)
         #outer.set_vadjustment(view.vadjustment)
         view.connect("key-press-event", self.keyPress, diagram)
         diagram.setupView(view)
         self.views[diagram] = view
-        self.notebook.append_page(view, gtk.Label('diagram'))
+        self.notebook.append_page(window, gtk.Label(diagram.name))
+        self.notebook.set_tab_detachable(window, True)        
 
     def getDiagram(self):
         "Return current shown diagram."
@@ -340,6 +345,7 @@ class MainWindow(object):
         window.add(view)
         window.show_all()
         self.notebook.append_page(window, gtk.Label(os.path.basename(fl.name)))
+        self.notebook.set_tab_detachable(window, True)
         return view
         
     def _sourceDirChanged(self, button):
