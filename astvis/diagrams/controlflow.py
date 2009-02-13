@@ -6,7 +6,7 @@ LOG=logging.getLogger('diagrams.controlflow')
 from astvis.common import FINE, FINER, FINEST
 
 from astvis.common import *
-from astvis import diagram
+from astvis import diagram, action
 from astvis.model import ast, flow
 from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, EllipseItem
 from astvis import event
@@ -32,7 +32,24 @@ class ItemFactory(diagram.ItemFactory):
         elif isinstance(obj, flow.Block):
             return GeneralBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
 
+class BlockItem(object):
+    def __init__(self, block):
+        self.block = block
+        children = []
+        if block.subBlocks:
+            children.append(OpenItem(self))
+        if block.parentBlock!=None:
+            children.append(CloseItem(self))
+        self.children = children
+        self.connections = set()
+
 class ControlFlowDiagram (diagram.Diagram):
+    UI_DESCRIPTION='''
+    <popup name="controlflowdiagram-popup">
+      <menuitem action="controlflowdiagram-open-ast"/>
+      <menuitem action="controlflowdiagram-open-code"/>
+    </popup>
+    '''
 
     def __init__(self, name, project):
         diagram.Diagram.__init__(self, ItemFactory())
@@ -42,11 +59,26 @@ class ControlFlowDiagram (diagram.Diagram):
         self._unboundConnections = set()
         self._connectTool = gaphas.tool.ConnectHandleTool()
 
+        action.manager.registerActionService(self)        
+        self.actionGroup = action.manager.createActionGroup('controlflowdiagram',
+                context=self, contextAdapter=self.getSelected,
+                targetClasses = [BlockItem])
+        self.contextMenu = action.getMenu(self.actionGroup, 'controlflowdiagram-popup')
+
     def setupView(self, view):
+        import weakref
+        self.view = weakref.proxy(view)
         view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
                 [(INFO_OBJECT_PATH.name,0,INFO_OBJECT_PATH.number)],
                 gtk.gdk.ACTION_COPY)
         view.connect("drag-data-received", self._dragDataRecv)
+
+    def getSelected(self, context):
+        print context
+        if self.view==None:
+            return
+        item=self.view.hovered_item
+        return item
 
     def _dragDataRecv(self, widget, context, x, y, data, info, timestamp):
         if self.flowModel != None:
@@ -136,16 +168,26 @@ class ControlFlowDiagram (diagram.Diagram):
         self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
 
 
-class BlockItem(object):
-    def __init__(self, block):
-        self.block = block
-        children = []
-        if block.subBlocks:
-            children.append(OpenItem(self))
-        if block.parentBlock!=None:
-            children.append(CloseItem(self))
-        self.children = children
-        self.connections = set()
+    @action.Action('controlflowdiagram-open-ast', label='Open AST')
+    def _openAST(self, target, context):
+        print type(target)
+        # open item in AST tree
+        ocItem = target
+        if ocItem.block!=None:
+            block=ocItem.block
+            if block!=None and block.astObjects:
+                astObj = block.astObjects[0]
+                action.manager.activate('show-ast-object', astObj, None)
+
+    @action.Action('controlflowdiagram-open-code', label='Open code', targetClass=BlockItem)
+    def _openCode(self, target, context):
+        # open item in AST tree
+        ocItem = target
+        if ocItem.block!=None:
+            block=ocItem.block
+            if block!=None and block.astObjects:
+                astObj = block.astObjects[0]
+                self.project.root.showFile(self.project, astObj.getFile(), astObj.location)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
@@ -286,19 +328,12 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
 class ContextMenuTool(gaphas.tool.Tool):
     def on_button_press(self, context, event):
 
-        ocItem = context.view.hovered_item
+        diagram = context.view.canvas.diagram
 
         if event.button==3:
-            if isinstance(ocItem, BlockItem):
-                # at the moment just open item in AST tree
-                if ocItem.block!=None:
-                    block=ocItem.block
-                    if block!=None and block.astObjects:
-                        astObj = block.astObjects[0]
-                        print astObj
-                        from astvis import action
-                        action.manager.activate('show-ast-object', astObj, None)
-                return True
+            diagram.actionGroup.updateActions(context.view.hovered_item)
+            diagram.contextMenu.popup(None, None, None, 3, 0)
+            return True
 
 
 class ControlFlowConnector(diagram.Connector, event.Observer):

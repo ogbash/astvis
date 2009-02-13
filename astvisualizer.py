@@ -111,6 +111,7 @@ class MainWindow(object):
         self._conceptTree = None
         
         self.notebook = self.wTree.get_widget('notebook')
+        self.code_notebook = self.wTree.get_widget('code_notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
@@ -321,11 +322,11 @@ class MainWindow(object):
             view = self.files[fileName]
         
         # find view index in notebook and open it
-        children = self.notebook.get_children()
+        children = self.code_notebook.get_children()
         for i, child in enumerate(children):
             if child==view or \
                    isinstance(child,gtk.ScrolledWindow) and child.child==view:
-                self.notebook.set_current_page(i)
+                self.code_notebook.set_current_page(i)
                 buf = view.get_buffer()
 
                 iBegin=None
@@ -350,8 +351,8 @@ class MainWindow(object):
         window = gtk.ScrolledWindow()
         window.add(view)
         window.show_all()
-        self.notebook.append_page(window, gtk.Label(os.path.basename(fl.name)))
-        self.notebook.set_tab_detachable(window, True)
+        self.code_notebook.append_page(window, gtk.Label(os.path.basename(fl.name)))
+        self.code_notebook.set_tab_detachable(window, True)
         return view
         
     def _sourceDirChanged(self, button):

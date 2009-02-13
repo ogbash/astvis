@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ASTCollection>
-<file name="SpMtx_aggregation.F90.f90">
+<file name="fortran/SpMtx_aggregation.F90.f90">
 <module id="SpMtx_aggregation">
 <location>
 <begin tokenIndex="0" line="27" column="0"/>
