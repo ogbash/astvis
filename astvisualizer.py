@@ -247,13 +247,19 @@ class MainWindow(object):
         view = gaphas.view.GtkView()
         view.tool = diagram.getDefaultTool()
         view.canvas = diagram.getCanvas()
+
+        #t = gtk.Table(2,2)
+        #hs = gtk.HScrollbar(view.hadjustment)
+        #vs = gtk.VScrollbar(view.vadjustment)
+        #t.attach(view, 0, 1, 0, 1)
+        #t.attach(hs, 0, 1, 1, 2, xoptions=gtk.FILL, yoptions=gtk.FILL)
+        #t.attach(vs, 1, 2, 0, 1, xoptions=gtk.FILL, yoptions=gtk.FILL)
+        #window = t
         window = gtk.ScrolledWindow(view.hadjustment, view.vadjustment)
         #window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         window.add_with_viewport(view)
         window.show_all()
         
-        #outer.set_hadjustment(view.hadjustment)
-        #outer.set_vadjustment(view.vadjustment)
         view.connect("key-press-event", self.keyPress, diagram)
         diagram.setupView(view)
         self.views[diagram] = view

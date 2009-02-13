@@ -11,7 +11,8 @@ def dispatch(frame, event, arg):
     locals = frame.f_locals
 
     # file patterns
-    patterns = ['astvis%s' % os.path.sep, 'astvisualizer.py']
+    #patterns = ['astvis%s' % os.path.sep, 'astvisualizer.py']
+    patterns = ['gaphas%s'%os.path.sep]
     for pattern in patterns:
         index = code.co_filename.find(pattern)
         if index!=-1: break
