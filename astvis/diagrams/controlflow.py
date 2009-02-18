@@ -167,6 +167,21 @@ class ControlFlowDiagram (diagram.Diagram):
         self._connectTool.connect_handle(connectorItem, handles[0], items[0], items[0].port)
         self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
 
+    def selectBlocksByObject(self, astObj):
+        objPath = astObj.model.getObjectPath(astObj)
+        selected = set()
+        for block in self._items.keys():
+            # for each block
+            for blockObj in block.astObjects:
+                blockObjPath = blockObj.model.getObjectPath(blockObj)
+                if len(objPath) < len(blockObjPath) and objPath==blockObjPath[:len(objPath)] or \
+                       blockObjPath==objPath[:len(blockObjPath)]:
+                    selected.add(block)
+                    break
+                
+        self.view.unselect_all()
+        for block in selected:
+            self.view.select_item(self.getItem(block))
 
     @action.Action('controlflowdiagram-open-ast', label='Open AST')
     def _openAST(self, target, context):

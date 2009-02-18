@@ -21,9 +21,10 @@ class CodeView(gtk.TextView):
 
         self.connect('populate-popup', self._populatePopup)
 
-        self.actionGroup = action.manager.createActionGroup('codeview', self, self.getSelected)
+        self.actionGroup = action.manager.createActionGroup('codeview', self, self.getSelected, categories='find')
 
     def _populatePopup(self, textview, menu):
+        print "Populate popup"
         self.actionGroup.updateActions(self.getSelected())
         action.generateMenu(self.actionGroup, menu=menu)
 

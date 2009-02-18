@@ -55,6 +55,14 @@ class ASTModel(object):
             # unnamed object
             path.append('*')
         return path
+
+    def getObjectPath(self, astObj):
+        path = []
+        while astObj!=None:
+            path.append(astObj)
+            astObj = astObj.parent
+        path.reverse()
+        return path
         
     def getObjectByPath(self, path):
         for f in self.files:
@@ -114,10 +122,26 @@ class ASTObject(object):
     model = property(_getModel, _setModel,
             doc="AST model where this AST object belongs to.")
 
+    def _getLocation(self):
+        if self._location==None:
+            children = self.getChildren()
+            location = Location(self.model)
+            if children:
+                location.begin = children[0].location.begin
+                location.end = children[-1].location.end
+            self._location = location
+            
+        return self._location
+
+    def _setLocation(self, location):
+        self._location = location
+        
+    location = property(_getLocation, _setLocation)
+
     def __init__(self, model):
         self.model = model
         self.parent = None        
-        self.location = None
+        self._location = None
         self.__active = True
         self.tags = set()
         

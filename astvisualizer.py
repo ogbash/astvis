@@ -332,7 +332,8 @@ class MainWindow(object):
                 iBegin=None
                 iEnd=None
                 if location is not None:
-                    if location.begin.line>0:
+                    if location.begin.line>0 and location.begin.column>=0 and \
+                           location.end.line>0 and location.end.column>=0:
                         iBegin = buf.get_iter_at_line_offset(location.begin.line-1, location.begin.column)
                         iEnd = buf.get_iter_at_line_offset(location.end.line-1, location.end.column)
                 else:

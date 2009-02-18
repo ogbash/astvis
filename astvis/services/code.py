@@ -22,6 +22,23 @@ class CodeService(core.Service):
             if obj!=None:
                 astView.selectObject(obj)
 
+    @action.Action('find-in-cfg', 'Find in CFG', contextClass=widgets.CodeView)
+    def findInCFG(self, location, context):
+        "Find in control flow graph."
+        file_, line, column = location
+        astModel = file_.model
+                    
+        obj = self._findObjectByLocation(file_, (line, column))
+        if obj==None:
+            return
+
+        cfgDiagrams = filter(lambda x: x.__class__.__name__=="ControlFlowDiagram", context.root.views.keys())
+        for cfgDiagram in cfgDiagrams:
+            if cfgDiagram.flowModel and cfgDiagram.flowModel.code==obj.model.getScope(obj):
+                print cfgDiagrams, obj
+                cfgDiagram.selectBlocksByObject(obj)
+                break
+
     def _findObjectByLocation(self, obj, loc):
         line, column = loc
         

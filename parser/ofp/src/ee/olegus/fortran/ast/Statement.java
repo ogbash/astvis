@@ -14,7 +14,7 @@ import ee.olegus.fortran.ast.text.Location;
  *
  */
 public abstract class Statement extends Construct {
-	private Location location;
+	Location location;
 	private String label;
 
 	public String getLabel() {

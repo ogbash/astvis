@@ -10,6 +10,7 @@ import org.xml.sax.SAXException;
 
 import ee.olegus.fortran.ASTVisitor;
 import ee.olegus.fortran.XMLGenerator;
+import ee.olegus.fortran.ast.text.Location;
 
 /**
  * @author olegus
@@ -51,4 +52,15 @@ public class IfConstruct extends Statement implements XMLGenerator {
 		this.ifStatements = ifStatements;
 	}
 
+	@Override
+	public Location getLocation() {
+		if (location==null && getIfStatements().size()>0) {
+			location = new Location();
+			location.start = getIfStatements().get(0).getLocation().start;
+			location.stop = getIfStatements().get(getIfStatements().size()-1).getLocation().stop;
+			return location;
+		} else {
+			return super.getLocation();
+		}
+	}
 }
