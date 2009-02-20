@@ -49,7 +49,6 @@ class Block(object):
             b.itertree(callback)
         callback(self)
 
-
 class BasicBlock(Block):
 
     def __init__(self, model, parentBlock, executions):
@@ -231,6 +230,7 @@ class ControlFlowModel(object):
         self._connections = None
 
         self._resolveJumpStatements()
+        self._allBasicBlocks = None
 
 
     classMap = {}
@@ -338,3 +338,35 @@ class ControlFlowModel(object):
         self.block.itertree(collect)
 
         return astObjects
+
+    def getAllBasicBlocks(self):
+        if self._allBasicBlocks==None:            
+            blocks = set()
+
+            def collect(block):
+                if isinstance(block, BasicBlock):
+                    blocks.add(block)
+
+            self.block.itertree(collect)
+            self._allBasicBlocks = blocks
+
+        return self._allBasicBlocks
+        
+
+    def findBlocksByObject(self, astObj, onlyBlocks=None):
+        blocks = set()
+
+        if onlyBlocks==None:
+            onlyBlocks = self.getAllBasicBlocks()
+        
+        objPath = astObj.model.getObjectPath(astObj)
+        for block in onlyBlocks:
+            # for each block
+            for blockObj in block.astObjects:
+                blockObjPath = blockObj.model.getObjectPath(blockObj)
+                if len(objPath) < len(blockObjPath) and objPath==blockObjPath[:len(objPath)] or \
+                       blockObjPath==objPath[:len(blockObjPath)]:
+                    blocks.add(block)
+                    break
+
+        return blocks

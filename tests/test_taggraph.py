@@ -36,14 +36,14 @@ class TagGraphTest(unittest.TestCase):
             return map(lambda x: graph[x], vertex.sources)
         
         tg=taggraph.TagGraph(gtv, gsv)
-        tg.addTag('cool', graph[3])
+        tg.addTag('cool', graph[3], 'cool')
 
         self.assertEquals(len(tg._tags), 1)
         self.assertEquals(tg._tags.keys(), [graph[3]])
-        self.assertEquals(tg._tags[graph[3]], set(['cool']))
+        self.assertEquals(tg._tags[graph[3]]['cool'], set(['cool']))
 
         tg=taggraph.TagGraph(gtv, gsv)
-        tg.addTag('cool', graph[4])
+        tg.addTag('cool', graph[4], 'cool')
 
         self.assertEquals(len(tg._tags), 1)
         self.assertEquals(set(tg._inducedTags.keys()), set([graph[1],graph[3]]))

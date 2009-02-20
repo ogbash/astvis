@@ -21,21 +21,25 @@ import gaphas.tool
 from gaphas.connector import PointPort, VariablePoint
 
 class ItemFactory(diagram.ItemFactory):
+    def __init__(self, diagram):
+        self.diagram = diagram
+    
     def getDiagramItem(self, obj):
         if isinstance(obj, flow.StartBlock):
-            return EntryExitItem(obj, 'start') 
+            return EntryExitItem(obj, self.diagram, 'start') 
         if isinstance(obj, flow.EndBlock):
-            return EntryExitItem(obj, 'end')
+            return EntryExitItem(obj, self.diagram, 'end')
         elif isinstance(obj, flow.ConditionBlock):
-            return ConditionBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
+            return ConditionBlockItem(obj, self.diagram, obj.astObjects and str(obj.astObjects[-1]) or '')
         elif isinstance(obj, flow.DoHeaderBlock):
-            return DoItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')            
+            return DoItem(obj, self.diagram, obj.astObjects and str(obj.astObjects[-1]) or '')            
         elif isinstance(obj, flow.Block):
-            return GeneralBlockItem(obj, obj.astObjects and str(obj.astObjects[-1]) or '')
+            return GeneralBlockItem(obj, self.diagram, obj.astObjects and str(obj.astObjects[-1]) or '')
 
 class BlockItem(object):
-    def __init__(self, block):
+    def __init__(self, block, diagram):
         self.block = block
+        self.diagram = diagram
         children = []
         if block.subBlocks:
             children.append(OpenItem(self))
@@ -48,7 +52,7 @@ class BlockItem(object):
 class BlockTagGraph(TagGraph):
 
     def __init__(self):
-        TagGraph.__init__(self, self.getSourceBlocks, self.getTargetBlocks)
+        TagGraph.__init__(self, self.getTargetBlocks, self.getSourceBlocks)
     
     def getSourceBlocks(self, block):
         if block.parentBlock != None:
@@ -71,7 +75,7 @@ class ControlFlowDiagram (diagram.Diagram):
     '''
 
     def __init__(self, name, project):
-        diagram.Diagram.__init__(self, ItemFactory())
+        diagram.Diagram.__init__(self, ItemFactory(self))
         self.project = project
         self.name = name
         self.flowModel = None
@@ -101,15 +105,16 @@ class ControlFlowDiagram (diagram.Diagram):
                 def showRef(menu, name):
                     service = core.getService('ReferenceResolver')
                     references = service.getReferringObjects(scope.variables[name])
-                    blocks = set()
-                    for ref in references.get(astCode, []):
-                        blocks.update(self.getBlocksByObject(ref))
 
                     self.view.unselect_all()
-                    for block in blocks:
-                        self.view.select_item(self.getItem(block))
+                    for ref in references.get(astCode, []):
+                        blocks = self.flowModel.findBlocksByObject(ref)
+                        for block in blocks:
+                            #self.view.select_item(self.getItem(block))
+                            #print scope.variables[name], block, ref
+                            self._tagGraph.addTag(scope.variables[name], block, ref)
                             
-                    #self._referenceTags.add(name)
+                    self._referenceTags.add(name)
                     
                 for name in names:
                     menu = gtk.MenuItem(name)
@@ -228,24 +233,9 @@ class ControlFlowDiagram (diagram.Diagram):
         self._connectTool.connect_handle(connectorItem, handles[0], items[0], items[0].port)
         self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
 
-    def getBlocksByObject(self, astObj):
-        blocks = set()
-        
-        objPath = astObj.model.getObjectPath(astObj)
-        for block in self._items.keys():
-            # for each block
-            for blockObj in block.astObjects:
-                blockObjPath = blockObj.model.getObjectPath(blockObj)
-                if len(objPath) < len(blockObjPath) and objPath==blockObjPath[:len(objPath)] or \
-                       blockObjPath==objPath[:len(blockObjPath)]:
-                    print '+++', objPath, blockObjPath
-                    blocks.add(block)
-                    break
-
-        return blocks
 
     def selectBlocksByObject(self, astObj):
-        selected = self.getBlocksByObject(astObj)
+        selected = self.flowModel.findBlocksByObject(astObj, self._items.keys())
         self.view.unselect_all()
         
         for block in selected:
@@ -280,9 +270,9 @@ class GeneralBlockItem(RectangleItem, BlockItem):
     MIN_WIDTH=30
     MIN_HEIGHT=30
 
-    def __init__(self, block, text):
+    def __init__(self, block, diagram, text):
         RectangleItem.__init__(self, text)
-        BlockItem.__init__(self, block)
+        BlockItem.__init__(self, block, diagram)
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
@@ -292,33 +282,51 @@ class GeneralBlockItem(RectangleItem, BlockItem):
         cr = context.cairo
         w = max((self.w+self.PADX*2), self.MIN_WIDTH)
         h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        # write number of substatements
         cr.move_to(-w/2,-h/2+10)
-        cr.show_text(u"%d" % len(self.canvas.diagram.astObjects[self.block]))
+        cr.show_text(u"%d" % (len(self.canvas.diagram.astObjects[self.block]), ))
+        
+        # write tags
+        y = -h/2+10
+        graph = self.diagram._tagGraph
+        if graph._tags.has_key(self.block):
+            names = map(lambda x: x.name, graph._tags[self.block].keys())
+            for name in names:
+                cr.move_to(w/2,y)
+                cr.show_text(u"t(%s)" % name)
+                y+=10
+        if graph._inducedTags.has_key(self.block):
+            names = map(lambda x: x.name, graph._inducedTags[self.block].keys())
+            for name in names:
+                cr.move_to(w/2,y)
+                cr.show_text(u"i(%s)" % name)
+                y+=10
+        
 
 
 class ConditionBlockItem(DiamondItem, BlockItem):
 
-    def __init__(self, block, text):
+    def __init__(self, block, diagram, text):
         DiamondItem.__init__(self, text)
-        BlockItem.__init__(self, block)
+        BlockItem.__init__(self, block, diagram)
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
 class DoItem(EllipseItem, BlockItem):
 
-    def __init__(self, block, text):
+    def __init__(self, block, diagram, text):
         EllipseItem.__init__(self, text)
-        BlockItem.__init__(self, block)
+        BlockItem.__init__(self, block, diagram)
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
 class EntryExitItem(RectangleItem, BlockItem):
 
-    def __init__(self, block, text):
+    def __init__(self, block, diagram, text):
         RectangleItem.__init__(self, text)
-        BlockItem.__init__(self, block)
+        BlockItem.__init__(self, block, diagram)
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
