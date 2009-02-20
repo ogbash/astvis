@@ -21,6 +21,8 @@ class ReferenceResolver(core.Service):
         return cache.references.get(astScope, ())
         
     def getReferringObjects(self, obj):
+        """@type obj: L{BasicObject}
+        @param obj: object to find references to"""
         model = obj.model
         if not self._caches.has_key(model):
             cache = self._collectReferences(model)

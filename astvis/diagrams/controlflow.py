@@ -6,11 +6,12 @@ LOG=logging.getLogger('diagrams.controlflow')
 from astvis.common import FINE, FINER, FINEST
 
 from astvis.common import *
-from astvis import diagram, action
+from astvis import diagram, action, core
 from astvis.model import ast, flow
 from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, EllipseItem
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
+from astvis.taggraph import TagGraph
 
 import gtk
 import pickle
@@ -43,6 +44,24 @@ class BlockItem(object):
         self.children = children
         self.connections = set()
 
+
+class BlockTagGraph(TagGraph):
+
+    def __init__(self):
+        TagGraph.__init__(self, self.getSourceBlocks, self.getTargetBlocks)
+    
+    def getSourceBlocks(self, block):
+        if block.parentBlock != None:
+            return set([block.parentBlock])
+        else:
+            return set()
+        
+    def getTargetBlocks(self, block):
+        if block.subBlocks != None:
+            return set(block.subBlocks)
+        else:
+            return set()
+    
 class ControlFlowDiagram (diagram.Diagram):
     UI_DESCRIPTION='''
     <popup name="controlflowdiagram-popup">
@@ -65,6 +84,49 @@ class ControlFlowDiagram (diagram.Diagram):
                 targetClasses = [BlockItem])
         self.contextMenu = action.getMenu(self.actionGroup, 'controlflowdiagram-popup')
 
+        # tags
+        self._referenceTags = set()
+        self._tagGraph = BlockTagGraph()
+        
+        # TODO refactor into action
+        def fillRefs(item):
+            sub = item.get_submenu()
+            sub.foreach(lambda c: sub.remove(c))
+            if self.flowModel:
+                astCode = self.flowModel.code
+                basicModel = astCode.model.basicModel
+                scope = basicModel.getObjectByASTObject(astCode)
+                names = list(scope.variables.keys())
+                names.sort()
+                def showRef(menu, name):
+                    service = core.getService('ReferenceResolver')
+                    references = service.getReferringObjects(scope.variables[name])
+                    blocks = set()
+                    for ref in references.get(astCode, []):
+                        blocks.update(self.getBlocksByObject(ref))
+
+                    self.view.unselect_all()
+                    for block in blocks:
+                        self.view.select_item(self.getItem(block))
+                            
+                    #self._referenceTags.add(name)
+                    
+                for name in names:
+                    menu = gtk.MenuItem(name)
+                    if name in self._referenceTags:
+                        menu.set_sensitive(False)
+                    else:
+                        menu.connect('activate', showRef, name)
+                    sub.append(menu)
+                
+            sub.show_all()
+            
+        menuAction = self.actionGroup.gtkactions['controlflowdiagram-show-references']
+        menuItem = menuAction.get_proxies()[0]
+        sm = gtk.Menu()
+        menuItem.set_submenu(sm)
+        menuItem.connect('activate', fillRefs)
+
     def setupView(self, view):
         import weakref
         self.view = weakref.proxy(view)
@@ -74,7 +136,6 @@ class ControlFlowDiagram (diagram.Diagram):
         view.connect("drag-data-received", self._dragDataRecv)
 
     def getSelected(self, context):
-        print context
         if self.view==None:
             return
         item=self.view.hovered_item
@@ -167,25 +228,31 @@ class ControlFlowDiagram (diagram.Diagram):
         self._connectTool.connect_handle(connectorItem, handles[0], items[0], items[0].port)
         self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
 
-    def selectBlocksByObject(self, astObj):
+    def getBlocksByObject(self, astObj):
+        blocks = set()
+        
         objPath = astObj.model.getObjectPath(astObj)
-        selected = set()
         for block in self._items.keys():
             # for each block
             for blockObj in block.astObjects:
                 blockObjPath = blockObj.model.getObjectPath(blockObj)
                 if len(objPath) < len(blockObjPath) and objPath==blockObjPath[:len(objPath)] or \
                        blockObjPath==objPath[:len(blockObjPath)]:
-                    selected.add(block)
+                    print '+++', objPath, blockObjPath
+                    blocks.add(block)
                     break
-                
+
+        return blocks
+
+    def selectBlocksByObject(self, astObj):
+        selected = self.getBlocksByObject(astObj)
         self.view.unselect_all()
+        
         for block in selected:
             self.view.select_item(self.getItem(block))
 
-    @action.Action('controlflowdiagram-open-ast', label='Open AST')
+    @action.Action('controlflowdiagram-open-ast', label='Open AST', targetClass=BlockItem)
     def _openAST(self, target, context):
-        print type(target)
         # open item in AST tree
         ocItem = target
         if ocItem.block!=None:
@@ -203,6 +270,10 @@ class ControlFlowDiagram (diagram.Diagram):
             if block!=None and block.astObjects:
                 astObj = block.astObjects[0]
                 self.project.root.showFile(self.project, astObj.getFile(), astObj.location)
+
+    @action.Action('controlflowdiagram-show-references', label='Show references')
+    def showReferences(self, target, context):
+        print '-- showReferences', target
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
@@ -347,7 +418,7 @@ class ContextMenuTool(gaphas.tool.Tool):
 
         if event.button==3:
             diagram.actionGroup.updateActions(context.view.hovered_item)
-            diagram.contextMenu.popup(None, None, None, 3, 0)
+            diagram.contextMenu.popup(None, None, None, event.button, event.time)
             return True
 
 
