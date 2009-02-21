@@ -57,17 +57,27 @@ class BlockItem(object):
         y = -h/2+10
         graph = self.diagram._tagGraph
         if graph._tags.has_key(self.block):
-            names = map(lambda x: x.name, graph._tags[self.block].keys())
-            for name in names:
+            names = map(lambda x: (x[0].name, x[1]) , graph._tags[self.block].keys())
+            for name, op in names:
                 cr.move_to(w/2,y)
-                cr.set_source_rgb(0.,.5,0.0)
+                if op=='write':
+                    cr.set_source_rgb(0.5,.0,0.)
+                elif op=='read':
+                    cr.set_source_rgb(0.,.5,0.)
+                else:
+                    cr.set_source_rgb(0.,0.,0.)                    
                 cr.show_text(u"t(%s)" % name)
                 y+=10
         if graph._inducedTags.has_key(self.block):
-            names = map(lambda x: x.name, graph._inducedTags[self.block].keys())
-            for name in names:
+            names = map(lambda x: (x[0].name, x[1]), graph._inducedTags[self.block].keys())
+            for name, op in names:
                 cr.move_to(w/2,y)
-                cr.set_source_rgb(0.,.5,0.0)
+                if op=='write':
+                    cr.set_source_rgb(0.5,.0,0.)
+                elif op=='read':
+                    cr.set_source_rgb(0.,.5,0.)
+                else:
+                    cr.set_source_rgb(0.,0.,0.)                    
                 cr.show_text(u"i(%s)" % name)
                 y+=10
         cr.restore()
@@ -137,7 +147,9 @@ class ControlFlowDiagram (diagram.Diagram):
                     for ref in references.get(astCode, []):
                         blocks = self.flowModel.findBlocksByObject(ref)
                         for block in blocks:
-                            self._tagGraph.addTag(scope.variables[name], block, ref)
+                            isAssign = ref.isAssignment()
+                            op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
+                            self._tagGraph.addTag((scope.variables[name],op), block, ref)
                             
                     self._referenceTags.add(name)
                     
@@ -173,7 +185,9 @@ class ControlFlowDiagram (diagram.Diagram):
                     for ref in references.get(astCode, []):
                         blocks = self.flowModel.findBlocksByObject(ref)
                         for block in blocks:
-                            self._tagGraph.removeTag(scope.variables[name], block, ref)
+                            isAssign = ref.isAssignment()
+                            op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
+                            self._tagGraph.removeTag((scope.variables[name],op), block, ref)
                             
                     self._referenceTags.remove(name)
                     

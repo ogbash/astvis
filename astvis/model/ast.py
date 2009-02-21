@@ -553,6 +553,21 @@ class Reference(Expression):
     def __str__(self):
         return "%s.%s" % ((self.base or ''), self.name)
 
+    def isAssignment(self):
+        parent = self.parent
+        child = self
+        while isinstance(parent, Reference):
+            child = parent
+            parent = parent.parent
+
+        if isinstance(parent, (Assignment)) and child==parent.target or \
+           isinstance(parent, (Allocate)):
+            return True
+        elif isinstance(parent, Call) or \
+             isinstance(parent, Statement) and parent.type=='call':
+            return None
+        return False
+
 class Section(ASTObject):
 
     def __init__(self, model):
