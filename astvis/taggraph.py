@@ -25,15 +25,38 @@ class TagGraph:
             return False
 
         self._tags[vertex][tag].add(target)
-        event.manager.notifyObservers(self, event.PROPERTY_CHANGED, ('tags',event.PC_ADDED,(tag,vertex,target),None))
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                                      ('tags',event.PC_ADDED,(tag,vertex,target),None))
 
         for sourceVertex in self._getSourceVertices(vertex):
             self._addInducedTag(tag, sourceVertex, vertex)
             
         return True
 
-    def removeTag(self, tag, vertex):
-        pass
+    def removeTag(self, tag, vertex, target):
+        if not self._tags[vertex] or \
+               not self._tags[vertex][tag] or \
+               not target in self._tags[vertex][tag]:
+            return False
+
+        self._tags[vertex][tag].remove(target)
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                                      ('tags',event.PC_REMOVED,None,(tag,vertex,target)))
+        
+        if not self._tags[vertex][tag]:
+            # no, the tag for the vertex anymore
+            del self._tags[vertex][tag]
+
+            if not self._tags[vertex]:
+                # no tags for the vertex anymore                
+                del self._tags[vertex]
+
+            # recursively
+            if not self._inducedTags.has_key(vertex) or \
+                   not self._inducedTags[vertex].has_key(tag):
+                # no, the induced tag for sources
+                for sourceVertex in self._getSourceVertices(vertex):
+                    self._removeInducedTag(tag, sourceVertex, vertex)            
 
     def _addInducedTag(self, tag, vertex, targetVertex):
         if not self._inducedTags.has_key(vertex):
@@ -51,3 +74,23 @@ class TagGraph:
             # proceed recursively
             for sourceVertex in self._getSourceVertices(vertex):
                 self._addInducedTag(tag, sourceVertex, vertex)
+
+    def _removeInducedTag(self, tag, vertex, targetVertex):
+        self._inducedTags[vertex][tag].remove(targetVertex)
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                                      ('inducedTags',event.PC_REMOVED,None,(tag,vertex,targetVertex)))
+
+        if not self._inducedTags[vertex][tag]:
+            # no, the induced tag for the vertex anymore
+            del self._inducedTags[vertex][tag]
+
+            if not self._inducedTags[vertex]:
+                # no induced tags for the vertex anymore                
+                del self._inducedTags[vertex]
+        
+            # recursively
+            if not self._tags.has_key(vertex) or \
+                   not self._tags[vertex].has_key(tag):
+                # no, the tag for sources
+                for sourceVertex in self._getSourceVertices(vertex):
+                    self._removeInducedTag(tag, sourceVertex, vertex)

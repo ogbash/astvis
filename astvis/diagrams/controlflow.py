@@ -48,6 +48,29 @@ class BlockItem(object):
         self.children = children
         self.connections = set()
 
+    def _drawTags(self, context):
+        # write tags
+        w = max((self.w+self.PADX*2), self.MIN_WIDTH)
+        h = max((self.h+self.PADY*2), self.MIN_HEIGHT)
+        cr = context.cairo
+        cr.save()
+        y = -h/2+10
+        graph = self.diagram._tagGraph
+        if graph._tags.has_key(self.block):
+            names = map(lambda x: x.name, graph._tags[self.block].keys())
+            for name in names:
+                cr.move_to(w/2,y)
+                cr.set_source_rgb(0.,.5,0.0)
+                cr.show_text(u"t(%s)" % name)
+                y+=10
+        if graph._inducedTags.has_key(self.block):
+            names = map(lambda x: x.name, graph._inducedTags[self.block].keys())
+            for name in names:
+                cr.move_to(w/2,y)
+                cr.set_source_rgb(0.,.5,0.0)
+                cr.show_text(u"i(%s)" % name)
+                y+=10
+        cr.restore()
 
 class BlockTagGraph(TagGraph):
 
@@ -71,6 +94,8 @@ class ControlFlowDiagram (diagram.Diagram):
     <popup name="controlflowdiagram-popup">
       <menuitem action="controlflowdiagram-open-ast"/>
       <menuitem action="controlflowdiagram-open-code"/>
+      <menuitem action="controlflowdiagram-show-references"/>
+      <menuitem action="controlflowdiagram-hide-references"/>
     </popup>
     '''
 
@@ -109,12 +134,9 @@ class ControlFlowDiagram (diagram.Diagram):
                     service = core.getService('ReferenceResolver')
                     references = service.getReferringObjects(scope.variables[name])
 
-                    self.view.unselect_all()
                     for ref in references.get(astCode, []):
                         blocks = self.flowModel.findBlocksByObject(ref)
                         for block in blocks:
-                            #self.view.select_item(self.getItem(block))
-                            #print scope.variables[name], block, ref
                             self._tagGraph.addTag(scope.variables[name], block, ref)
                             
                     self._referenceTags.add(name)
@@ -135,11 +157,50 @@ class ControlFlowDiagram (diagram.Diagram):
         menuItem.set_submenu(sm)
         menuItem.connect('activate', fillRefs)
 
+        def fillHideRefs(item):
+            sub = item.get_submenu()
+            sub.foreach(lambda c: sub.remove(c))
+            if self.flowModel:
+                astCode = self.flowModel.code
+                basicModel = astCode.model.basicModel
+                scope = basicModel.getObjectByASTObject(astCode)
+                names = list(self._referenceTags)
+                names.sort()
+                def hideRef(menu, name):
+                    service = core.getService('ReferenceResolver')
+                    references = service.getReferringObjects(scope.variables[name])
+
+                    for ref in references.get(astCode, []):
+                        blocks = self.flowModel.findBlocksByObject(ref)
+                        for block in blocks:
+                            self._tagGraph.removeTag(scope.variables[name], block, ref)
+                            
+                    self._referenceTags.remove(name)
+                    
+                for name in names:
+                    menu = gtk.MenuItem(name)
+                    menu.connect('activate', hideRef, name)
+                    sub.append(menu)
+                
+            sub.show_all()
+            
+        menuAction = self.actionGroup.gtkactions['controlflowdiagram-hide-references']
+        menuItem = menuAction.get_proxies()[0]
+        sm = gtk.Menu()
+        menuItem.set_submenu(sm)
+        menuItem.connect('activate', fillHideRefs)
+
     def _tagGraphChanged(self, obj, ev, args, dargs):
         if ev==event.PROPERTY_CHANGED:
             name, evtype, newvalue, oldvalue = args
             if evtype==event.PC_ADDED and name in ('tags','inducedTags'):
                 tag,block,target = newvalue
+                blockItem = self.getItem(block)
+                if blockItem:
+                    self.view.canvas.request_update(blockItem)
+
+            elif evtype==event.PC_REMOVED and name in ('tags','inducedTags'):
+                tag,block,target = oldvalue
                 blockItem = self.getItem(block)
                 if blockItem:
                     self.view.canvas.request_update(blockItem)
@@ -276,6 +337,11 @@ class ControlFlowDiagram (diagram.Diagram):
     @action.Action('controlflowdiagram-show-references', label='Show references')
     def showReferences(self, target, context):
         print '-- showReferences', target
+
+    @action.Action('controlflowdiagram-hide-references', label='Hide references')
+    def hideReferences(self, target, context):
+        print '-- unshowReferences', target
+
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
@@ -297,24 +363,8 @@ class GeneralBlockItem(RectangleItem, BlockItem):
         # write number of substatements
         cr.move_to(-w/2,-h/2+10)
         cr.show_text(u"%d" % (len(self.canvas.diagram.astObjects[self.block]), ))
-        
-        # write tags
-        y = -h/2+10
-        graph = self.diagram._tagGraph
-        if graph._tags.has_key(self.block):
-            names = map(lambda x: x.name, graph._tags[self.block].keys())
-            for name in names:
-                cr.move_to(w/2,y)
-                cr.show_text(u"t(%s)" % name)
-                y+=10
-        if graph._inducedTags.has_key(self.block):
-            names = map(lambda x: x.name, graph._inducedTags[self.block].keys())
-            for name in names:
-                cr.move_to(w/2,y)
-                cr.show_text(u"i(%s)" % name)
-                y+=10
-        
 
+        self._drawTags(context)
 
 class ConditionBlockItem(DiamondItem, BlockItem):
 
@@ -324,6 +374,11 @@ class ConditionBlockItem(DiamondItem, BlockItem):
 
         self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
+
+    def draw(self, context):
+        super(ConditionBlockItem, self).draw(context)
+        
+        self._drawTags(context)
 
 class DoItem(EllipseItem, BlockItem):
 
