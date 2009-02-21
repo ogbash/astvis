@@ -1,4 +1,6 @@
 
+from astvis import event
+
 class TagGraph:
 
     def __init__(self, getTargetVertices, getSourceVertices):
@@ -23,6 +25,7 @@ class TagGraph:
             return False
 
         self._tags[vertex][tag].add(target)
+        event.manager.notifyObservers(self, event.PROPERTY_CHANGED, ('tags',event.PC_ADDED,(tag,vertex,target),None))
 
         for sourceVertex in self._getSourceVertices(vertex):
             self._addInducedTag(tag, sourceVertex, vertex)
@@ -39,8 +42,12 @@ class TagGraph:
         
         if inducedTags.has_key(tag):
             inducedTags[tag].add(targetVertex)
+            event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                                          ('inducedTags',event.PC_ADDED,(tag,vertex,targetVertex),None))
         else:
             inducedTags[tag] = set([targetVertex])
+            event.manager.notifyObservers(self, event.PROPERTY_CHANGED,
+                                          ('inducedTags',event.PC_ADDED,(tag,vertex,targetVertex),None))
             # proceed recursively
             for sourceVertex in self._getSourceVertices(vertex):
                 self._addInducedTag(tag, sourceVertex, vertex)

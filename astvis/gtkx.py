@@ -178,7 +178,7 @@ class PythonTreeModel(gtk.GenericTreeModel):
             self.__objectChanged(obj, event_, args, dargs)
         except Exception, e:
             LOG.debug(e, exc_info=e)
-            raise e
+            raise
     
     def __objectChanged(self, obj, event_, args, dargs):
 

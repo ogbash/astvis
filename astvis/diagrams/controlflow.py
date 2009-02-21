@@ -91,6 +91,9 @@ class ControlFlowDiagram (diagram.Diagram):
         # tags
         self._referenceTags = set()
         self._tagGraph = BlockTagGraph()
+
+        # register for events
+        event.manager.subscribe(self._tagGraphChanged, self._tagGraph)
         
         # TODO refactor into action
         def fillRefs(item):
@@ -131,6 +134,15 @@ class ControlFlowDiagram (diagram.Diagram):
         sm = gtk.Menu()
         menuItem.set_submenu(sm)
         menuItem.connect('activate', fillRefs)
+
+    def _tagGraphChanged(self, obj, ev, args, dargs):
+        if ev==event.PROPERTY_CHANGED:
+            name, evtype, newvalue, oldvalue = args
+            if evtype==event.PC_ADDED and name in ('tags','inducedTags'):
+                tag,block,target = newvalue
+                blockItem = self.getItem(block)
+                if blockItem:
+                    self.view.canvas.request_update(blockItem)
 
     def setupView(self, view):
         import weakref
