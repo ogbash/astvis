@@ -6,7 +6,7 @@ from astvis.common import FINE, FINER, FINEST
 
 from astvis.common import INFO_TEXT, INFO_OBJECT_PATH
 from astvis.model import ast
-from astvis import core, event
+from astvis import core, event, action
 from astvis.event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
 from astvis.widgets.base import BaseWidget
 
@@ -46,8 +46,18 @@ class RowFactory:
 factory = RowFactory()
 
 class CallTree(BaseWidget):
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                                                  'call-tree',
+                                                  contextClass=CallTree,
+                                                  categories=['show'])
+        return cls.ACTION_GROUP
+
+
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer', categories=['show'])
+        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer')
         self.root = root
         self.view = self.widget
         self.hide()

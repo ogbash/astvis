@@ -88,13 +88,17 @@ class MainWindow(object):
 
         # main action group
         action.manager.registerActionService(self)
-        self.globalActionGroup = action.manager.createActionGroup('global',
-                                                                  self,
-                                                                  categories = ['main','file','project'])
-        self.globalActionGroup.gtkgroup.add_action(gtk.Action('file', 'File', None, None))
-        self.globalActionGroup.gtkgroup.add_action(gtk.Action('tools', 'Tools', None, None))
+        
+        globalActionGroup = action.ActionGroup(action.manager,
+                                               'global',
+                                               categories = ['main','file','project'])
 
-        self.globalActionGroup.updateActions(None)
+        globalActionGroup.addAction(action.Action('file', "File"))
+        globalActionGroup.addAction(action.Action('tools', "Tools"))
+        self.globalGtkActionGroup = globalActionGroup.createGtkActionGroup(self)
+        action.manager.addGtkGroup(self.globalGtkActionGroup)
+
+        globalActionGroup.updateActions(self.globalGtkActionGroup, None)
         
         self.ui.add_ui_from_string(self.UI_DESCRIPTION)
         self.menubar = self.ui.get_widget('/MenuBar')
@@ -184,7 +188,7 @@ class MainWindow(object):
         finally:
             dialog.destroy()
 
-    @Action('project-open', label='Open project', icon='gtk-open', contextClass=widgets.ProjectTree, )
+    @Action('project-open', label='Open project', icon='gtk-open')
     def _openProject(self, widget, context):
         wTree = gtk.glade.XML("astvisualizer.glade", 'openproject_dialog')
         dialog = wTree.get_widget('openproject_dialog')
@@ -270,6 +274,9 @@ class MainWindow(object):
     def getDiagram(self):
         "Return current shown diagram."
         page = self.getCurrentPage()
+        if isinstance(page, gtk.ScrolledWindow):
+            page = page.get_children()[0].get_children()[0]
+        print page
         if isinstance(page, gaphas.view.GtkView):
             diagrams = filter(lambda x: x[1]==page, self.views.items())
             return diagrams and diagrams[0][0] or None

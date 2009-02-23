@@ -15,6 +15,7 @@ from astvis import gtkx, diagram
 import gtk
 
 class ProjectTree(BaseWidget):
+    
     UI_DESCRIPTION = '''
     <menubar name="MenuBar">
       <menu action="file">
@@ -50,10 +51,22 @@ class ProjectTree(BaseWidget):
     </popup>    
 '''
 
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                               'project-tree',
+                               contextAdapter=cls.getSelected,
+                               categories=['project', 'diagram', 'concept', 'tag', 'show'],
+                               contextClass=ProjectTree,
+                               targetClasses=[Project, TagTypeList, TagType, Concepts,
+                                              project.DiagramList, diagram.Diagram])
+        return cls.ACTION_GROUP
+
+
     def __init__(self, projects, root):
         BaseWidget.__init__(self, 'project_tree', 'project_tree_outer',
-                            categories=['project', 'diagram', 'concept', 'tag', 'show'],
-                            targetClasses=[Project, TagTypeList, TagType, Concepts, project.DiagramList, diagram.Diagram],
+                            
                             menuName='projecttree-popup')
         self.view = self.widget
         self.projects = projects
@@ -75,7 +88,7 @@ class ProjectTree(BaseWidget):
     def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
         parent, childName, obj = _extractObjectInfo(model, iRow)
-        self.actionGroup.updateActions(obj)
+        self.getActionGroup().updateActions(self.gtkActionGroup, obj)
 
     def _projectChanged(self, project, event_, args, dargs):
         if event_ == event.PROPERTY_CHANGED:

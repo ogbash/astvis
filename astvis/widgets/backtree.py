@@ -5,7 +5,7 @@ LOG = logging.getLogger("backtree")
 from astvis.common import FINE, FINER, FINEST
 
 from astvis.model import basic
-from astvis import core
+from astvis import core, action
 from astvis.widgets.base import BaseWidget
 
 import gtk
@@ -46,10 +46,17 @@ class RowFactory:
 factory = RowFactory()
 
 class BackCallTree(BaseWidget):
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                                                  'back-tree',
+                                                  contextClass=BackCallTree,
+                                                  categories=['show'])
+        return cls.ACTION_GROUP
 
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer',
-                            categories=['show'])
+        BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer')
 
         self.root = root
         self.view = self.widget
@@ -125,11 +132,18 @@ class BackCallTree(BaseWidget):
         self.showObject(state)
 
 class ReferencesList(BaseWidget):
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                                                  'back-tree-refs',
+                                                  contextClass=cls,
+                                                  categories=['refs'])
+        return cls.ACTION_GROUP
 
     def __init__(self, backCallTree, wTree):
         BaseWidget.__init__(self, 'back_call_tree_refs', outerWidgetName='back_call_tree_outer',
-                            wTree=wTree,
-                            categories=['show'])
+                            wTree=wTree)
 
         self.parent = backCallTree
         self.view = self.widget

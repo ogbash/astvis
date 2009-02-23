@@ -10,6 +10,11 @@ from astvis import action, gtkx
 class BaseWidget(object):
     "Base widget for the tree widgets."
 
+    @classmethod
+    def getActionGroup(cls):
+        "Implement in subclasses."
+        raise NotImplementedError
+
     def __init__(self, widgetName, outerWidgetName=None, wTree=None, gladeFile='astvisualizer.glade', widgetsWindow='widgets_window',
             actionGroupName=None, menuName=None, **kvargs):
 
@@ -24,19 +29,14 @@ class BaseWidget(object):
         self.widget = self.wTree.get_widget(widgetName) #: widget that holds basic logic
 
         # actions
-        action.manager.registerActionService(self)        
-        self.actionGroup = action.manager.createActionGroup(actionGroupName or widgetName,
-                context=self, contextAdapter=self.getSelected,
-                **kvargs)
+        action.manager.registerActionService(self)
+        
+        self.gtkActionGroup = self.getActionGroup().createGtkActionGroup(self)
+        action.manager.addGtkGroup(self.gtkActionGroup)
 
         # context menu
-        #if menuName:
-        #    menuwTree = gtk.glade.XML(gladeFile, menuName)
-        #else:
-        #    menuwTree = None
-        #self.contextMenu = action.generateMenuFromGlade(self.actionGroup, menuwTree, menuName)
         if menuName:
-            self.contextMenu = action.getMenu(self.actionGroup, menuName)
+            self.contextMenu = action.getMenu(self.gtkActionGroup, menuName)
         else:
             self.contextMenu = None
             
@@ -52,7 +52,7 @@ class BaseWidget(object):
         self._historyBackwardButton = self.wTree.get_widget("%s_history_backward" % widgetName)
         self._updateHistoryButtons()
 
-    def getSelected(self, context):
+    def getSelected(self):
         model, iRow = self.widget.get_selection().get_selected()
         if iRow==None:
             return None
@@ -75,11 +75,11 @@ class BaseWidget(object):
     def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
         parent, childName, obj = _extractObjectInfo(model, iRow)
-        self.actionGroup.updateActions(obj)
+        self.getActionGroup().updateActions(self.gtkActionGroup, obj)
 
     def _focusIn(self, widget, ev):
-        if self.actionGroup!=None:
-            action.manager.bringToFront(self.actionGroup)
+        if self.gtkActionGroup!=None:
+            action.manager.bringToFront(self.gtkActionGroup)
 
     def history_backward(self, widget):
         if self._historyPosition>0:

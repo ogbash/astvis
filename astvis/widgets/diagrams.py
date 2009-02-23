@@ -51,12 +51,13 @@ class DiagramItemToolbox(object):
         self.wTree.signal_autoconnect(self)
 
         action.manager.registerActionService(self)        
-        self.actionGroup = action.manager.createActionGroup('toolbox', context=self, radioPrefix='toolbox-item')
+        self.actionGroup = action.ActionGroup(action.manager, 'toolbox', radioPrefix='toolbox-item')
+        self.gtkActionGroup = self.actionGroup.createGtkActionGroup(self)
         for action_ in self.actionGroup.radioActions:
             if not action_.name.startswith('toolbox-item'):
                 continue
             button = gtk.ToggleToolButton()
-            gtkaction = self.actionGroup.gtkactions[action_.name]
+            gtkaction = self.gtkActionGroup.get_action(action_.name)
             gtkaction.connect_proxy(button)
             self.widget.add(button)
             

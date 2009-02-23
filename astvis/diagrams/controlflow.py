@@ -109,6 +109,17 @@ class ControlFlowDiagram (diagram.Diagram):
     </popup>
     '''
 
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP=action.ActionGroup(
+                action.manager,
+                'controlflowdiagram',
+                contextClass=ControlFlowDiagram,
+                contextAdapter=cls.getSelected,
+                targetClasses = [BlockItem])
+        return cls.ACTION_GROUP
+
     def __init__(self, name, project):
         diagram.Diagram.__init__(self, ItemFactory(self))
         self.project = project
@@ -118,10 +129,9 @@ class ControlFlowDiagram (diagram.Diagram):
         self._connectTool = gaphas.tool.ConnectHandleTool()
 
         action.manager.registerActionService(self)        
-        self.actionGroup = action.manager.createActionGroup('controlflowdiagram',
-                context=self, contextAdapter=self.getSelected,
-                targetClasses = [BlockItem])
-        self.contextMenu = action.getMenu(self.actionGroup, 'controlflowdiagram-popup')
+        self.gtkActionGroup = self.getActionGroup().createGtkActionGroup(self)
+        action.manager.addGtkGroup(self.gtkActionGroup)
+        self.contextMenu = action.getMenu(self.gtkActionGroup, 'controlflowdiagram-popup')
 
         # tags
         self._referenceTags = set()
@@ -163,7 +173,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 
             sub.show_all()
             
-        menuAction = self.actionGroup.gtkactions['controlflowdiagram-show-references']
+        menuAction = self.gtkActionGroup.get_action('controlflowdiagram-show-references')
         menuItem = menuAction.get_proxies()[0]
         sm = gtk.Menu()
         menuItem.set_submenu(sm)
@@ -198,7 +208,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 
             sub.show_all()
             
-        menuAction = self.actionGroup.gtkactions['controlflowdiagram-hide-references']
+        menuAction = self.gtkActionGroup.get_action('controlflowdiagram-hide-references')
         menuItem = menuAction.get_proxies()[0]
         sm = gtk.Menu()
         menuItem.set_submenu(sm)
@@ -227,7 +237,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 gtk.gdk.ACTION_COPY)
         view.connect("drag-data-received", self._dragDataRecv)
 
-    def getSelected(self, context):
+    def getSelected(self):
         if self.view==None:
             return
         item=self.view.hovered_item
@@ -506,7 +516,8 @@ class ContextMenuTool(gaphas.tool.Tool):
         diagram = context.view.canvas.diagram
 
         if event.button==3:
-            diagram.actionGroup.updateActions(context.view.hovered_item)
+            diagram.getActionGroup().updateActions(diagram.gtkActionGroup,
+                                                   context.view.hovered_item)
             diagram.contextMenu.popup(None, None, None, event.button, event.time)
             return True
 

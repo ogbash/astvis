@@ -38,12 +38,13 @@ class ActionGroup(object):
     
     @param actionFilter: action filter
     """
-    def __init__(self, manager, groupName, context, contextAdapter, targetClasses=[], categories=[],
+    def __init__(self, manager, groupName, contextAdapter=None, contextClass=None,
+                 targetClasses=[], categories=[],
                  actionFilter=None, radioPrefix=None):
         self.manager = manager #: host manager
         self.name = groupName #: group name
-        self.context = context #: widget or other action context
         self.contextAdapter = contextAdapter #: function to extract target from context
+        self.contextClass = contextClass
         self.targetClasses = targetClasses
         if not categories:
             categories = [groupName]
@@ -54,34 +55,43 @@ class ActionGroup(object):
             self.filter = standardFilter
         
         self.radioPrefix = radioPrefix #: action name prefix for the radio group
-
-        self.gtkgroup = gtk.ActionGroup(groupName) #: corresponding GTK group
-        self.gtkactions = {} #: action name -> GTK action
+        
         self.radioGroup = None
         self.radioActions = []
+        
+        self.gtkgroups = set()
+        self.actions = {}
+
+        for action in self.manager._actions.values():
+            if self.acceptsAction(action):
+                self.actions[action.name] = action
 
     def acceptsAction(self, action):
         "Checks that at least one filter for the action holds."
         s = self.filter.satisfies(self, action)
         return s
+
+    def addAction(self, action):
+        self.actions[action.name] = action
         
-    def updateActions(self, target):
+    def updateActions(self, gtkgroup, target):
         """Show/hide actions based on the currently selected object.
         
         @param target: selected object"""
         LOG.log(FINE, 'updateActions(%s)', target)
-        
+        context = gtkgroup.get_data('context')
         # for all group actions
-        for name, gtkaction in self.gtkactions.iteritems():
-            action = manager.getAction(name)
+        for gtkaction in gtkgroup.list_actions():
+            name = gtkaction.get_name()
+            action = self.actions[name]
             # enable/disable action
-            if self.filter.enabled(self, action, target, self.context):
+            if self.filter.enabled(self, action, target, context):
                 gtkaction.set_sensitive(True)
             else:
                 gtkaction.set_sensitive(False)
         self.manager.ui.ensure_update()
-        
-    def addAction(self, action):
+    
+    def _addGtkAction(self, gtkgroup, action):
         if self.radioPrefix==None:
             gtkaction = gtk.Action(action.name, action.label, action.tooltip, action.icon)
         else:
@@ -91,29 +101,47 @@ class ActionGroup(object):
                 self.radioGroup=gtkaction
             else:
                 gtkaction.set_group(self.radioGroup)
-        
+        context = gtkgroup.get_data('group')
+            
         gtkaction.connect("activate", self._activate)
         if LOG.isEnabledFor(FINEST):
-            LOG.log(FINEST, "Adding gtk instance of %s with context %s" % (action, self.context))
-        self.gtkgroup.add_action_with_accel(gtkaction, action.accel)
-        self.gtkactions[action.name] = gtkaction
+            LOG.log(FINEST, "Adding gtk instance of %s with context %s" % (action, context))
+        gtkgroup.add_action_with_accel(gtkaction, action.accel)
 
 
     def _activate(self, gtkaction):
         # resolve target
-        target = self.context
-        if self.contextAdapter!=None:
-            target = self.contextAdapter(self.context)
-        manager.activate(gtkaction.get_name(), target, self.context)
+        gtkgroup = gtkaction.props.action_group
+        group = gtkgroup.get_data('group')
+        context =  gtkgroup.get_data('context')
         
-    def connectProxy(self, actionName, widget):                
-        if not self.gtkactions.has_key(actionName):
+        target = None
+        if self.contextAdapter!=None:
+            target = self.contextAdapter(context)
+        manager.activate(gtkaction.get_name(), target, context)
+        
+    def connectProxy(self, gtkgroup, actionName, widget):
+        gtkaction = gtkgroup.get_action(actionName)
+        if not gtkaction:
             LOG.warn("Action %s not found, cannot connect %s" % (actionName, widget))
             return False
-        gtkaction = self.gtkactions[actionName]
         LOG.log(FINER, "Connecting proxy %s to %s" % (widget, gtkaction))
         gtkaction.connect_proxy(widget)
         return True
+
+    def createGtkActionGroup(self, context):
+        "Creates new gtk group and fills it with gtk actions"
+        LOG.debug('Creating gtk action group "%s" with context %s', self.name, context)
+                
+        gtkgroup = gtk.ActionGroup(self.name) #: corresponding GTK group
+        gtkgroup.set_data('group', self)
+        gtkgroup.set_data('context', context)
+        
+        for action in self.actions.values():
+            self._addGtkAction(gtkgroup, action)
+        
+        self.gtkgroups.add(gtkgroup)  
+        return gtkgroup
         
     def __str__(self):
         return "ActionGroup{%s}" % self.name
@@ -139,20 +167,17 @@ class ActionManager(object):
             return True
         return False
         
-    def addGroup(self, groupName, group):
-        if not self._groups.has_key(groupName):
-            self._groups[groupName] = []
+    def addGtkGroup(self, gtkActionGroup):
+        
+        LOG.debug('Adding action group %s', gtkActionGroup.get_name())
+        self.ui.insert_action_group(gtkActionGroup, -1)
+        context = gtkActionGroup.get_data('context')
+        if hasattr(context, 'UI_DESCRIPTION'):
+            self.ui.add_ui_from_string(context.UI_DESCRIPTION)
 
-        LOG.debug('Adding action group %s with actions %s', groupName, group.gtkactions.keys())
-        if hasattr(group.context, 'UI_DESCRIPTION'):
-            self.ui.add_ui_from_string(group.context.UI_DESCRIPTION)
-        self.ui.insert_action_group(group.gtkgroup, -1)
-
-        self._groups[groupName].append(group)
-
-    def bringToFront(self, group):
-        self.ui.remove_action_group(group.gtkgroup)
-        self.ui.insert_action_group(group.gtkgroup, 0)
+    def bringToFront(self, gtkgroup):
+        self.ui.remove_action_group(gtkgroup)
+        self.ui.insert_action_group(gtkgroup, 0)
         
     def registerActionService(self, service):
         "Collects actions of action service."
@@ -173,18 +198,6 @@ class ActionManager(object):
         LOG.debug("Registering service %s with %d actions" % (service, len(actions)))
         self._services.append(actions)
         return actions
-
-    def createActionGroup(self, groupName, context, contextAdapter=None, **kvargs):
-        "Creates new group and fills it with gtk actions"
-        LOG.debug('Creating action group "%s" with context %s', groupName, context)
-                
-        group = ActionGroup(self, groupName, context, contextAdapter, **kvargs)
-        for action in self._actions.itervalues():
-            if group.acceptsAction(action):            
-                group.addAction(action)
-        
-        self.addGroup(groupName, group)        
-        return group
         
     def activate(self, actionName, target, context):
         LOG.log(FINE,"action %s activated with %s within %s" % (actionName, target, context))
@@ -205,13 +218,15 @@ class ActionManager(object):
 
 manager = None
 
-def generateMenu(actionGroup, menu=None, connectedActions = []):
+def generateMenu(gtkActionGroup, menu=None, connectedActions = []):
     if menu==None:
         menu = gtk.Menu()
 
+    actionGroup = gtkActionGroup.get_data('group')
+
     # add menu items for the actions missing from the menu
-    LOG.log(FINER, "%s (actionGroup=%s): selecting and adding %s", menu, actionGroup, actionGroup.gtkactions)
-    absentNames = set(actionGroup.gtkactions.keys()) - set(connectedActions)
+    LOG.log(FINER, "%s (actionGroup=%s)", menu, actionGroup)
+    absentNames = set(actionGroup.actions.keys()) - set(connectedActions)
 
     if absentNames:
         menu.append(gtk.SeparatorMenuItem())
@@ -221,13 +236,14 @@ def generateMenu(actionGroup, menu=None, connectedActions = []):
         extraMenuItem.set_submenu(extraMenu)
         menu.append(extraMenuItem)
         for name in absentNames:
-            gtkaction = actionGroup.gtkactions[name]
+            gtkaction = gtkActionGroup.get_action(name)
             menuItem = gtkaction.create_menu_item()
             extraMenu.append(menuItem)
     return menu
 
 
-def getMenu(actionGroup, menuName):
+def getMenu(gtkActionGroup, menuName):
+    actionGroup = gtkActionGroup.get_data('group')
     menu=actionGroup.manager.ui.get_widget("/%s"%menuName)
 
     # add actions that are not in UI description
@@ -235,7 +251,7 @@ def getMenu(actionGroup, menuName):
                          map(lambda x: x.get_action(),
                              menu.get_children()))
     actionNames = map(lambda x: x.get_name(), menuActions)
-    menu = generateMenu(actionGroup, menu, actionNames)
+    menu = generateMenu(gtkActionGroup, menu, actionNames)
     return menu
 
 def generateMenuFromGlade(actionGroup, wTree=None, templateMenuName=None):
@@ -310,7 +326,10 @@ class ContextFilter(ActionFilter):
     def satisfies(self, actionGroup, action):
         # check that action required context is satisfied
         if action.contextClass!=None:
-            if not isinstance(actionGroup.context, action.contextClass):
+            if actionGroup.contextClass!=None and \
+                   issubclass(actionGroup.contextClass, action.contextClass):
+                return True
+            else:
                 return False
         return True
 

@@ -7,7 +7,7 @@ from astvis.common import INFO_TEXT, INFO_PROJECTS_ATTRPATH
 
 from astvis.model import concept
 from astvis.widgets.base import BaseWidget
-from astvis import event
+from astvis import event, action
 from astvis.transfer import externalize, internalize
 
 import gtk
@@ -22,10 +22,19 @@ class ConceptTree(BaseWidget):
     </popup>
     '''
     
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                                                  'concept-tree',
+                                                  contextClass=cls,
+                                                  contextAdapter=cls.getSelected,
+                                                  categories=['concept', 'project-new-concept'],
+                                                  targetClasses=[concept.Concept])
+        return cls.ACTION_GROUP
+
     def __init__(self, root, concepts):
         BaseWidget.__init__(self, 'concept_tree', 'concept_tree_outer',
-                            categories=['concept', 'project-new-concept'],
-                            targetClasses=[concept.Concept],
                             menuName='concepttree-popup')
         self.root = root
         self.view = self.widget

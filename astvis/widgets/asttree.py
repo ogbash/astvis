@@ -121,11 +121,23 @@ class AstTree(BaseWidget):
       <menuitem action="ast-open-declaration"/>
     </popup>
     '''
-    
+
+    @classmethod
+    def getActionGroup(cls):
+        if not hasattr(cls, 'ACTION_GROUP'):
+            cls.ACTION_GROUP = action.ActionGroup(action.manager,
+                                                  'ast-tree',
+                                                  contextClass=AstTree,
+                                                  contextAdapter=cls.getSelected,
+                                                  targetClasses=[ast.ASTObject],
+                                                  categories=['ast','show'])
+
+        return cls.ACTION_GROUP
+
+
     def __init__(self, root, astModel):
         LOG.debug('Generating AstTree with %s' % astModel)
         BaseWidget.__init__(self, 'ast_tree', 'ast_tree_outer',
-                            targetClasses=[ast.ASTObject], categories=['ast','show'],
                             menuName='asttree-popup')
         self.root = root
         self.astModel = astModel
@@ -169,6 +181,13 @@ class AstTree(BaseWidget):
         
         self.regenerateSidebarTree()
         
+    def getSelected(self):
+        selection = self.view.get_selection()
+        _model, iRow = selection.get_selected()
+        if iRow!=None:
+            astObj = _model[iRow][1]
+            return astObj
+
     def _selectionChanged(self, selection, param):
         model, iRow = selection.get_selected()
         if not model or not iRow:
