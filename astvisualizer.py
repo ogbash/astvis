@@ -43,6 +43,7 @@ from astvis.action import Action
 from astvis import action
 from astvis.misc.list import ObservableList
 import astvis.widgets.task
+from astvis.widgets.frames import FrameBox
 
 class MainWindow(object):
     
@@ -57,6 +58,12 @@ class MainWindow(object):
         <menuitem action="main-quit"/>
       </menu>
 
+      <menu action="frames">
+        <menuitem action="frame-horizontal"/>
+        <menuitem action="frame-vertical"/>
+        <menuitem action="frame-unsplit"/>
+      </menu>
+
       <menu action="tools">
         <menuitem action="main-generate-ofp-astxml"/>
         <menuitem action="main-toggle-tracing"/>
@@ -67,11 +74,22 @@ class MainWindow(object):
         <toolitem action="project-new"/>
         <toolitem action="project-open"/>
       </placeholder>
-      <separator/>
+      <separator/>      
+      <placeholder name="frames">
+        <toolitem action="frame-horizontal"/>
+        <toolitem action="frame-vertical"/>
+        <toolitem action="frame-unsplit"/>
+      </placeholder>
     </toolbar>
     '''
 
     windows = {}
+
+    def _setFocusedFrame(self, frame):
+        self._focusedFrame = frame
+        group = self.globalGtkActionGroup.get_data('group')
+        group.updateActions(self.globalGtkActionGroup, None)
+    focusedFrame = property(lambda self: self._focusedFrame, _setFocusedFrame)
     
     def __init__(self, ui):
         MainWindow.windows[id(self)] = self
@@ -82,6 +100,7 @@ class MainWindow(object):
         self.wTree = gtk.glade.XML("astvisualizer.glade", 'main_window')
         self.mainWindow = self.wTree.get_widget("main_window")
         self.mainWindow.connect("destroy",self._quit)
+        self._focusedFrame = None
 
         ## UI Manager
         self.ui = ui
@@ -91,14 +110,15 @@ class MainWindow(object):
         
         globalActionGroup = action.ActionGroup(action.manager,
                                                'global',
-                                               categories = ['main','file','project'])
+                                               categories = ['main','file','project', 'frame'])
 
-        globalActionGroup.addAction(action.Action('file', "File"))
-        globalActionGroup.addAction(action.Action('tools', "Tools"))
+        for aname, atitle in [('file', "File"),
+                              ('frames',"Frame"),
+                              ('tools',"Tools")]:
+            globalActionGroup.addAction(action.Action(aname, atitle))
+            
         self.globalGtkActionGroup = globalActionGroup.createGtkActionGroup(self)
         action.manager.addGtkGroup(self.globalGtkActionGroup)
-
-        globalActionGroup.updateActions(self.globalGtkActionGroup, None)
         
         self.ui.add_ui_from_string(self.UI_DESCRIPTION)
         self.menubar = self.ui.get_widget('/MenuBar')
@@ -114,8 +134,7 @@ class MainWindow(object):
         self._referenceTree = None # call back tree
         self._conceptTree = None
         
-        self.notebook = self.wTree.get_widget('notebook')
-        self.code_notebook = self.wTree.get_widget('code_notebook')
+        #self.code_notebook = self.wTree.get_widget('code_notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
         self.taskProgressbars = self.wTree.get_widget('task_progressbars')
         gtklabel = self.taskProgressbars.get_parent().get_tab_label(self.taskProgressbars)
@@ -126,8 +145,10 @@ class MainWindow(object):
         leftPanel = self.wTree.get_widget('left_panel_top')
         leftPanel.pack_start(self.projectTree.outerWidget)
         
-        self.notebook = self.wTree.get_widget("notebook")
-
+        self.mainbox = self.wTree.get_widget("mainbox")
+        frame = FrameBox(self, 3)
+        self.mainbox.add(frame.eventBox)
+        
         self.wTree.signal_autoconnect(self)
         
         self.consoleWindow = gtk.Window()
@@ -142,6 +163,7 @@ class MainWindow(object):
         vbox.show_all()
         self.sidebarNotebook.append_page(vbox, gtk.Label('Items'))
 
+        globalActionGroup.updateActions(self.globalGtkActionGroup, None)
 
     @Action('main-quit', label='Quit')
     def _quit(self, obj, context=None):
@@ -153,6 +175,20 @@ class MainWindow(object):
     @staticmethod
     def internalize(data):
         return MainWindow.windows[data]
+
+    def getFrame(self):
+        "Get a frame where new things to be added."
+        child = self.mainbox.get_child2()
+        if isinstance(child, gtk.Paned):
+            paned = child
+            while isinstance(paned.get_child1(), gtk.Paned):
+                paned = paned.get_child1()
+            child = paned.get_child1() 
+        else:
+            pass            
+            
+        return child.get_data('framebox')
+        
     
     @Action('project-new', label='New project', icon='gtk-new') #contextClass=widgets.ProjectTree
     def _newProject(self, target, context):
@@ -207,17 +243,27 @@ class MainWindow(object):
         finally:
             dialog.destroy()
 
-    def addView(self, obj, widget, labelText):
+    def addSidebarView(self, obj, widget, labelText):
         self.views[obj] = widget
         self.sidebarNotebook.append_page(widget, gtk.Label(labelText))
         self.sidebarNotebook.set_tab_detachable(widget, True)
+
+    def addView(self, obj, view, label, window=None, notebook=None):
+        if window==None:
+            window = view
+        if notebook==None:
+            notebook = self.getFrame().notebook
+
+        self.views[obj] = view
+        notebook.append_page(window, label)
+        notebook.set_tab_detachable(window, True)        
 
     @Action('show-ast', 'Show AST tree', targetClass=ast.ASTModel)
     def openASTTree(self, astModel, context):
         "ast tree view"
         if self._astTree==None:
             self._astTree = widgets.AstTree(self, astModel)        
-            self.addView(self._astTree, self._astTree.outerWidget, 'ast')
+            self.addSidebarView(self._astTree, self._astTree.outerWidget, 'ast')
 
     @Action('show-ast-object', 'Show in AST', targetClass=ast.ASTObject)
     def openASTObject(self, astObj, context):
@@ -230,14 +276,14 @@ class MainWindow(object):
         "create call tree"
         if self._callTree==None:
             self._callTree = widgets.CallTree(self, context)
-            self.addView(self._callTree, self._callTree.outerWidget, 'call')
+            self.addSidebarView(self._callTree, self._callTree.outerWidget, 'call')
 
     @Action('show-references', 'Show references', contextClass=widgets.AstTree)
     def openBackCallTree(self, target, context):
         "create back call tree"
         if self._referenceTree==None:
             self._referenceTree = widgets.BackCallTree(self)
-            self.addView(self._referenceTree, self._referenceTree.outerWidget, 'back')
+            self.addSidebarView(self._referenceTree, self._referenceTree.outerWidget, 'back')
 
         basicModel = target.model.basicModel
         obj = basicModel.getObjectByASTObject(target)
@@ -267,9 +313,29 @@ class MainWindow(object):
         
         view.connect("key-press-event", self.keyPress, diagram)
         diagram.setupView(view)
-        self.views[diagram] = view
-        self.notebook.append_page(window, gtk.Label(diagram.name))
-        self.notebook.set_tab_detachable(window, True)        
+        self.addView(diagram, view, gtk.Label(diagram.name), window=window)
+
+    @Action('frame-horizontal',"Split H",
+            sensitivePredicate=lambda t,o: o.focusedFrame!=None)
+    def _frameHorizontal(self, target, context):
+        if self.focusedFrame:
+            self.focusedFrame.split(gtk.HPaned())
+
+    @Action('frame-vertical',"Split V",
+            sensitivePredicate=lambda t,o: o.focusedFrame!=None)
+    def _frameVertical(self, target, context):
+        if self.focusedFrame:
+            self.focusedFrame.split(gtk.VPaned())
+
+    def _isNotTopBox(target, self):
+        if self.focusedFrame==None:
+            return False
+        return self.focusedFrame.eventBox.get_parent()!=self.mainbox
+    
+    @Action('frame-unsplit',"Unsplit",
+            sensitivePredicate=_isNotTopBox)
+    def _frameUnsplit(self, target, context):
+        self.focusedFrame.unsplit()
 
     def getDiagram(self):
         "Return current shown diagram."
@@ -283,10 +349,10 @@ class MainWindow(object):
         return None
 
     def getCurrentPage(self):
-        i = self.notebook.get_current_page()
+        i = self.focusedFrame.notebook.get_current_page()
         if i<0:
             return None
-        page = self.notebook.get_nth_page(i)
+        page = self.focusedFrame.notebook.get_nth_page(i)
         return page
         
     def openObjectList(self):
@@ -329,11 +395,15 @@ class MainWindow(object):
             view = self.files[fileName]
         
         # find view index in notebook and open it
-        children = self.code_notebook.get_children()
+        notebook = view.get_parent()
+        while not isinstance(notebook, gtk.Notebook):
+            notebook = notebook.get_parent()
+            
+        children = notebook.get_children()
         for i, child in enumerate(children):
             if child==view or \
                    isinstance(child,gtk.ScrolledWindow) and child.child==view:
-                self.code_notebook.set_current_page(i)
+                self.getFrame().notebook.set_current_page(i)
                 buf = view.get_buffer()
 
                 iBegin=None
@@ -359,8 +429,7 @@ class MainWindow(object):
         window = gtk.ScrolledWindow()
         window.add(view)
         window.show_all()
-        self.code_notebook.append_page(window, gtk.Label(os.path.basename(fl.name)))
-        self.code_notebook.set_tab_detachable(window, True)
+        self.addView(file_, view, gtk.Label(os.path.basename(fl.name)), window=window )
         return view
         
     def _sourceDirChanged(self, button):

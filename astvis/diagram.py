@@ -6,7 +6,7 @@ from astvis.common import FINE, FINER, FINEST
 
 import gaphas
 from event import ADDED_TO_DIAGRAM, REMOVED_FROM_DIAGRAM
-import event
+from astvis import event, action
 from astvis.misc.list import ObservableList
 import gtkx
 from astvis import gaphasx
@@ -98,7 +98,12 @@ class Diagram(object):
         return self._canvas
 
     def setupView(self, view):
-        pass
+        view.connect('focus-in-event', self._focusIn)
+        
+    def _focusIn(self, widget, ev):
+        if self.gtkActionGroup!=None:
+            action.manager.bringToFront(self.gtkActionGroup)
+        
 
     def getDefaultTool(self):
         return gaphasx.DefaultTool()

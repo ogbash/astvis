@@ -12,7 +12,8 @@ import types
 class Action(object):
     "Logical action that is used as a template for the GTK actions."
     def __init__(self, name, label = None, tooltip = None, icon = None, accel=None,
-                 targetClass=None, contextClass=None, sensitivePredicate=None):
+                 targetClass=None, contextClass=None,
+                 sensitivePredicate=None, getSubmenuItems=None):
         self.name = name
         self.label = label or name
         self.tooltip = tooltip
@@ -22,6 +23,7 @@ class Action(object):
         self.targetClass = targetClass #: required target class
         self.contextClass = contextClass #: required context class
         self.sensitivePredicate = sensitivePredicate #: given target and context returns if action should be enabled
+        self.getSubmenuItems = getSubmenuItems
     
     def __call__(self, fun):
         fun.__action__ = self
@@ -48,7 +50,10 @@ class ActionGroup(object):
         self.targetClasses = targetClasses
         if not categories:
             categories = [groupName]
-        standardFilter = AndFilter(ContextFilter(), TargetFilter(), OneOfCategoriesFilter(categories))
+        standardFilter = AndFilter(ContextFilter(),
+                                   TargetFilter(),
+                                   OneOfCategoriesFilter(categories),
+                                   PredicateFilter())
         if actionFilter:
             self.filter = AndFilter(standardFilter, actionFilter)
         else:
@@ -73,22 +78,46 @@ class ActionGroup(object):
 
     def addAction(self, action):
         self.actions[action.name] = action
+
+    def updateAction(self, gtkaction, target, widget=None):
+        actionName = gtkaction.get_name()
+        action = self.actions[actionName]
+        gtkgroup = gtkaction.props.action_group
+        context = gtkgroup.get_data('context')
+
+        # enable/disable action
+        if self.filter.enabled(self, action, target, context):
+            gtkaction.set_sensitive(True)
+        else:
+            gtkaction.set_sensitive(False)        
+
+        # get submenu items
+        if action.getSubmenuItems!=None:
+            sub = gtk.Menu()
+            if widget!=None:
+                widget.set_submenu(sub)
+            else:
+                for proxy in gtkaction.get_proxies():
+                    proxy.set_submenu(sub)
+            
+            items = action.getSubmenuItems(context)
+            for name, sensitive in items:
+                subItem = gtk.MenuItem(name)
+                subItem.set_sensitive(sensitive)
+                subItem.connect('activate', self._activateItem,
+                                actionName, name, context)
+                sub.append(subItem)
+
+            sub.show_all()
         
     def updateActions(self, gtkgroup, target):
         """Show/hide actions based on the currently selected object.
         
         @param target: selected object"""
         LOG.log(FINE, 'updateActions(%s)', target)
-        context = gtkgroup.get_data('context')
         # for all group actions
         for gtkaction in gtkgroup.list_actions():
-            name = gtkaction.get_name()
-            action = self.actions[name]
-            # enable/disable action
-            if self.filter.enabled(self, action, target, context):
-                gtkaction.set_sensitive(True)
-            else:
-                gtkaction.set_sensitive(False)
+            self.updateAction(gtkaction, target)
         self.manager.ui.ensure_update()
     
     def _addGtkAction(self, gtkgroup, action):
@@ -109,16 +138,24 @@ class ActionGroup(object):
         gtkgroup.add_action_with_accel(gtkaction, action.accel)
 
 
+    def _activateItem(self, item, actionName, name, context):
+        print context, name
+        self.manager.activate(actionName, name, context)
+
     def _activate(self, gtkaction):
         # resolve target
         gtkgroup = gtkaction.props.action_group
         group = gtkgroup.get_data('group')
         context =  gtkgroup.get_data('context')
-        
-        target = None
-        if self.contextAdapter!=None:
-            target = self.contextAdapter(context)
-        manager.activate(gtkaction.get_name(), target, context)
+        action = group.actions[gtkaction.get_name()]
+
+        if action.getSubmenuItems==None:
+            target = None
+            if self.contextAdapter!=None:
+                target = self.contextAdapter(context)
+            manager.activate(gtkaction.get_name(), target, context)
+        else:
+            pass # action with submenu
         
     def connectProxy(self, gtkgroup, actionName, widget):
         gtkaction = gtkgroup.get_action(actionName)
@@ -153,6 +190,13 @@ class ActionManager(object):
         self._groups = {} #: name -> list(gtk action group)
         self._services = [] #: list(dict(action -> service method))
         self.ui = ui
+        self.ui.connect('connect-proxy', self._proxyConnected)
+
+    def _proxyConnected(self, ui, gtkaction, widget):
+        gtkgroup = gtkaction.props.action_group
+        name = gtkaction.get_name()
+        group = gtkgroup.get_data('group')
+        group.updateAction(gtkaction, None, widget)
         
     def getGroups(self, groupName):
         return self._groups[groupName]
@@ -207,14 +251,25 @@ class ActionManager(object):
         # look through all action services and call given action
         if LOG.isEnabledFor(FINER):
             LOG.log(FINER, "Looking for action in %d services" % len(self._services))
+        # find services that provide given action
+        methods = []
         for service in self._services:
             if service.has_key(action):
                 method = service[action]
-                try:
-                    LOG.debug("Action activation calls %s" % method)
-                    method(target, context=context)
-                except Exception, e:
-                    LOG.warn("Error during %s activation", action, exc_info=e)
+                if isinstance(method, types.MethodType) and \
+                   method.im_self is context:
+                    # context is the same as service, use it
+                    methods = [method]
+                    break
+                # otherwise collect all services
+                methods.append(method)
+
+        for method in methods:
+            try:
+                LOG.debug("Action activation calls %s" % method)
+                method(target, context=context)
+            except Exception, e:
+                LOG.warn("Error during %s activation", action, exc_info=e)
 
 manager = None
 
@@ -377,3 +432,13 @@ class OneOfCategoriesFilter(ActionFilter):
 
     def enabled(self, actionGroup, action, target, context):
         return self.filter.enabled(actionGroup, action, target, context)
+
+class PredicateFilter(ActionFilter):
+
+    def satisfies(self, actionGroup, action):
+        return True
+
+    def enabled(self, actionGroup, action, target, context):
+        if action.sensitivePredicate!=None:
+            return action.sensitivePredicate(target, context)
+        return True

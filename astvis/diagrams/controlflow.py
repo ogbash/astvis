@@ -139,80 +139,6 @@ class ControlFlowDiagram (diagram.Diagram):
 
         # register for events
         event.manager.subscribe(self._tagGraphChanged, self._tagGraph)
-        
-        # TODO refactor into action
-        def fillRefs(item):
-            sub = item.get_submenu()
-            sub.foreach(lambda c: sub.remove(c))
-            if self.flowModel:
-                astCode = self.flowModel.code
-                basicModel = astCode.model.basicModel
-                scope = basicModel.getObjectByASTObject(astCode)
-                names = list(scope.variables.keys())
-                names.sort()
-                def showRef(menu, name):
-                    service = core.getService('ReferenceResolver')
-                    references = service.getReferringObjects(scope.variables[name])
-
-                    for ref in references.get(astCode, []):
-                        blocks = self.flowModel.findBlocksByObject(ref)
-                        for block in blocks:
-                            isAssign = ref.isAssignment()
-                            op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
-                            self._tagGraph.addTag((scope.variables[name],op), block, ref)
-                            
-                    self._referenceTags.add(name)
-                    
-                for name in names:
-                    menu = gtk.MenuItem(name)
-                    if name in self._referenceTags:
-                        menu.set_sensitive(False)
-                    else:
-                        menu.connect('activate', showRef, name)
-                    sub.append(menu)
-                
-            sub.show_all()
-            
-        menuAction = self.gtkActionGroup.get_action('controlflowdiagram-show-references')
-        menuItem = menuAction.get_proxies()[0]
-        sm = gtk.Menu()
-        menuItem.set_submenu(sm)
-        menuItem.connect('activate', fillRefs)
-
-        def fillHideRefs(item):
-            sub = item.get_submenu()
-            sub.foreach(lambda c: sub.remove(c))
-            if self.flowModel:
-                astCode = self.flowModel.code
-                basicModel = astCode.model.basicModel
-                scope = basicModel.getObjectByASTObject(astCode)
-                names = list(self._referenceTags)
-                names.sort()
-                def hideRef(menu, name):
-                    service = core.getService('ReferenceResolver')
-                    references = service.getReferringObjects(scope.variables[name])
-
-                    for ref in references.get(astCode, []):
-                        blocks = self.flowModel.findBlocksByObject(ref)
-                        for block in blocks:
-                            isAssign = ref.isAssignment()
-                            op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
-                            self._tagGraph.removeTag((scope.variables[name],op), block, ref)
-                            
-                    self._referenceTags.remove(name)
-                    
-                for name in names:
-                    menu = gtk.MenuItem(name)
-                    menu.connect('activate', hideRef, name)
-                    sub.append(menu)
-                
-            sub.show_all()
-            
-        menuAction = self.gtkActionGroup.get_action('controlflowdiagram-hide-references')
-        menuItem = menuAction.get_proxies()[0]
-        sm = gtk.Menu()
-        menuItem.set_submenu(sm)
-        menuItem.connect('activate', fillHideRefs)
 
     def _tagGraphChanged(self, obj, ev, args, dargs):
         if ev==event.PROPERTY_CHANGED:
@@ -230,6 +156,8 @@ class ControlFlowDiagram (diagram.Diagram):
                     self.view.canvas.request_update(blockItem)
 
     def setupView(self, view):
+        super(ControlFlowDiagram, self).setupView(view)
+        
         import weakref
         self.view = weakref.proxy(view)
         view.drag_dest_set(gtk.DEST_DEFAULT_MOTION|gtk.DEST_DEFAULT_DROP,
@@ -358,14 +286,70 @@ class ControlFlowDiagram (diagram.Diagram):
                 astObj = block.astObjects[0]
                 self.project.root.showFile(self.project, astObj.getFile(), astObj.location)
 
-    @action.Action('controlflowdiagram-show-references', label='Show references')
+
+    def _getRefs(self):
+        items = []
+        if self.flowModel:
+            astCode = self.flowModel.code
+            basicModel = astCode.model.basicModel
+            scope = basicModel.getObjectByASTObject(astCode)
+            names = list(scope.variables.keys())
+            names.sort()
+
+            for name in names:
+                sensitive = not name in self._referenceTags
+                items.append((name, sensitive))
+                
+        return items
+
+    @action.Action('controlflowdiagram-show-references', label='Show references',
+                   getSubmenuItems=_getRefs)
     def showReferences(self, target, context):
-        print '-- showReferences', target
+        name = target
+        service = core.getService('ReferenceResolver')
+        astCode = self.flowModel.code
+        basicModel = astCode.model.basicModel
+        scope = basicModel.getObjectByASTObject(astCode)
+        references = service.getReferringObjects(scope.variables[target])
 
-    @action.Action('controlflowdiagram-hide-references', label='Hide references')
+        for ref in references.get(astCode, []):
+            blocks = self.flowModel.findBlocksByObject(ref)
+            for block in blocks:
+                isAssign = ref.isAssignment()
+                op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
+                self._tagGraph.addTag((scope.variables[name],op), block, ref)
+
+        self._referenceTags.add(name)
+
+    def _getShownRefs(self):
+        items = []
+        if self.flowModel:
+            names = list(self._referenceTags)
+            names.sort()
+
+            for name in names:
+                items.append((name, True))
+                
+        return items
+    
+    @action.Action('controlflowdiagram-hide-references', label='Hide references',
+                   getSubmenuItems=_getShownRefs)
     def hideReferences(self, target, context):
-        print '-- unshowReferences', target
+        name = target
+        service = core.getService('ReferenceResolver')
+        astCode = self.flowModel.code
+        basicModel = astCode.model.basicModel
+        scope = basicModel.getObjectByASTObject(astCode)
+        references = service.getReferringObjects(scope.variables[name])
 
+        for ref in references.get(astCode, []):
+            blocks = self.flowModel.findBlocksByObject(ref)
+            for block in blocks:
+                isAssign = ref.isAssignment()
+                op = isAssign is True and 'write' or isAssign is False and 'read' or 'unknown'
+                self._tagGraph.removeTag((scope.variables[name],op), block, ref)
+
+        self._referenceTags.remove(name)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
