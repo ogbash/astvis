@@ -28,7 +28,7 @@ class OFPService(core.Service):
                     relFortranFiles.append(name)
             dirnames = list(dialog.dirnames)
 
-            commandLine = ['java', '-jar', 'parser/ofp/FortranCPR.jar',
+            commandLine = ['java', '-Xmx512M', '-jar', 'parser/ofp/FortranCPR.jar',
                        '-X', os.path.join(dirpath,xmlFilename),
                        '-O', dirpath,
                        '-I', dirpath]
