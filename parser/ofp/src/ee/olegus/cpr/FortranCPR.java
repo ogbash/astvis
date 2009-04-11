@@ -157,7 +157,7 @@ public class FortranCPR {
 		
 		for(String file: files) {
 			try {
-				if(file.endsWith("F90"))
+				if(file.endsWith(".F90")||file.endsWith(".F95")||file.endsWith(".F"))
 					file = preprocess(file, includeDirs);
 				parser.feed(this.inDir, file, args);
 			} catch (Exception e) {
@@ -170,6 +170,14 @@ public class FortranCPR {
 	}	
 	
 	private String preprocess(String file, String[] includeDirs) {
+		String suffix;
+		if(file.endsWith(".F90")) {
+			suffix=".f90";
+		} else if(file.endsWith(".F95")) {
+			suffix=".f95";
+		} else {
+			suffix=".f";
+		}
 		try {
 			ArrayList<String> command = new ArrayList<String>();
 			String absFilename;
@@ -181,7 +189,7 @@ public class FortranCPR {
 			command.add("cpp");
 			command.add("-traditional-cpp");
 			command.add("-o");
-			command.add(absFilename+".f90");
+			command.add(absFilename+suffix);
 			if (includeDirs!=null) {
 				for (String dir: includeDirs) {
 					command.add("-I"+dir);
@@ -202,7 +210,7 @@ public class FortranCPR {
 			LOG.error(e);
 			throw new RuntimeException(e);
 		}
-		return file+".f90";
+		return file+suffix;
 	}
 	
 	public List<String> getFiles() {
