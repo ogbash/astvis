@@ -39,8 +39,8 @@ public class Location implements XMLGenerator {
 	}
 
 	public Location(CommonTree tree, Code code, Statement statement) {
-		this(tree.startIndex==-1?tree.token.getTokenIndex():tree.startIndex,
-				tree.stopIndex==-1?tree.token.getTokenIndex()+1:tree.stopIndex,
+	    this(tree.getTokenStartIndex()==-1?tree.token.getTokenIndex():tree.getTokenStartIndex(),
+		 tree.getTokenStopIndex()==-1?tree.token.getTokenIndex()+1:tree.getTokenStopIndex(),
 						code, statement);
 	}
 

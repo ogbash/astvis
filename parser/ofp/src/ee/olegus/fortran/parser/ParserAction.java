@@ -1858,6 +1858,9 @@ public class ParserAction implements IFortranParserAction {
 		parseStack.popMark();		
 	}
 
+	public void end_of_file(String filename) {
+	}
+
 	public void end_of_stmt(Token eos) {
 		// TODO Auto-generated method stub
 		
@@ -3259,7 +3262,7 @@ public class ParserAction implements IFortranParserAction {
 		parseStack.push(stmt);
 	}
 
-	public void only() {
+	public void only(boolean hasGenericSpec, boolean hasRename, boolean hasOnlyUseName) {
 		// TODO Auto-generated method stub
 		
 	}
