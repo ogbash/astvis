@@ -72,6 +72,7 @@ import fortran.ofp.parser.java.IActionEnums;
 import fortran.ofp.parser.java.IFortranParserAction;
 import ee.olegus.fortran.ast.CommonBlock;
 import ee.olegus.fortran.ast.RewindStatement;
+import ee.olegus.fortran.ast.DataStatement;
 
 /**
  * @author olegus
@@ -1365,8 +1366,10 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void data_stmt(Token label, Token keyword, Token eos, int count) {
-		// TODO Auto-generated method stub
-		
+		DataStatement stmt = new DataStatement();
+		stmt.setValues((List<Object>)parseStack.pop());
+		stmt.setObjects((List<DataReference>)parseStack.pop());
+		parseStack.push(stmt);
 	}
 
 	public void data_stmt_constant() {
@@ -1385,8 +1388,12 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#data_stmt_object_list(int)
 	 */
 	public void data_stmt_object_list(int count) {
-		// TODO Auto-generated method stub
-
+		List<DataReference> objs = new ArrayList<DataReference>(count);
+		for(int i=0; i<count; i++) {
+			objs.add((DataReference)parseStack.pop());
+		}
+		Collections.reverse(objs);
+		parseStack.push(objs);
 	}
 
 	/*
@@ -1405,8 +1412,11 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void data_stmt_value(Token asterisk) {
-		// TODO Auto-generated method stub
-		
+		if(asterisk!=null) {
+			Constant c = (Constant) parseStack.pop();
+			parseStack.pop(); // ignore multiplicity for now
+			parseStack.push(c);
+		}
 	}
 
 	/*
@@ -1415,8 +1425,12 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#data_stmt_value_list(int)
 	 */
 	public void data_stmt_value_list(int count) {
-		// TODO Auto-generated method stub
-
+		List<Object> values = new ArrayList<Object>(count);
+		for(int i=0; i<count; i++) {
+			values.add(parseStack.pop());
+		}
+		Collections.reverse(values);
+		parseStack.push(values);
 	}
 
 	/*
