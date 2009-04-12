@@ -70,6 +70,8 @@ import ee.olegus.fortran.ast.Attribute.IntentType;
 import fortran.ofp.parser.java.FortranParser;
 import fortran.ofp.parser.java.IActionEnums;
 import fortran.ofp.parser.java.IFortranParserAction;
+import ee.olegus.fortran.ast.CommonBlock;
+import ee.olegus.fortran.ast.RewindStatement;
 
 /**
  * @author olegus
@@ -1028,8 +1030,10 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void common_block_object(Token id, boolean hasShapeSpecList) {
-		// TODO Auto-generated method stub
-		
+		Entity entity = new Entity(id.getText());
+		if(hasShapeSpecList)
+			entity.setArraySpecification((List<ArraySpecificationElement>)parseStack.pop());
+		parseStack.push(entity);
 	}
 
 	/*
@@ -1038,8 +1042,13 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#common_block_object_list(int)
 	 */
 	public void common_block_object_list(int count) {
-		// TODO Auto-generated method stub
-
+		CommonBlock block=new CommonBlock();
+		List<Entity> entities=new ArrayList<Entity>(count);
+		for(int i=0; i<count; i++)
+			entities.add((Entity)parseStack.pop());
+		Collections.reverse(entities);
+		block.setEntities(entities);
+		parseStack.push(block);
 	}
 
 	/*
@@ -1054,6 +1063,8 @@ public class ParserAction implements IFortranParserAction {
 
 	public void common_stmt(Token label, Token commonKeyword, Token eos, int numBlocks) {
 		CommonStatement stmt = new CommonStatement();
+		for (int i=0; i<numBlocks; i++)
+			stmt.addBlock((CommonBlock)parseStack.pop());
 		parseStack.push(stmt);
 	}
 
@@ -3181,8 +3192,9 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void named_constant_def(Token id) {
-		// TODO Auto-generated method stub
-		
+		Entity entity = new Entity(id.getText());
+		entity.setInitialization((Expression)parseStack.pop()); // value
+		parseStack.push(entity);
 	}
 
 	/*
@@ -3191,8 +3203,11 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#named_constant_def_list(int)
 	 */
 	public void named_constant_def_list(int count) {
-		// TODO Auto-generated method stub
-
+		List<Entity> entities = new ArrayList<Entity>();
+		for(int i=0; i<count; i++)
+			entities.add((Entity)parseStack.pop());
+		Collections.reverse(entities);
+		parseStack.push(entities);
 	}
 
 	/*
@@ -3363,8 +3378,9 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void parameter_stmt(Token label, Token keyword, Token eos) {
-		// TODO Auto-generated method stub
-		
+	    AttributeDeclaration decl = new AttributeDeclaration(Attribute.Type.PARAMETER);
+	    decl.setEntities((List<Entity>)parseStack.pop());
+	    parseStack.push(decl);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -3787,8 +3803,8 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void rewind_stmt(Token label, Token rewindKeyword, Token eos, boolean hasPositionSpecList) {
-		// TODO Auto-generated method stub
-		
+		parseStack.pop(); // file unit number or spec
+		parseStack.push(new RewindStatement());
 	}
 
 	public void save_stmt(Token label, Token keyword, Token eos, boolean hasSavedEntityList) {

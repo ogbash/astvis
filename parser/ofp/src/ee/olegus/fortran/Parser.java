@@ -166,6 +166,7 @@ public class Parser implements XMLGenerator {
 		File file = new File(parent, filename);
 		
 		int sourceForm = determineSourceForm(filename);
+		LOG.info("Source form: "+sourceForm);
 		FortranLexer lexer = new FortranLexer(new FortranStream(file.getPath(),
 				sourceForm));
 		FortranTokenStream tokens = new FortranTokenStream(lexer);
@@ -186,7 +187,7 @@ public class Parser implements XMLGenerator {
 			try {
 				error = parseProgramUnit(lexer, tokens, parser);
 			} catch(Exception e) {
-				LOG.error("At "+parser.getTokenStream().LT(1));
+				LOG.error("At "+parser.getTokenStream().LT(1), e);
 			}
 
 			// see if we successfully parse the program unit or not

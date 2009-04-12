@@ -49,5 +49,7 @@ public class ArraySpecificationElement {
 		this.last = last;
 	}
 
-	
+	public String toString() {
+		return "ArraySpecEl("+this.type+", "+this.first+":"+this.last+")";
+	}
 }
