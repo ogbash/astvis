@@ -2603,8 +2603,9 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#implicit_spec_list(int)
 	 */
 	public void implicit_spec_list(int count) {
-		// TODO Auto-generated method stub
-
+		// for the moment ignore
+		for(int i=0; i<count; i++)
+			parseStack.pop(); // type
 	}
 
 	/*
@@ -3822,13 +3823,18 @@ public class ParserAction implements IFortranParserAction {
 	}
 
 	public void save_stmt(Token label, Token keyword, Token eos, boolean hasSavedEntityList) {
-		// TODO Auto-generated method stub
-		
+		AttributeDeclaration decl = new AttributeDeclaration(Attribute.Type.SAVE);
+		if(hasSavedEntityList) {
+			decl.setEntities((List<Entity>)parseStack.pop());
+		}
+		parseStack.push(decl);
 	}
 
 	public void saved_entity(Token id, boolean isCommonBlockName) {
-		// TODO Auto-generated method stub
-		
+		if(!isCommonBlockName) {
+			Entity entity = new Entity(id.getText());
+			parseStack.push(entity);
+		}
 	}
 
 	/*
@@ -3837,8 +3843,12 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#saved_entity_list(int)
 	 */
 	public void saved_entity_list(int count) {
-		// TODO Auto-generated method stub
-
+		List<Entity> entities = new ArrayList<Entity>(count);
+		for(int i=0; i<count; i++) {
+			entities.add((Entity)parseStack.pop());
+		}
+		Collections.reverse(entities);
+		parseStack.push(entities);
 	}
 
 	/*
