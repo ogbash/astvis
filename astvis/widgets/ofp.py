@@ -60,6 +60,9 @@ class NewASTXMLDialog:
                                             parent=self.widget,
                                             buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                                      gtk.STOCK_OK, gtk.RESPONSE_OK))
+        directory = self.directoryButton.get_filename()
+        filesDialog.set_current_folder(directory)
+        
         fileFilter = gtk.FileFilter()
         fileFilter.set_name("All files")
         fileFilter.add_pattern("*")
@@ -105,6 +108,9 @@ class NewASTXMLDialog:
                                            buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                                     gtk.STOCK_OK, gtk.RESPONSE_OK))
                 
+        directory = self.directoryButton.get_filename()
+        dirsDialog.set_current_folder(directory)
+
         dirsDialog.props.select_multiple = True
         result = dirsDialog.run()
         if result==gtk.RESPONSE_OK:
