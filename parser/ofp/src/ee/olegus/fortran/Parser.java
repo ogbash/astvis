@@ -56,7 +56,7 @@ public class Parser implements XMLGenerator {
 	}
 	
     private static boolean parseMainProgram(FortranTokenStream tokens,
-			FortranParser parser, int start) throws Exception {
+			FortranParser parser, int start) throws RecognitionException {
 		// try parsing the main program
 		parser.main_program();
 
@@ -73,33 +73,33 @@ public class Parser implements XMLGenerator {
 	}// end determineSourceForm()	
 	
 	   private static boolean parseModule(FortranTokenStream tokens,
-			FortranParser parser, int start) throws Exception {
+			FortranParser parser, int start) throws RecognitionException {
 		parser.module();
 		return parser.hasErrorOccurred;
 	}// end parseModule()
 
 	private static boolean parseBlockData(FortranTokenStream tokens,
-			FortranParser parser, int start) throws Exception {
+			FortranParser parser, int start) throws RecognitionException {
 		parser.block_data();
 
 		return parser.hasErrorOccurred;
 	}// end parseBlockData()
 
 	private static boolean parseSubroutine(FortranTokenStream tokens,
-			FortranParser parser, int start) throws Exception {
+			FortranParser parser, int start) throws RecognitionException {
 		parser.subroutine_subprogram();
 
 		return parser.hasErrorOccurred;
 	}// end parserSubroutine()
 
 	private static boolean parseFunction(FortranTokenStream tokens,
-			FortranParser parser, int start) throws Exception {
+			FortranParser parser, int start) throws RecognitionException {
 		parser.ext_function_subprogram();
 		return parser.hasErrorOccurred;
 	}// end parseFunction()
 	
  private static boolean parseProgramUnit(FortranLexer lexer,
-			FortranTokenStream tokens, FortranParser parser) throws Exception {
+			FortranTokenStream tokens, FortranParser parser) {
 		int firstToken;
 		int lookAhead = 1;
 		int start;
@@ -166,6 +166,7 @@ public class Parser implements XMLGenerator {
 		File file = new File(parent, filename);
 		
 		int sourceForm = determineSourceForm(filename);
+		LOG.info("Source form: "+sourceForm);
 		FortranLexer lexer = new FortranLexer(new FortranStream(file.getPath(),
 				sourceForm));
 		FortranTokenStream tokens = new FortranTokenStream(lexer);
@@ -185,8 +186,10 @@ public class Parser implements XMLGenerator {
 			// attempt to parse the current program unit
 			try {
 				error = parseProgramUnit(lexer, tokens, parser);
-			} catch(Exception e) {
-				LOG.error("At "+parser.getTokenStream().LT(1));
+			} catch(RuntimeException e) {
+				LOG.error("At "+parser.getTokenStream().LT(1), e);
+				error = true;
+				throw e;
 			}
 
 			// see if we successfully parse the program unit or not

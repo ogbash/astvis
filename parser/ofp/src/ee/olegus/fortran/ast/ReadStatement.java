@@ -28,8 +28,10 @@ public class ReadStatement extends Statement {
 		this.inputs = outputs;
 	}
 	public Object astWalk(ASTVisitor visitor) {
-		for(Expression expr: inputs) {
-			expr.astWalk(visitor);
+		if(inputs!=null) {
+			for(Expression expr: inputs) {
+				expr.astWalk(visitor);
+			}
 		}
 		
 		return visitor.visit(this);
