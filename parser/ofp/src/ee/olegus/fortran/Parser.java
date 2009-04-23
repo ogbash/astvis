@@ -175,6 +175,7 @@ public class Parser implements XMLGenerator {
 		FortranLexicalPrepass prepass = new FortranLexicalPrepass(lexer,
 				tokens, parser);
 		
+		lexer.setIncludeDirs(new ArrayList<String>());
 		prepass.setSourceForm(sourceForm);
 		prepass.performPrepass();
 		// overwrite the old token stream with the (possibly) modified one

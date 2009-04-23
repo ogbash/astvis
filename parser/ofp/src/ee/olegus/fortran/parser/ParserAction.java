@@ -4069,8 +4069,9 @@ public class ParserAction implements IFortranParserAction {
 	 * @see parser.java.IFortranParserAction#stop_code(org.antlr.runtime.Token)
 	 */
 	public void stop_code(Token digitString) {
-		// TODO Auto-generated method stub
-
+		Constant c = new Constant(Constant.Type.STRING);
+		c.setValue(digitString.getText());
+		parseStack.push(c);
 	}
 
 	public void stop_stmt(Token label, Token stopKeyword, Token eos, boolean hasStopCode) {
