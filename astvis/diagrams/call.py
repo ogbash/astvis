@@ -99,9 +99,9 @@ class CallDiagram(diagram.Diagram):
             for child in obj.getChildren():
                 if self.hasObject(child):
                     self.addConnector(ContainerConnector(obj, child, self))
+            
             # get all calls/callers for obj and add connectors
             resolver = core.getService('ReferenceResolver')
-
             refObjs = resolver.getReferencedObjects(obj)            
             for refObj in refObjs:
                 if not isinstance(refObj, (basic.ProgramUnit, basic.Subprogram)):

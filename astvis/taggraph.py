@@ -2,6 +2,17 @@
 from astvis import event
 
 class TagGraph:
+    """This class allows to add tags to the vertices of a directed graph
+    and track any induced tags, produced by this. Induced tags are created
+    recursively for all vertices that precede (in the sense of directed graph)
+    the vertex with a tag.
+
+    Hierarchical structure can be represented as directed graph, where
+    parent leads to children. In this case if a tag is added to a child,
+    then corresponding induced tag is added to its parents. This is used in
+    many places where we want to know if a node contains children with specific
+    property.
+    """
 
     def __init__(self, getTargetVertices, getSourceVertices):
         self._getTargetVertices = getTargetVertices

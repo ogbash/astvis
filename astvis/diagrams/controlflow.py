@@ -83,6 +83,8 @@ class BlockItem(object):
         cr.restore()
 
 class BlockTagGraph(TagGraph):
+    """TagGraph with blocks as vertices, parent blocks point to children
+    blocks. """
 
     def __init__(self):
         TagGraph.__init__(self, self.getTargetBlocks, self.getSourceBlocks)
@@ -206,16 +208,22 @@ class ControlFlowDiagram (diagram.Diagram):
             LOG.log(FINER, "%d unbound connections, %d classified connections",
                     len(self._unboundConnections), len(clConnections))
 
+        # for all (classified) connections
         newUnboundConnections = set()
         for key in clConnections.keys():
             fromBlock, toBlock = key
             if fromBlock is toBlock:
+                # loop connection, just add to the item
                 self._items[fromBlock].connections.update(clConnections[key])
                 if LOG.isEnabledFor(FINEST):
                     LOG.log(FINEST, "Internal block connection: %s", fromBlock)
+                    
             elif fromBlock!=None and toBlock!=None:
+                # new control flow connector
                 self.addConnector(ControlFlowConnector(fromBlock, toBlock, self, clConnections[key]))
+                
             else:
+                # hm, either 'from' or 'to' block (or their parent blocks) are not on diagram
                 if LOG.isEnabledFor(FINEST):
                     LOG.log(FINEST, "Missing block(s) for the connection: %s, %s; basic connections: %s",
                             fromBlock,
