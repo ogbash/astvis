@@ -14,7 +14,7 @@ class FlowTest(ASTTestCase):
 
 class SpMtxAggregate(FlowTest):
 
-    FILENAME="fortran/SpMtx_aggregation.F90.f90.xml"
+    FILENAME="fortran/SpMtx_aggregation.F90.xml"
 
     def setUp(self):
         super(SpMtxAggregate, self).setUp()
@@ -48,6 +48,10 @@ class Fib(FlowTest):
         self.assertEquals(len(blocks), 3)
 
     def testNextBasicBlocks1(self):
+        """Use two different methods by moving through basic blocks
+        using the main way only."""
+
+        # iterate by taking first basic block of the end block
         block = self.flowModel.block.getFirstBasicBlock()
         blocks1 = []
         while block!=None:
@@ -55,6 +59,7 @@ class Fib(FlowTest):
             endBlock = block.getEndBlock()
             block = endBlock!=None and endBlock.getFirstBasicBlock() or None
 
+        # iterate by using getNextBasicBlocks and taking last block from the returned list
         block = self.flowModel.block.getFirstBasicBlock()
         blocks2 = []
         while block!=None:
@@ -65,6 +70,8 @@ class Fib(FlowTest):
         self.assertEquals(blocks1,blocks2)
 
     def testNextBasicBlocks0(self):
+        "Test getNextBasicBlocks using first branch block from the returned list."
+        
         block = self.flowModel.block.getFirstBasicBlock()
         blocks = []
         while block!=None:

@@ -190,7 +190,8 @@ class ActionManager(object):
         self._groups = {} #: name -> list(gtk action group)
         self._services = [] #: list(dict(action -> service method))
         self.ui = ui
-        self.ui.connect('connect-proxy', self._proxyConnected)
+        if ui is not None:
+            self.ui.connect('connect-proxy', self._proxyConnected)
 
     def _proxyConnected(self, ui, gtkaction, widget):
         gtkgroup = gtkaction.props.action_group
