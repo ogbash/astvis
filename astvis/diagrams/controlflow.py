@@ -320,7 +320,9 @@ class ControlFlowDiagram (diagram.Diagram):
         scope = basicModel.getObjectByASTObject(astCode)
         references = service.getReferringObjects(scope.variables[target])
 
+        # for each reference
         for ref in references.get(astCode, []):
+            # get the basic block that contain the reference statement
             blocks = self.flowModel.findBlocksByObject(ref)
             for block in blocks:
                 isAssign = ref.isAssignment()
@@ -358,6 +360,30 @@ class ControlFlowDiagram (diagram.Diagram):
                 self._tagGraph.removeTag((scope.variables[name],op), block, ref)
 
         self._referenceTags.remove(name)
+
+    @action.Action('controlflowdiagram-show-active', label='Show active', targetClass=BlockItem)
+    def showActiveObjects(self, target, context):
+        "Show active objects (used variables) in block."
+        
+        # open item in AST tree
+        ocItem = target
+        if ocItem.block!=None:
+            block=ocItem.block
+
+            # collect AST objects
+            objs = []
+            def cb(block):
+                if isinstance(block, flow.BasicBlock):
+                    objs.extend(block.executions)
+            
+            block.itertree(cb)
+
+            # find references in every AST object
+            service = core.getService('ASTTreeWalker')
+            for obj in objs:
+                refs = service.getReferencesFrom(obj)
+                print obj, '--', map(str, refs)
+
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
