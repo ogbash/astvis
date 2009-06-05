@@ -156,7 +156,13 @@ class MainWindow(object):
         self._consoleWindow = gtk.Window()
         def _hide(w,o): w.hide(); return True
         self._consoleWindow.connect('delete-event', _hide)
-        pyconsole = console.GTKInterpreterConsole({'window':self})
+        def _reloadService(name):
+            import sys
+            s=core.getService(name)
+            reload(sys.modules[s.__module__])
+            clazz=getattr(sys.modules[s.__module__], s.__class__.__name__)
+            core.registerService(name, clazz())
+        pyconsole = console.GTKInterpreterConsole({'window':self, 'reloadService':_reloadService})
         pyconsole.set_size_request(640,480)
         self._consoleWindow.add(pyconsole)
 
