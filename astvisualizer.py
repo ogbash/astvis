@@ -66,7 +66,9 @@ class MainWindow(object):
 
       <menu action="tools">
         <menuitem action="main-generate-ofp-astxml"/>
+        <separator/>
         <menuitem action="main-toggle-tracing"/>
+        <menuitem action="main-show-console"/>
       </menu>
     </menubar>
     <toolbar name="Toolbar">
@@ -151,11 +153,12 @@ class MainWindow(object):
         
         self.wTree.signal_autoconnect(self)
         
-        self.consoleWindow = gtk.Window()
-        pyconsole = console.GTKInterpreterConsole()
+        self._consoleWindow = gtk.Window()
+        def _hide(w,o): w.hide(); return True
+        self._consoleWindow.connect('delete-event', _hide)
+        pyconsole = console.GTKInterpreterConsole({'window':self})
         pyconsole.set_size_request(640,480)
-        self.consoleWindow.add(pyconsole)
-        #self.consoleWindow.show_all()
+        self._consoleWindow.add(pyconsole)
 
         self.toolbox = widgets.DiagramItemToolbox(self.wTree, self)
         vbox = gtk.VBox()
@@ -490,6 +493,10 @@ class MainWindow(object):
     def toggleTracing(self, target, context):
         from astvis.misc import trace
         trace.toggle()
+
+    @Action('main-show-console', 'Show console')
+    def _showConsole(self, target, context):
+        self._consoleWindow.show_all()
 
 if __name__ == "__main__":
     ui = gtk.UIManager()
