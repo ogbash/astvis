@@ -365,25 +365,11 @@ class ControlFlowDiagram (diagram.Diagram):
     def showActiveObjects(self, target, context):
         "Show active objects (used variables) in block."
         
-        # open item in AST tree
         ocItem = target
         if ocItem.block!=None:
             block=ocItem.block
-
-            # collect AST objects
-            objs = []
-            def cb(block):
-                if isinstance(block, flow.BasicBlock):
-                    objs.extend(block.executions)
-            
-            block.itertree(cb)
-
-            # find references in every AST object
-            service = core.getService('ASTTreeWalker')
-            for obj in objs:
-                refs = service.getReferencesFrom(obj)
-                print obj, '--', map(str, refs)
-
+            service = core.getService('DataflowService')
+            service.getActiveDefinitionsByBlock(block)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 

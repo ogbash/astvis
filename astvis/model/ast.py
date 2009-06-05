@@ -554,6 +554,7 @@ class Reference(Expression):
         return "%s.%s" % ((self.base or ''), self.name)
 
     def isAssignment(self):
+        "@return: True, False, or None if unknown"
         parent = self.parent
         child = self
         while isinstance(parent, Reference):
