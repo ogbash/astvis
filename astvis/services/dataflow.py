@@ -11,14 +11,81 @@ class DataflowService(core.Service):
     def getReachingDefinitions(self, astNode, context=None):
         "@todo: This is just filler code, reimplement the function."
         
+        astScope = astNode.model.getScope(astNode, False)
+
         localEntities = [] 
         
-        for decl in astNode.declarationBlock.statements:
+        for decl in astScope.declarationBlock.statements:
             localEntities.extend(decl.entities)
 
-        localNames = map(lambda e:e.name, localEntities)
+        localNames = map(lambda e:e.name.lower(), localEntities)
+        cfservice = core.getService('ControlflowService')
+        flowModel = cfservice.getModel(astScope)
 
-        return localNames
+        ins = {} # { block: {name: set((block,indexInBlock))}}
+        outs = {} # { block: {name: set((block,indexInBlock))]}}
+
+        # some help functions
+        def IN(block):
+            if not ins.has_key(block):
+                ins[block] = {}
+            return ins[block]
+
+        def OUT(block, createNew=True):
+            if not outs.has_key(block):
+                if not createNew:
+                    return None
+                outs[block] = {}
+            return outs[block]
+
+        # start main loop which works until converging of IN/OUT states
+        
+        working = [] # blocks that have their IN redefined
+        working.append(flowModel.block.getFirstBasicBlock())
+
+        while working:
+            block = working.pop()
+            inDefs = IN(block)
+            oldOutDefs = OUT(block, False)
+            outDefs = self._transform(inDefs, block)
+            changed = (outDefs != oldOutDefs)
+            if changed:
+                outs[block] = outDefs
+                # OUT has changed since the last try
+                #  add following basic blocks to the working set as their INs change
+                for nextBlock in block.getNextBasicBlocks():
+                    if nextBlock==None:
+                        # @todo: fix parser (handle "read" statement)
+                        # this is only necessary, because fortran parser is not complete
+                        #  i.e. there may exist empty block
+                        continue 
+                    nextInDefs = IN(nextBlock)
+                    self._update(nextInDefs, outDefs)
+                    working.append(nextBlock)
+
+        return ins, outs
+
+    def _transform(self, inDefs, block):
+        """Transform function for the 'reaching definitions' algorithm.
+
+        @todo: for arrays - add the new, not replace the previous, definition
+        """
+
+        outDefs = dict(inDefs)
+        for i,execution in enumerate(block.executions):
+            if isinstance(execution, ast.Assignment):
+                # replace the previous definition
+                assignName = execution.target.name.lower()
+                outDefs[assignName] = set([(block,i)])
+
+        return outDefs
+
+    def _update(self, toDefs, fromDefs):
+        "Update IN definitions from OUT definitions."
+        for name in fromDefs.keys():
+            if not toDefs.has_key(name):
+                toDefs[name] = set()
+            toDefs[name].update(fromDefs[name])
 
     def getActiveDefinitionsByBlock(self, block):
         """Return all references and calls in the control flow block.

@@ -187,7 +187,8 @@ class ControlFlowDiagram (diagram.Diagram):
                 cx, cy = m.transform_point(x,y)
                 # add item
                 obj = self.project.astModel.getObjectByPath(path)
-                self.flowModel = flow.ControlFlowModel(obj)
+                cfservice = core.getService('ControlflowService')
+                self.flowModel = cfservice.getModel(obj)
                 self.astObjects = self.flowModel.collectASTObjects()
                 LOG.debug("Number of AST objects in code is %d",
                           len(self.astObjects[self.flowModel.block]))
