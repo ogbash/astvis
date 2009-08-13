@@ -221,7 +221,7 @@ class ControlFlowDiagram (diagram.Diagram):
                     
             elif fromBlock!=None and toBlock!=None:
                 # new control flow connector
-                self.addConnector(ControlFlowConnector(fromBlock, toBlock, self, clConnections[key]))
+                self.addConnector((fromBlock, toBlock), ControlFlowConnector(fromBlock, toBlock, self, clConnections[key]))
                 
             else:
                 # hm, either 'from' or 'to' block (or their parent blocks) are not on diagram
@@ -234,9 +234,9 @@ class ControlFlowDiagram (diagram.Diagram):
                 
         self._unboundConnections = newUnboundConnections
 
-    def removeConnector(self, connector):
-        res = super(ControlFlowDiagram, self).removeConnector(connector)
-        if res:
+    def removeConnector(self, connection):
+        connector = super(ControlFlowDiagram, self).removeConnector(connection)
+        if connector:
             if LOG.isEnabledFor(FINEST):
                 LOG.log(FINEST, "Updating unbound connections with %s", connector.connections)
             self._unboundConnections.update(connector.connections)
@@ -554,7 +554,7 @@ class ControlFlowConnector(diagram.Connector, event.Observer):
             diagram, = args
             if not diagram==self._diagram or not obj in (self._toBlock, self._fromBlock):
                 return
-            self._diagram.removeConnector(self)
+            self._diagram.removeConnector((self._fromBlock, self._toBlock))
 
     def __setstate__(self, state):
         self.__dict__.update(state)

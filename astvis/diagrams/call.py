@@ -95,10 +95,12 @@ class CallDiagram(diagram.Diagram):
         if event==ADDED_TO_DIAGRAM and args[0]==self:
             # add container connector
             if self.hasObject(obj.parent):
-                self.addConnector(ContainerConnector(obj.parent, obj, self))
+                connector = ContainerConnector(obj.parent, obj, self)
+                self.addConnector(connector, connector)
             for child in obj.getChildren():
                 if self.hasObject(child):
-                    self.addConnector(ContainerConnector(obj, child, self))
+                    connector = ContainerConnector(obj, child, self)
+                    self.addConnector(connector, connector)
             
             # get all calls/callers for obj and add connectors
             resolver = core.getService('ReferenceResolver')
@@ -108,14 +110,16 @@ class CallDiagram(diagram.Diagram):
                     continue
                 callee = refObj.astObject
                 if callee and self.hasObject(callee):
-                    self.addConnector(CallConnector(obj, callee, self))            
+                    connector = CallConnector(obj, callee, self)
+                    self.addConnector(connector, connector)
 
             basicObj = obj.model.basicModel.getObjectByASTObject(obj)
             refObjs = resolver.getReferringObjects(basicObj).keys()
             for refObj in refObjs:
                 caller = refObj
                 if caller and self.hasObject(caller):
-                    self.addConnector(CallConnector(caller, obj, self))
+                    connector = CallConnector(caller, obj, self)
+                    self.addConnector(connector, connector)
                     
     def __setstate__(self, state):
         self.__dict__.update(state)

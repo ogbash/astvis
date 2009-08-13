@@ -32,7 +32,7 @@ class Diagram(object):
         self._canvas = gaphas.canvas.Canvas()
         self._canvas.diagram = self
         self._items = {}
-        self._connectors = set()
+        self._connectors = {} # connection -> connector
 
     def add(self, obj, x=0, y=0, item=None):
         if self._items.has_key(obj):
@@ -78,21 +78,22 @@ class Diagram(object):
     def hasObject(self, obj):
         return self._items.has_key(obj)
         
-    def addConnector(self, connector):
-        if connector in self._connectors:
+    def addConnector(self, connection, connector):
+        if self._connectors.has_key(connection):
             return False
         LOG.debug("Adding connector %s to diagram", connector)
-        self._connectors.add(connector)
+        self._connectors[connection] = connector
         connector.setup_diagram()
         return True
         
-    def removeConnector(self, connector):
-        if not connector in self._connectors:
-            return False
+    def removeConnector(self, connection):
+        if not self._connectors.has_key(connection):
+            return None
+        connector = self._connectors[connection]
         LOG.debug("Removing connector %s from diagram", connector)
         connector.teardown_diagram()
-        self._connectors.remove(connector)
-        return True
+        del self._connectors[connection]
+        return connector
         
     def getCanvas(self):
         return self._canvas
