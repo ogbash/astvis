@@ -356,17 +356,25 @@ class ControlFlowDiagram (diagram.Diagram):
             service = core.getService('DataflowService')
             service.getActiveDefinitionsByBlock(block)
 
-    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem,
-                   sensitivePredicate=lambda t,c: isinstance(t.block, flow.BasicBlock))
+    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem)
+                   
     def showOutDefinitions(self, target, context):
         "Show definitions that reach the block output (in Reaching Definitions)."
         
         ocItem = target
-        code = ocItem.block.model.code
+        block = ocItem.block
+        code = block.model.code
+        diagram = context
         
         dfService = core.getService('DataflowService')
         ins, outs = dfService.getReachingDefinitions(code)
-        print outs[ocItem.block].keys()
+
+        blockGraph = diagram._hgraph
+        outDefs = set()
+        for edge in blockGraph.outEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                outDefs.update(outs[fromBlock].keys())
+        print outDefs
 
 
     @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem,
