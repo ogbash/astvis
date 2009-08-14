@@ -7,12 +7,21 @@ __all__=['DataflowService']
 
 class DataflowService(core.Service):
 
+    def __init__(self):
+        core.Service.__init__(self)
+
+        self._reachingDefinitions = {} # astScope -> (ins, outs)
+
     @action.Action('ast-reaching-definitions',"Reaching defs",targetClass=ast.ASTObject)
     def getReachingDefinitions(self, astNode, context=None):
-        "@todo: This is just filler code, reimplement the function."
+        "For each basic block calculates (variable) definitions that reach this code location."
         
         astScope = astNode.model.getScope(astNode, False)
+        # check for cached version
+        if self._reachingDefinitions.has_key(astScope):
+            return self._reachingDefinitions[astScope]
 
+        # else calculate
         localEntities = [] 
         
         for decl in astScope.declarationBlock.statements:
@@ -63,6 +72,7 @@ class DataflowService(core.Service):
                     self._update(nextInDefs, outDefs)
                     working.append(nextBlock)
 
+        self._reachingDefinitions[astScope] = (ins, outs)
         return ins, outs
 
     def _transform(self, inDefs, block):
@@ -125,3 +135,21 @@ class DataflowService(core.Service):
         print 'unknown = ', unknown
         print 'written = ', written
         print 'read = ', read
+
+
+    def getUsedDefinitions(self, block):
+        "For every use of variable in the block calculate potential definitions."
+
+        ins, outs = self.getReachingDefinitions(block.model.code)
+
+        insDefs = ins[block]
+        def matchReference(node):
+            if isinstance(node, ast.Reference) and node.base==None:
+                print node
+        
+        for execution in block.executions:
+            execution.itertree(matchReference)
+
+        usedDefs = {} # use (e.g. Reference) -> set(Definitions)
+
+        return usedDefs
