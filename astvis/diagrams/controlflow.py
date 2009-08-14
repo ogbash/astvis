@@ -12,6 +12,7 @@ from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, Ellips
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 from astvis.taggraph import TagGraph
+from astvis.hgraph import HierarchicalGraph
 
 import gtk
 import pickle
@@ -46,7 +47,6 @@ class BlockItem(object):
         if block.parentBlock!=None:
             children.append(CloseItem(self))
         self.children = children
-        self.connections = set()
 
     def _drawTags(self, context):
         # write tags
@@ -100,6 +100,14 @@ class BlockTagGraph(TagGraph):
             return set(block.subBlocks)
         else:
             return set()
+
+class BlockGraph(HierarchicalGraph):
+    
+    def _getParent(self, block):
+        return block.parentBlock
+
+    def _getChildren(self, block):
+        return block.subBlocks
     
 class ControlFlowDiagram (diagram.Diagram):
     UI_DESCRIPTION='''
@@ -127,7 +135,6 @@ class ControlFlowDiagram (diagram.Diagram):
         self.project = project
         self.name = name
         self.flowModel = None
-        self._unboundConnections = set()
         self._connectTool = gaphas.tool.ConnectHandleTool()
 
         action.manager.registerActionService(self)        
@@ -193,53 +200,15 @@ class ControlFlowDiagram (diagram.Diagram):
                 LOG.debug("Number of AST objects in code is %d",
                           len(self.astObjects[self.flowModel.block]))
                 
-                self.add(self.flowModel.block, cx,cy)
-                self._unboundConnections = self.flowModel.getConnections()
-                self.bindConnections()
+                connections = self.flowModel.getConnections()
+                self._hgraph = BlockGraph(set([self.flowModel.block]), connections)
+                self.processBlockGraphChanges((cx,cy))
 
                 context.drop_finish(True, timestamp)
             else:
                 context.drop_finish(False, timestamp)                
         else:
             context.drop_finish(False, timestamp)
-
-    def bindConnections(self):
-        clConnections = self.flowModel.classifyConnectionsBy(self._unboundConnections, self._items.keys())
-        if LOG.isEnabledFor(FINER):
-            LOG.log(FINER, "%d unbound connections, %d classified connections",
-                    len(self._unboundConnections), len(clConnections))
-
-        # for all (classified) connections
-        newUnboundConnections = set()
-        for key in clConnections.keys():
-            fromBlock, toBlock = key
-            if fromBlock is toBlock:
-                # loop connection, just add to the item
-                self._items[fromBlock].connections.update(clConnections[key])
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "Internal block connection: %s", fromBlock)
-                    
-            elif fromBlock!=None and toBlock!=None:
-                # new control flow connector
-                self.addConnector((fromBlock, toBlock), ControlFlowConnector(fromBlock, toBlock, self, clConnections[key]))
-                
-            else:
-                # hm, either 'from' or 'to' block (or their parent blocks) are not on diagram
-                if LOG.isEnabledFor(FINEST):
-                    LOG.log(FINEST, "Missing block(s) for the connection: %s, %s; basic connections: %s",
-                            fromBlock,
-                            toBlock,
-                            map(lambda cs: (str(cs[0]), str(cs[1])), clConnections[key]))
-                newUnboundConnections.update(clConnections[key])
-                
-        self._unboundConnections = newUnboundConnections
-
-    def removeConnector(self, connection):
-        connector = super(ControlFlowDiagram, self).removeConnector(connection)
-        if connector:
-            if LOG.isEnabledFor(FINEST):
-                LOG.log(FINEST, "Updating unbound connections with %s", connector.connections)
-            self._unboundConnections.update(connector.connections)
 
     def getDefaultTool(self):
         tool = gaphas.tool.ToolChain()
@@ -252,13 +221,28 @@ class ControlFlowDiagram (diagram.Diagram):
         tool.append(gaphas.tool.RubberbandTool())
         return tool
 
-    def remove(self, obj):
-        item = self.getItem(obj)
-        res = super(ControlFlowDiagram, self).remove(obj)
-        if res:
-            self._unboundConnections.update(item.connections)
-        return res
+    def processBlockGraphChanges(self, point):
+        x, y = point
+        print '--'
+        changes = self._hgraph.changes
+        for action, obj in changes:
+            print action, obj
+            if isinstance(obj, flow.Block):
+                if action=='ADDED':
+                    self.add(obj, x, y)
+                    y+=50
+                elif action=='REMOVED':
+                    self.remove(obj)
 
+            elif isinstance(obj, tuple): # edge
+                fromBlock, toBlock = obj
+                if action=='ADDED':
+                    self.addConnector((fromBlock, toBlock), ControlFlowConnector(fromBlock, toBlock, self))
+                    y+=50
+                elif action=='REMOVED':
+                    self.removeConnector(obj)
+
+        self._hgraph.changes = []
 
     def _connectItems(self, items, connectorItem):
         LOG.debug('connect %s', items)
@@ -371,6 +355,30 @@ class ControlFlowDiagram (diagram.Diagram):
             block=ocItem.block
             service = core.getService('DataflowService')
             service.getActiveDefinitionsByBlock(block)
+
+    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem,
+                   sensitivePredicate=lambda t,c: isinstance(t.block, flow.BasicBlock))
+    def showOutDefinitions(self, target, context):
+        "Show definitions that reach the block output (in Reaching Definitions)."
+        
+        ocItem = target
+        code = ocItem.block.model.code
+        
+        dfService = core.getService('DataflowService')
+        ins, outs = dfService.getReachingDefinitions(code)
+        print outs[ocItem.block].keys()
+
+
+    @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem,
+                   sensitivePredicate=lambda t,c: isinstance(t.block, flow.BasicBlock))
+    def showUsedDefinitions(self, target, context):
+        "Show used (variable) definitions for the block (Use-Definition chain)."
+        
+        ocItem = target
+        
+        dfService = core.getService('DataflowService')
+        usedDefs = dfService.getUsedDefinitions(ocItem.block)
+        print usedDefs
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
@@ -485,12 +493,8 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
             diagram = ocItem.canvas.diagram
             matrix = ocItem.item.matrix
             x,y = matrix[4], matrix[5]
-            subBlocks = ocItem.item.block.subBlocks
-            diagram.remove(ocItem.item.block)
-            for subBlock in subBlocks:
-                diagram.add(subBlock, x, y)
-                y += 50
-            diagram.bindConnections()
+            diagram._hgraph.unfold(ocItem.item.block)
+            diagram.processBlockGraphChanges((x,y))
             return True
 
         elif isinstance(ocItem, CloseItem):
@@ -498,10 +502,8 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
             matrix = ocItem.item.matrix
             x,y = matrix[4], matrix[5]
             parentBlock = ocItem.item.block.parentBlock
-            self.closeBlock(parentBlock, diagram)
-
-            diagram.add(parentBlock, x, y)
-            diagram.bindConnections()
+            diagram._hgraph.fold(ocItem.item.block)
+            diagram.processBlockGraphChanges((x,y))            
             return True
 
     def closeBlock(self, block, diagram):
@@ -529,16 +531,13 @@ class ContextMenuTool(gaphas.tool.Tool):
 
 class ControlFlowConnector(diagram.Connector, event.Observer):
 
-    def __init__(self, fromBlock, toBlock, diagram, connections):
+    def __init__(self, fromBlock, toBlock, diagram):
         self._fromBlock = fromBlock
         self._toBlock = toBlock
         self._diagram = diagram
         self._line = ControlFlowLine()
         self._line.handles()[0].connectable=False
         self._line.handles()[-1].connectable=False
-        self.connections = set(connections)
-        event.manager.subscribe(self, self._toBlock)
-        event.manager.subscribe(self, self._fromBlock)
         
     def setup_diagram(self):
         self._diagram._canvas.add(self._line)
@@ -548,18 +547,6 @@ class ControlFlowConnector(diagram.Connector, event.Observer):
         
     def teardown_diagram(self):
         self._diagram._canvas.remove(self._line)        
-
-    def notify(self, obj, event, args, dargs):
-        if event==REMOVED_FROM_DIAGRAM:
-            diagram, = args
-            if not diagram==self._diagram or not obj in (self._toBlock, self._fromBlock):
-                return
-            self._diagram.removeConnector((self._fromBlock, self._toBlock))
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        event.manager.subscribe(self, self._toBlock)
-        event.manager.subscribe(self, self._fromBlock)        
 
 class ControlFlowLine(gaphas.item.Line):
     def draw_head(self, context):
