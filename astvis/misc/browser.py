@@ -41,17 +41,19 @@ class Browser(object):
         elif hasattr( value, "__len__"):
             keys = range( len(value) )
         for key in keys:
-            # separate case for sets
-            if isinstance(value, set):
-                _name = '[]'
-                _child = key
-            else:
-                _name = "[%s]"%str(key)
-                _child = value[key]
-            _piter = self.make_row( piter, _name, _child )
-            _path = self.treestore.get_path( _piter )
-            self.otank[ _path ] = (_name, _child)
-
+            try:
+                # separate case for sets
+                if isinstance(value, set):
+                    _name = '[]'
+                    _child = key
+                else:
+                    _name = "[%s]"%str(key)
+                    _child = value[key]
+                _piter = self.make_row( piter, _name, _child )
+                _path = self.treestore.get_path( _piter )
+                self.otank[ _path ] = (_name, _child)
+            except TypeError, e:
+                pass
     def make(self, name=None, value=None, path=None, depth=1):
         if path is None:
             # make root node
