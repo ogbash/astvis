@@ -4,6 +4,17 @@
 import ast        
 
 class Block(object):
+    """
+    Abstract base class for blocks in Control/Data Flow analysis.
+
+    This class is a common base class for basic blocks and composite
+    types of blocks (If, Do, Case, and other blocks). It defines
+    interface of methods and common implementation which can be
+    redefined in subclasses.
+
+    @ivar model: control flow model that this block belongs to
+    @type model: L{ControlFlowModel}
+    """
 
     def __init__(self, model, parentBlock, subBlocks = []):
         self.model = model # control flow model
@@ -17,6 +28,9 @@ class Block(object):
         self.astObjects = []
 
     def getFirstBasicBlock(self):
+        """The first basic block that is run when entering this block.
+        @rtype: L{BasicBlock}
+        """
         if self.firstBlock==None:
             return None
 
@@ -26,11 +40,18 @@ class Block(object):
             return self.firstBlock.getFirstBasicBlock()
 
     def getEndBlock(self):
+        """The following block after exiting this block.
+        @rtype: L{Block}
+        """
         if self.endBlock==None and self.parentBlock!=None:
             return self.parentBlock.getEndBlock()
         return self.endBlock
 
     def getNextBasicBlocks(self):
+        """Basic blocks that may be executed after exiting this block.
+        @return: list of basic blocks
+        @rtype: list of L{BasicBlock}s
+        """
         if self._nextBasicBlocks==None:
             self._nextBasicBlocks = [self.getEndBlock().getFirstBasicBlock()]
         return self._nextBasicBlocks
