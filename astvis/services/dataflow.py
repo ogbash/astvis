@@ -146,17 +146,6 @@ class DataflowService(core.Service):
 
         ins, outs = self.getReachingDefinitions(block.model.code)
 
-        #blockGraph = flow.BlockGraph(set([block.model.block]), block.model.getConnections())
-        #if block.parentBlock!=None:
-        #    blockGraph.unfold(block.parentBlock)
-        #insDefs = {}
-        #for edge in blockGraph.inEdges[block]:
-        #    for fromBlock, toBlock in blockGraph.edges[edge]:
-        #        for name in ins[toBlock].keys():
-        #            if not insDefs.has_key(name):
-        #                insDefs[name]=set()
-        #            insDefs[name].update(ins[toBlock][name])
-
         usedDefs = {} # use (e.g. Reference) -> set(Definitions)
 
         defsInBlock = set()
@@ -185,8 +174,11 @@ class DataflowService(core.Service):
                         # check that definition is outside of our initial block
                         if not isInside(defBlock):
                             if not usedDefs.has_key(name):
-                                usedDefs[name] = set()
-                            usedDefs[name].add(defBlock.executions[defIndex])
+                                usedDefs[name] = {}
+                            execution = (defBlock.executions[defIndex], defBlock, defIndex)
+                            if not usedDefs[name].has_key(execution):
+                                usedDefs[name][execution] = set()
+                            usedDefs[name][execution].add((node, data.block))
 
             elif isinstance(node, ast.Assignment):
                 name = node.target.getPrimaryBase().name.lower()
@@ -203,7 +195,5 @@ class DataflowService(core.Service):
                     execution.itertree(matchReference)
 
         block.itertree(iterExecutions)
-
-        print usedDefs
 
         return usedDefs

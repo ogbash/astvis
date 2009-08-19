@@ -135,6 +135,7 @@ class MainWindow(object):
         self._callTree = None
         self._referenceTree = None # call back tree
         self._conceptTree = None
+        self._udList = None # used definitions list
         
         #self.code_notebook = self.wTree.get_widget('code_notebook')
         self.sidebarNotebook = self.wTree.get_widget('sidebar_notebook')
@@ -373,6 +374,11 @@ class MainWindow(object):
         lst.show_all()
         self.sidebarNotebook.append_page(lst, gtk.Label('refs(%s)'%obj))        
 
+    def openUsedDefinitionsList(self, diagram, block, usedDefs):
+        if self._udList==None:
+            self._udList = widgets.UsedDefinitionsList(self)
+            self.addSidebarView(self._udList, self._udList.outerWidget, 'usedef')
+        self._udList.showData(diagram, block, usedDefs)
 
     def keyPress(self, widget, event, diagram):
         if isinstance(widget, gaphas.view.GtkView):

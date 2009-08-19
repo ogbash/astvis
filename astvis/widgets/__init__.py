@@ -11,3 +11,4 @@ from tags import *
 from concepts import ConceptDialog
 from diagrams import NewDiagramDialog, DiagramItemToolbox
 from wrapbox import Wrapbox
+from dataflow import UsedDefinitionsList

@@ -376,7 +376,7 @@ class ControlFlowDiagram (diagram.Diagram):
         
         dfService = core.getService('DataflowService')
         usedDefs = dfService.getUsedDefinitions(ocItem.block)
-        print usedDefs
+        self.project.root.openUsedDefinitionsList(self, ocItem.block, usedDefs)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
