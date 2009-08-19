@@ -100,9 +100,16 @@ class HierarchicalGraph(object):
         return True
 
     def unfold(self, node):
-        if not self._remove(node):
+        
+        if not node in self.nodes:
+            parent = self._getParent(node)
+            if parent is not None:
+                self.unfold(parent)
+            
+        if not node in self.nodes:
             raise KeyError(node)
 
+        self._remove(node)
         for child in self._getChildren(node):
             self._add(child)
 

@@ -562,12 +562,18 @@ class Reference(Expression):
             parent = parent.parent
 
         if isinstance(parent, (Assignment)) and child==parent.target or \
-           isinstance(parent, (Allocate)):
+           isinstance(parent, (Allocate)) and child==self:
             return True
         elif isinstance(parent, Call) or \
              isinstance(parent, Statement) and parent.type=='call':
             return None
         return False
+
+    def getPrimaryBase(self):
+        if self.base == None:
+            return self
+        else:
+            return self.base.getPrimaryBase()
 
 class Section(ASTObject):
 

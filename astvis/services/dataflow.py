@@ -14,7 +14,11 @@ class DataflowService(core.Service):
 
     @action.Action('ast-reaching-definitions',"Reaching defs",targetClass=ast.ASTObject)
     def getReachingDefinitions(self, astNode, context=None):
-        "For each basic block calculates (variable) definitions that reach this code location."
+        """For each basic block calculates (variable) definitions that reach this code location.
+        
+        @return: (ins, outs) - definitions on enter/leave of each basic block
+        @rtype: (d, d) where d = {block: set((block, indexInBlock))}
+        """
         
         astScope = astNode.model.getScope(astNode, False)
         # check for cached version
@@ -142,14 +146,64 @@ class DataflowService(core.Service):
 
         ins, outs = self.getReachingDefinitions(block.model.code)
 
-        insDefs = ins[block]
-        def matchReference(node):
-            if isinstance(node, ast.Reference) and node.base==None:
-                print node
-        
-        for execution in block.executions:
-            execution.itertree(matchReference)
+        #blockGraph = flow.BlockGraph(set([block.model.block]), block.model.getConnections())
+        #if block.parentBlock!=None:
+        #    blockGraph.unfold(block.parentBlock)
+        #insDefs = {}
+        #for edge in blockGraph.inEdges[block]:
+        #    for fromBlock, toBlock in blockGraph.edges[edge]:
+        #        for name in ins[toBlock].keys():
+        #            if not insDefs.has_key(name):
+        #                insDefs[name]=set()
+        #            insDefs[name].update(ins[toBlock][name])
 
         usedDefs = {} # use (e.g. Reference) -> set(Definitions)
+
+        defsInBlock = set()
+        class Data:
+            pass
+        data = Data() # solve problem with closures
+        data.block = None
+
+        def isInside(defBlock):
+            if defBlock==block:
+                return True
+            if defBlock.parentBlock!=None:
+                return isInside(defBlock.parentBlock)
+            return False
+        
+        def matchReference(node):
+            if isinstance(node, ast.Reference) and node.base==None \
+                   and not node.isAssignment():
+                name = node.name.lower()
+
+                if name in defsInBlock:
+                    return # the variable is defined in our basic block
+                
+                if ins[data.block].has_key(name):
+                    for defBlock, defIndex in ins[data.block][name]:
+                        # check that definition is outside of our initial block
+                        if not isInside(defBlock):
+                            if not usedDefs.has_key(name):
+                                usedDefs[name] = set()
+                            usedDefs[name].add(defBlock.executions[defIndex])
+
+            elif isinstance(node, ast.Assignment):
+                name = node.target.getPrimaryBase().name.lower()
+                defsInBlock.add(name)
+                
+                
+        def iterExecutions(block):
+            if isinstance(block, flow.BasicBlock):
+                if not ins.has_key(block):
+                    return
+                data.block = block
+                defsInBlock.clear()
+                for execution in block.executions:
+                    execution.itertree(matchReference)
+
+        block.itertree(iterExecutions)
+
+        print usedDefs
 
         return usedDefs

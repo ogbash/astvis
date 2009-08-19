@@ -12,7 +12,6 @@ from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, Ellips
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 from astvis.taggraph import TagGraph
-from astvis.hgraph import HierarchicalGraph
 
 import gtk
 import pickle
@@ -100,14 +99,6 @@ class BlockTagGraph(TagGraph):
             return set(block.subBlocks)
         else:
             return set()
-
-class BlockGraph(HierarchicalGraph):
-    
-    def _getParent(self, block):
-        return block.parentBlock
-
-    def _getChildren(self, block):
-        return block.subBlocks
     
 class ControlFlowDiagram (diagram.Diagram):
     UI_DESCRIPTION='''
@@ -201,7 +192,7 @@ class ControlFlowDiagram (diagram.Diagram):
                           len(self.astObjects[self.flowModel.block]))
                 
                 connections = self.flowModel.getConnections()
-                self._hgraph = BlockGraph(set([self.flowModel.block]), connections)
+                self._hgraph = flow.BlockGraph(set([self.flowModel.block]), connections)
                 self.processBlockGraphChanges((cx,cy))
 
                 context.drop_finish(True, timestamp)
@@ -377,8 +368,7 @@ class ControlFlowDiagram (diagram.Diagram):
         print outDefs
 
 
-    @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem,
-                   sensitivePredicate=lambda t,c: isinstance(t.block, flow.BasicBlock))
+    @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem)
     def showUsedDefinitions(self, target, context):
         "Show used (variable) definitions for the block (Use-Definition chain)."
         

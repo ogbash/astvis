@@ -2,6 +2,7 @@
 "Control flow model."
 
 import ast        
+from astvis.hgraph import HierarchicalGraph
 
 class Block(object):
     """
@@ -401,3 +402,11 @@ class ControlFlowModel(object):
                     break
 
         return blocks
+
+class BlockGraph(HierarchicalGraph):
+    
+    def _getParent(self, block):
+        return block.parentBlock
+
+    def _getChildren(self, block):
+        return block.subBlocks
