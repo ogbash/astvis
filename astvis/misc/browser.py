@@ -44,10 +44,10 @@ class Browser(object):
             try:
                 # separate case for sets
                 if isinstance(value, set):
-                    _name = '[]'
+                    _name = '-'
                     _child = key
                 else:
-                    _name = "[%s]"%str(key)
+                    _name = "%s (id: %0x)"% (str(key), id(key))
                     _child = value[key]
                 _piter = self.make_row( piter, _name, _child )
                 _path = self.treestore.get_path( _piter )
