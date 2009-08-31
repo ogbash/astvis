@@ -62,34 +62,51 @@ class HierarchicalGraph(object):
     def _getChildren(self, node):
         raise NotImplementedError
 
-    def _remove(self, node):
-        if node in self.nodes:
-            # loop edges
-            for edge in self.loopEdges.get(node, []):
-                self._unclassifiedEdges.add(edge)
-            self.loopEdges.pop(node, None)
-            
-            # out edges
-            for edge in self.outEdges.get(node, []):
-                for basicEdge in self.edges.get(edge, []):
-                    self._unclassifiedEdges.add(basicEdge)
-                if self.edges.pop(edge, None)!=None:
-                    self.changes.append(('REMOVED', edge))
-            self.outEdges.pop(node, None)
-
-            # in edges
-            for edge in self.inEdges.get(node, []):
-                for basicEdge in self.edges.get(edge, []):
-                    self._unclassifiedEdges.add(basicEdge)
-                if self.edges.pop(edge, None)!=None:
-                    self.changes.append(('REMOVED', edge))
-            self.inEdges.pop(node, None)
-
-            self.nodes.remove(node)
-            self.changes.append(('REMOVED', node))
-            return True
+    def _removeEdge(self, edge):
+        if not self.edges.has_key(edge):
+            return False
         
-        return False
+        # collect basic edges
+        self._unclassifiedEdges.update(self.edges[edge])
+
+        del self.edges[edge]
+
+        # remove from the in and out edges
+        self.outEdges[edge[0]].remove(edge)
+        self.inEdges[edge[1]].remove(edge)
+            
+        # remember
+        self.changes.append(('REMOVED', edge))
+
+        return True
+
+    def _remove(self, node):
+        if node not in self.nodes:
+            return False
+
+        # remove the node
+        self.nodes.remove(node)
+        self.changes.append(('REMOVED', node))
+
+        # loop edges for the node
+        for edge in self.loopEdges.get(node, []):
+            self._unclassifiedEdges.add(edge)
+        self.loopEdges.pop(node, None)
+
+        # remove in/out edges for the node
+        outEdges = self.outEdges.get(node, set())
+        inEdges = self.inEdges.get(node, set())
+        allEdges = set()
+        allEdges.update(outEdges)
+        allEdges.update(inEdges)
+        for edge in allEdges:
+            self._removeEdge(edge)
+
+        # remove presumably empty sets        
+        self.outEdges.pop(node, None)
+        self.inEdges.get(node, None)
+        
+        return True
 
     def _add(self, node):
         if node in self.nodes:
@@ -100,7 +117,6 @@ class HierarchicalGraph(object):
         return True
 
     def unfold(self, node):
-        
         if not node in self.nodes:
             parent = self._getParent(node)
             if parent is not None:
@@ -134,3 +150,4 @@ class HierarchicalGraph(object):
         else:
             # node is not open, remove it
             self._remove(node)
+            

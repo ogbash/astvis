@@ -2,7 +2,6 @@
 from tests.ast import ASTTestCase
 
 from astvis.model import flow, ast
-from astvis.diagrams.controlflow import BlockGraph
 
 class FlowTest(ASTTestCase):
     def browse(self):
@@ -138,17 +137,24 @@ class Fib(FlowTest):
         codeBlock = block.subBlocks[1]
         # start, stop, if and ifconstruct blocks
         blocks = [block.subBlocks[0]] + [block.subBlocks[2]] + block.subBlocks[1].subBlocks
-        hgraph = BlockGraph(blocks, connections)
+        hgraph = flow.BlockGraph(blocks, connections)
         print hgraph.inEdges
 
 
     def testBlockGraphUnfold(self):
         connections = self.flowModel.getConnections()
         block = self.flowModel.block
-        hgraph = BlockGraph([block], connections)
+        hgraph = flow.BlockGraph([block], connections)
+
+        # collect
+        nEdges = len(hgraph.edges)
+        nLoopEdges = len(hgraph.loopEdges[block])
+        
         hgraph.unfold(block)
         hgraph.fold(block.subBlocks[0])
-        print len(hgraph.loopEdges[block])
+
+        self.assertEqual(len(hgraph.edges), nEdges)
+        self.assertEqual(len(hgraph.loopEdges[block]), nLoopEdges)
 
 class Loop(FlowTest):
 
