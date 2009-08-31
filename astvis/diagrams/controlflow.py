@@ -107,6 +107,11 @@ class ControlFlowDiagram (diagram.Diagram):
       <menuitem action="controlflowdiagram-open-code"/>
       <menuitem action="controlflowdiagram-show-references"/>
       <menuitem action="controlflowdiagram-hide-references"/>
+      <separator/>
+      <menu action="analysis-rd">
+        <menuitem action="controlflowdiagram-show-out"/>
+        <menuitem action="controlflowdiagram-show-useddef"/>
+      </menu>
     </popup>
     '''
 
@@ -119,6 +124,10 @@ class ControlFlowDiagram (diagram.Diagram):
                 contextClass=ControlFlowDiagram,
                 contextAdapter=cls.getSelected,
                 targetClasses = [BlockItem])
+
+            # add actions for menu
+            cls.ACTION_GROUP.addAction(action.Action('analysis-rd', "Reaching definitions"))
+            
         return cls.ACTION_GROUP
 
     def __init__(self, name, project):

@@ -247,6 +247,10 @@ class ActionManager(object):
     def activate(self, actionName, target, context):
         LOG.log(FINE,"action %s activated with %s within %s" % (actionName, target, context))
 
+        if not self._actions.has_key(actionName):
+            LOG.log(FINE,"action %s not found" % (actionName))
+            return
+        
         action = self._actions[actionName]
                     
         # look through all action services and call given action
