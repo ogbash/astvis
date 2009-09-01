@@ -80,6 +80,14 @@ class Fib(FlowTest):
 
         self.assertEqual(len(blocks), 6)
 
+    def testPreviousBasicBlocks(self):
+        "Test getPreviousBasicBlocks."
+        
+        block = self.flowModel._endBlock
+        previousBlocks = block.getPreviousBasicBlocks()
+        
+        self.assertEquals(len(previousBlocks), 2)
+
     def testGetConnections(self):
         connections = self.flowModel.getConnections()
         self.assertEquals(len(connections), 8)

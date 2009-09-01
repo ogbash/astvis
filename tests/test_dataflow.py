@@ -14,6 +14,7 @@ class FibonacciTestCase(tests.ast.ASTTestCase):
         from astvis import services
         core.registerServices(services.dataflow)
         core.registerServices(services.controlflow)
+        core.registerServices(services.references)
         
         self.service = core.getService('DataflowService')
         subprogram = self.astModel.files[0].units[0].subprograms[0]
@@ -57,6 +58,7 @@ class SpMtxAggregate(tests.ast.ASTTestCase):
         from astvis import services
         core.registerServices(services.dataflow)
         core.registerServices(services.controlflow)
+        core.registerServices(services.references)
         
         self.service = core.getService('DataflowService')
         subprogram = self.astModel.files[0].units[0].subprograms[0]
@@ -77,9 +79,22 @@ class SpMtxAggregate(tests.ast.ASTTestCase):
         ins, outs = self.service.getReachingDefinitions(function)
         
         # more tests for the result follow here
-        print ins
-        print outs
+        print len(ins)
+        print len(outs)
 
+
+    def testLiveVariables(self):
+        "Test reaching definition algorithm for the aggregate subprogram"
+        
+        module = self.astModel.files[0].units[0]
+        function = module.subprograms[0]
+
+        ins, outs = self.service.getLiveVariables(function)
+        
+        # more tests for the result follow here
+        print len(ins)
+        print len(outs)
+        #self.browse(ins)
 
     def testUsedDefinitions(self):
         "Test used definitions algorithm for the aggregate subprogram"

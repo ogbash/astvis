@@ -25,6 +25,7 @@ class Block(object):
         self.endBlock = None
 
         self._nextBasicBlocks = None
+        self._previousBasicBlocks = None
 
         self.astObjects = []
 
@@ -54,8 +55,17 @@ class Block(object):
         @rtype: list of L{BasicBlock}s
         """
         if self._nextBasicBlocks==None:
-            self._nextBasicBlocks = [self.getEndBlock().getFirstBasicBlock()]
+            nextBlock = self.getEndBlock().getFirstBasicBlock()
+            if nextBlock is not None:
+                self._nextBasicBlocks = [nextBlock]
+            else:
+                self._nextBasicBlocks = []
         return self._nextBasicBlocks
+
+    def getPreviousBasicBlocks(self):
+        if self._previousBasicBlocks == None:
+            self.model._calculatePreviousBasicBlocks()
+        return self._previousBasicBlocks
 
     def __str__(self):
         return "<%s(%s)>" % (self.__class__.__name__,
@@ -104,8 +114,11 @@ class ConditionBlock(BasicBlock):
         if self._nextBasicBlocks==None:
             blocks = []
             for branchBlock in self.branchBlocks:
-                blocks.append(branchBlock.getFirstBasicBlock())
-            blocks.append(self.getEndBlock().getFirstBasicBlock())
+                nextBlock = branchBlock.getFirstBasicBlock()
+                if nextBlock is not None:
+                    blocks.append(nextBlock)
+            nextBlocks = super(ConditionBlock,self).getNextBasicBlocks()
+            blocks.extend(nextBlocks)
             self._nextBasicBlocks = blocks
         return self._nextBasicBlocks
 
@@ -402,6 +415,15 @@ class ControlFlowModel(object):
                     break
 
         return blocks
+
+    def _calculatePreviousBasicBlocks(self):
+        allBlocks = self.getAllBasicBlocks()
+        for block in allBlocks:
+            block._previousBasicBlocks = []
+
+        for block in allBlocks:
+            for nextBlock in block.getNextBasicBlocks():
+                nextBlock._previousBasicBlocks.append(block)
 
 class BlockGraph(HierarchicalGraph):
     

@@ -112,6 +112,9 @@ class ControlFlowDiagram (diagram.Diagram):
         <menuitem action="controlflowdiagram-show-out"/>
         <menuitem action="controlflowdiagram-show-useddef"/>
       </menu>
+      <menu action="analysis-lv">
+        <menuitem action="controlflowdiagram-lv-show-in"/>
+      </menu>
     </popup>
     '''
 
@@ -127,6 +130,7 @@ class ControlFlowDiagram (diagram.Diagram):
 
             # add actions for menu
             cls.ACTION_GROUP.addAction(action.Action('analysis-rd', "Reaching definitions"))
+            cls.ACTION_GROUP.addAction(action.Action('analysis-lv', "Live variables"))
             
         return cls.ACTION_GROUP
 
@@ -356,8 +360,7 @@ class ControlFlowDiagram (diagram.Diagram):
             service = core.getService('DataflowService')
             service.getActiveDefinitionsByBlock(block)
 
-    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem)
-                   
+    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem)                   
     def showOutDefinitions(self, target, context):
         "Show definitions that reach the block output (in Reaching Definitions)."
         
@@ -376,6 +379,24 @@ class ControlFlowDiagram (diagram.Diagram):
                 outDefs.update(outs[fromBlock].keys())
         print outDefs
 
+    @action.Action('controlflowdiagram-lv-show-in', label='Show IN', targetClass=BlockItem)                   
+    def showLVInDefinitions(self, target, context):
+        "Show uses that the block input has (in Live Variables)."
+        
+        ocItem = target
+        block = ocItem.block
+        code = block.model.code
+        diagram = context
+        
+        dfService = core.getService('DataflowService')
+        ins, outs = dfService.getLiveVariables(code)
+
+        blockGraph = diagram._hgraph
+        inUses = set()
+        for edge in blockGraph.inEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                inUses.update(ins[toBlock].keys())
+        print inUses
 
     @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem)
     def showUsedDefinitions(self, target, context):

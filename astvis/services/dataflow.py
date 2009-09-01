@@ -11,6 +11,7 @@ class DataflowService(core.Service):
         core.Service.__init__(self)
 
         self._reachingDefinitions = {} # astScope -> (ins, outs)
+        self._liveVariables = {} # astScope -> (ins, outs)
 
     @action.Action('ast-reaching-definitions',"Reaching defs",targetClass=ast.ASTObject)
     def getReachingDefinitions(self, astNode, context=None):
@@ -104,12 +105,99 @@ class DataflowService(core.Service):
 
         return outDefs
 
-    def _update(self, toDefs, fromDefs):
-        "Update IN definitions from OUT definitions."
-        for name in fromDefs.keys():
-            if not toDefs.has_key(name):
-                toDefs[name] = set()
-            toDefs[name].update(fromDefs[name])
+    def _update(self, toData, fromData):
+        "Update IN definitions/OUT uses from OUT definitions/IN uses."
+        for name in fromData.keys():
+            if not toData.has_key(name):
+                toData[name] = set()
+            toData[name].update(fromData[name])
+
+    def _backTransform(self, outUses, block):
+        """Transform function for the 'live variables' algorithm.
+        """
+
+        astWalkerService = core.getService('ASTTreeWalker')
+
+        inUses = dict(outUses)
+
+        executions = list(block.executions)
+        n = len(executions)
+        executions.reverse()
+        for i,execution in enumerate(executions):
+            refs = astWalkerService.getReferencesFrom(execution)
+            for ref in refs:
+                if isinstance(ref, ast.Statement) and ref.type=='call' \
+                       or isinstance(ref, ast.Call):
+                    pass # ignore calls
+                else:
+                    isA = ref.isAssignment()
+                    if isA is None or isA==False: # consider unknown as read
+                        # replace the previous use
+                        name = ref.name.lower()
+                        inUses[name] = set([(block,n-1-i)])
+
+        return inUses
+
+
+    def getLiveVariables(self, astNode, context=None):
+        """For each basic block calculates (variable) uses that are reached from this code location.
+        
+        @return: (ins, outs) - uses on enter/leave of each basic block
+        @rtype: (d, d) where d = {block: set((block, indexInBlock))}
+        """
+        
+        astScope = astNode.model.getScope(astNode, False)
+        # check for cached version
+        if self._liveVariables.has_key(astScope):
+            return self._liveVariables[astScope]
+
+        # else calculate
+        localEntities = []
+        for decl in astScope.declarationBlock.statements:
+            localEntities.extend(decl.entities)
+
+        localNames = map(lambda e:e.name.lower(), localEntities)
+        cfservice = core.getService('ControlflowService')
+        flowModel = cfservice.getModel(astScope)
+
+        ins = {} # { block: {name: set((block,indexInBlock))}}
+        outs = {} # { block: {name: set((block,indexInBlock))]}}
+
+        # some help functions
+        def IN(block, createNew=True):
+            if not ins.has_key(block):
+                if not createNew:
+                    return None
+                ins[block] = {}
+            return ins[block]
+
+        def OUT(block):
+            if not outs.has_key(block):
+                outs[block] = {}
+            return outs[block]
+
+        # start main loop which works until converging of IN/OUT states
+        
+        working = [] # blocks that have their OUT redefined
+        working.append(flowModel._endBlock)
+
+        while working:
+            block = working.pop()
+            outUses = OUT(block)
+            oldInUses = IN(block, False)
+            inUses = self._backTransform(outUses, block)
+            changed = (inUses != oldInUses)
+            if changed:
+                ins[block] = inUses
+                # OUT has changed since the last try
+                #  add following basic blocks to the working set as their INs change
+                for prevBlock in block.getPreviousBasicBlocks():
+                    prevOutUses = OUT(prevBlock)
+                    self._update(prevOutUses, inUses)
+                    working.append(prevBlock)
+
+        self._liveVariables[astScope] = (ins, outs)
+        return ins, outs
 
     def getActiveDefinitionsByBlock(self, block):
         """Return all references and calls in the control flow block.
