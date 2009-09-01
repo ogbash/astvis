@@ -85,12 +85,22 @@ class DataflowService(core.Service):
         @todo: for arrays - add the new, not replace the previous, definition
         """
 
+        astWalkerService = core.getService('ASTTreeWalker')
+
         outDefs = dict(inDefs)
+        
         for i,execution in enumerate(block.executions):
-            if isinstance(execution, ast.Assignment):
-                # replace the previous definition
-                assignName = execution.target.name.lower()
-                outDefs[assignName] = set([(block,i)])
+            refs = astWalkerService.getReferencesFrom(execution)
+            for ref in refs:
+                if isinstance(ref, ast.Statement) and ref.type=='call' \
+                       or isinstance(ref, ast.Call):
+                    pass # ignore calls
+                else:
+                    isA = ref.isAssignment()
+                    if isA is None or isA: # consider unknown as write
+                        # replace the previous definition
+                        assignName = ref.name.lower()
+                        outDefs[assignName] = set([(block,i)])
 
         return outDefs
 
