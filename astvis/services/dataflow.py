@@ -18,7 +18,7 @@ class DataflowService(core.Service):
         """For each basic block calculates (variable) definitions that reach this code location.
         
         @return: (ins, outs) - definitions on enter/leave of each basic block
-        @rtype: (d, d) where d = {block: set((block, indexInBlock))}
+        @rtype: (d, d) where d = {block: {name: set((block, indexInBlock))}}
         """
         
         astScope = astNode.model.getScope(astNode, False)
@@ -295,3 +295,14 @@ class DataflowService(core.Service):
         block.itertree(iterExecutions)
 
         return usedDefs
+
+
+    def getDefinedUses(self, block):
+        "For every definition in the block calculate potential uses."
+
+        rdIns, rdOuts = self.getReachingDefinitions(block.model.code)
+        lvIns, lvOuts = self.getLiveVariables(block.model.code)
+
+        defdUses = {} # use (e.g. Reference) -> set(Definitions)
+
+        return defdUses

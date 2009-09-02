@@ -108,11 +108,12 @@ class ControlFlowDiagram (diagram.Diagram):
       <menuitem action="controlflowdiagram-show-references"/>
       <menuitem action="controlflowdiagram-hide-references"/>
       <separator/>
-      <menu action="analysis-rd">
-        <menuitem action="controlflowdiagram-show-out"/>
-        <menuitem action="controlflowdiagram-show-useddef"/>
-      </menu>
-      <menu action="analysis-lv">
+      <menu action="analysis">
+        <menuitem action="controlflowdiagram-show-usedef"/>
+        <menuitem action="controlflowdiagram-show-defuse"/>
+        <separator/>
+        <menuitem action="controlflowdiagram-rd-show-defs"/>
+        <menuitem action="controlflowdiagram-rd-show-out"/>
         <menuitem action="controlflowdiagram-lv-show-in"/>
       </menu>
     </popup>
@@ -129,8 +130,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 targetClasses = [BlockItem])
 
             # add actions for menu
-            cls.ACTION_GROUP.addAction(action.Action('analysis-rd', "Reaching definitions"))
-            cls.ACTION_GROUP.addAction(action.Action('analysis-lv', "Live variables"))
+            cls.ACTION_GROUP.addAction(action.Action('analysis', "Analysis"))
             
         return cls.ACTION_GROUP
 
@@ -360,7 +360,7 @@ class ControlFlowDiagram (diagram.Diagram):
             service = core.getService('DataflowService')
             service.getActiveDefinitionsByBlock(block)
 
-    @action.Action('controlflowdiagram-show-out', label='Show OUT', targetClass=BlockItem)                   
+    @action.Action('controlflowdiagram-rd-show-out', label='Show RD outs', targetClass=BlockItem)
     def showOutDefinitions(self, target, context):
         "Show definitions that reach the block output (in Reaching Definitions)."
         
@@ -379,7 +379,48 @@ class ControlFlowDiagram (diagram.Diagram):
                 outDefs.update(outs[fromBlock].keys())
         print outDefs
 
-    @action.Action('controlflowdiagram-lv-show-in', label='Show IN', targetClass=BlockItem)                   
+    @action.Action('controlflowdiagram-rd-show-defs', label='Block definitions', targetClass=BlockItem)
+    def showBlockDefinitions(self, target, context):
+        "Show definitions that reach the block output (in Reaching Definitions)."
+        
+        ocItem = target
+        block = ocItem.block
+        code = block.model.code
+        diagram = context
+        
+        dfService = core.getService('DataflowService')
+        ins, outs = dfService.getReachingDefinitions(code)
+
+        def updateSum(dict1, dict2, sumf=set.union):
+            "Update dict1 by adding (not replacing) values from dict2."
+            for key in dict2.keys():
+                if not dict1.has_key(key):
+                    dict1[key] = dict2[key]
+                else:
+                    dict1[key] = sumf(dict1[key], dict2[key])
+
+        blockGraph = diagram._hgraph
+        # calculate all in definitions
+        inDefs = {}
+        for edge in blockGraph.inEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                updateSum(inDefs, ins[toBlock])        
+        # calculate all out definitions
+        outDefs = {}
+        for edge in blockGraph.outEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                updateSum(outDefs, outs[fromBlock])
+
+        # block definitions are those which in outDefs but not in inDefs
+        blockDefs = {}
+        for name in outDefs.keys():
+            defs = outDefs[name]-inDefs.get(name, set())
+            if defs:
+                blockDefs[name] = defs
+
+        print blockDefs
+
+    @action.Action('controlflowdiagram-lv-show-in', label='Show LV ins', targetClass=BlockItem)
     def showLVInDefinitions(self, target, context):
         "Show uses that the block input has (in Live Variables)."
         
@@ -398,7 +439,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 inUses.update(ins[toBlock].keys())
         print inUses
 
-    @action.Action('controlflowdiagram-show-useddef', label='Used defs', targetClass=BlockItem)
+    @action.Action('controlflowdiagram-show-usedef', label='Used definitions', targetClass=BlockItem)
     def showUsedDefinitions(self, target, context):
         "Show used (variable) definitions for the block (Use-Definition chain)."
         
@@ -407,6 +448,15 @@ class ControlFlowDiagram (diagram.Diagram):
         dfService = core.getService('DataflowService')
         usedDefs = dfService.getUsedDefinitions(ocItem.block)
         self.project.root.openUsedDefinitionsList(self, ocItem.block, usedDefs)
+
+    @action.Action('controlflowdiagram-show-defuse', label='Defined uses', targetClass=BlockItem)
+    def showDefinedUses(self, target, context):
+        ocItem = target
+        
+        dfService = core.getService('DataflowService')
+        defdUses = dfService.getDefinedUses(ocItem.block)
+        print defdUses
+        #self.project.root.openUsedDefinitionsList(self, ocItem.block, usedDefs)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
