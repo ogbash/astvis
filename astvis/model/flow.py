@@ -81,6 +81,13 @@ class Block(object):
             b.itertree(callback)
         callback(self)
 
+    def hasInside(self, block):
+        if block==self:
+            return True
+        if block.parentBlock!=None:
+            return self.hasInside(block.parentBlock)
+        return False
+
 class BasicBlock(Block):
 
     def __init__(self, model, parentBlock, executions):

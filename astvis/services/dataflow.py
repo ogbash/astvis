@@ -134,7 +134,7 @@ class DataflowService(core.Service):
                     if isA is None or isA==False: # consider unknown as read
                         # replace the previous use
                         name = ref.name.lower()
-                        inUses[name] = set([(block,n-1-i)])
+                        inUses[name] = set([(block,n-1-i,ref)])
 
         return inUses
 
@@ -143,7 +143,7 @@ class DataflowService(core.Service):
         """For each basic block calculates (variable) uses that are reached from this code location.
         
         @return: (ins, outs) - uses on enter/leave of each basic block
-        @rtype: (d, d) where d = {block: set((block, indexInBlock))}
+        @rtype: (d, d) where d = {block: {name: set((block, indexInBlock))}}
         """
         
         astScope = astNode.model.getScope(astNode, False)
@@ -160,8 +160,8 @@ class DataflowService(core.Service):
         cfservice = core.getService('ControlflowService')
         flowModel = cfservice.getModel(astScope)
 
-        ins = {} # { block: {name: set((block,indexInBlock))}}
-        outs = {} # { block: {name: set((block,indexInBlock))]}}
+        ins = {} # { block: {name: set((block,indexInBlock,astNode))}}
+        outs = {} # { block: {name: set((block,indexInBlock,astNode))}}
 
         # some help functions
         def IN(block, createNew=True):
@@ -251,13 +251,6 @@ class DataflowService(core.Service):
             pass
         data = Data() # solve problem with closures
         data.block = None
-
-        def isInside(defBlock):
-            if defBlock==block:
-                return True
-            if defBlock.parentBlock!=None:
-                return isInside(defBlock.parentBlock)
-            return False
         
         def matchReference(node):
             if isinstance(node, ast.Reference) and node.base==None \
@@ -270,7 +263,7 @@ class DataflowService(core.Service):
                 if ins[data.block].has_key(name):
                     for defBlock, defIndex in ins[data.block][name]:
                         # check that definition is outside of our initial block
-                        if not isInside(defBlock):
+                        if not block.hasInside(defBlock):
                             if not usedDefs.has_key(name):
                                 usedDefs[name] = {}
                             execution = (defBlock.executions[defIndex], defBlock, defIndex)
@@ -300,10 +293,35 @@ class DataflowService(core.Service):
     def getDefinedUses(self, block):
         "For every definition in the block calculate potential uses."
 
-        rdIns, rdOuts = self.getReachingDefinitions(block.model.code)
-        lvIns, lvOuts = self.getLiveVariables(block.model.code)
-
         defdUses = {} # use (e.g. Reference) -> set(Definitions)
+
+        code = block.model.code
+        rdIns, rdOuts = self.getReachingDefinitions(code)
+        lvIns, lvOuts = self.getLiveVariables(code)
+
+        # create block graph to get edges leaving the block
+        mainBlock = block.model.block
+        blockGraph = flow.BlockGraph(set([mainBlock]), block.model.getConnections())
+        if block.parentBlock != None:
+            blockGraph.unfold(block.parentBlock)
+
+        # for each edge leaving the block match
+        #  reaching definitions and live variables
+        for edge in blockGraph.outEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]: # for each edge
+                for name in lvOuts[fromBlock].keys(): # for each live variable on the edge
+                    if name in rdOuts[fromBlock].keys():
+                        # for each reaching definition of the variable
+                        for defBlock, defIndex in rdOuts[fromBlock][name]:
+                            if block.hasInside(defBlock):
+                                if not defdUses.has_key(name):
+                                    defdUses[name] = {}
+                                definition = (defBlock.executions[defIndex], defBlock, defIndex)
+                                if not defdUses[name].has_key(definition):
+                                    defdUses[name][definition] = set()
+                                # for each use of live variable
+                                for refBlock, refIndex, refNode in lvOuts[fromBlock][name]:
+                                    defdUses[name][definition].add((refBlock, refIndex, refNode))
 
         return defdUses
 
