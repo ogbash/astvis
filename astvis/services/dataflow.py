@@ -306,3 +306,40 @@ class DataflowService(core.Service):
         defdUses = {} # use (e.g. Reference) -> set(Definitions)
 
         return defdUses
+
+    def getBlockDefinitions(self, block):
+        code = block.model.code
+        ins, outs = self.getReachingDefinitions(code)
+
+        def updateSum(dict1, dict2, sumf=set.union):
+            "Update dict1 by adding (not replacing) values from dict2."
+            for key in dict2.keys():
+                if not dict1.has_key(key):
+                    dict1[key] = dict2[key]
+                else:
+                    dict1[key] = sumf(dict1[key], dict2[key])
+
+        mainBlock = block.model.block
+        blockGraph = flow.BlockGraph(set([mainBlock]), block.model.getConnections())
+        if block.parentBlock != None:
+            blockGraph.unfold(block.parentBlock)
+        
+        # calculate all in definitions
+        inDefs = {}
+        for edge in blockGraph.inEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                updateSum(inDefs, ins[toBlock])        
+        # calculate all out definitions
+        outDefs = {}
+        for edge in blockGraph.outEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]:
+                updateSum(outDefs, outs[fromBlock])
+
+        # block definitions are those which in outDefs but not in inDefs
+        blockDefs = {}
+        for name in outDefs.keys():
+            defs = outDefs[name]-inDefs.get(name, set())
+            if defs:
+                blockDefs[name] = defs
+
+        return blockDefs

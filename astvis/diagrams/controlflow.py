@@ -385,38 +385,10 @@ class ControlFlowDiagram (diagram.Diagram):
         
         ocItem = target
         block = ocItem.block
-        code = block.model.code
         diagram = context
         
         dfService = core.getService('DataflowService')
-        ins, outs = dfService.getReachingDefinitions(code)
-
-        def updateSum(dict1, dict2, sumf=set.union):
-            "Update dict1 by adding (not replacing) values from dict2."
-            for key in dict2.keys():
-                if not dict1.has_key(key):
-                    dict1[key] = dict2[key]
-                else:
-                    dict1[key] = sumf(dict1[key], dict2[key])
-
-        blockGraph = diagram._hgraph
-        # calculate all in definitions
-        inDefs = {}
-        for edge in blockGraph.inEdges[block]:
-            for fromBlock, toBlock in blockGraph.edges[edge]:
-                updateSum(inDefs, ins[toBlock])        
-        # calculate all out definitions
-        outDefs = {}
-        for edge in blockGraph.outEdges[block]:
-            for fromBlock, toBlock in blockGraph.edges[edge]:
-                updateSum(outDefs, outs[fromBlock])
-
-        # block definitions are those which in outDefs but not in inDefs
-        blockDefs = {}
-        for name in outDefs.keys():
-            defs = outDefs[name]-inDefs.get(name, set())
-            if defs:
-                blockDefs[name] = defs
+        blockDefs = dfService.getBlockDefinitions(block)
 
         print blockDefs
 
