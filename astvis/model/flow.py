@@ -439,3 +439,29 @@ class BlockGraph(HierarchicalGraph):
 
     def _getChildren(self, block):
         return block.subBlocks
+
+class Location(object):
+    def __init__(self, block, index):
+        self.block = block
+        self.index = index
+
+    def __eq__(self, obj):
+        return self.block==obj.block and self.index==obj.index
+
+    def __hash__(self):
+        return hash((self.block, self.index))
+
+    def getStatement(self):
+        return self.block.executions[self.index]
+
+class ASTLocation(Location):
+
+    def __init__(self, block, index, astObject):
+        super(ASTLocation, self).__init__(block, index)
+        self.astObject = astObject
+
+    def __eq__(self, obj):
+        return super(ASTLocation, self).__eq__(obj) and self.astObject==obj.astObject
+
+    def __hash__(self):
+        return hash((super(ASTLocation,self).__hash__(), self.astObject))

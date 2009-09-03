@@ -58,15 +58,16 @@ class UsedDefinitionsList(BaseWidget):
         names.sort()
         for name in names:
             iName = self.model.append(None, (name, (name, usedDefs[name])))
-            for key in usedDefs[name].keys():
-                definition, defBlock, defIndex = key
+            for defLoc in usedDefs[name].keys():
+                definition = defLoc.getStatement()
                 iDef = self.model.append(iName, (str(definition), \
-                                                 (definition, (defBlock, defIndex, usedDefs[name][key]))))
-                for reference in usedDefs[name][key]:
+                                                 (definition, defLoc)))
+                for reference in usedDefs[name][defLoc]:
                     self.model.append(iDef, (str(reference), reference))
 
     def _selectionChanged(self, selection):
         _model, iRow = selection.get_selected()
+        obj = None
         if iRow!=None:
             obj = _model[iRow][1]
             if isinstance(obj, tuple):

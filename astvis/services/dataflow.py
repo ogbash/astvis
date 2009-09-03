@@ -101,7 +101,7 @@ class DataflowService(core.Service):
                     if isA is None or isA: # consider unknown as write
                         # replace the previous definition
                         assignName = ref.name.lower()
-                        outDefs[assignName] = set([(block,i)])
+                        outDefs[assignName] = set([flow.ASTLocation(block,i,ref)])
 
         return outDefs
 
@@ -134,7 +134,7 @@ class DataflowService(core.Service):
                     if isA is None or isA==False: # consider unknown as read
                         # replace the previous use
                         name = ref.name.lower()
-                        inUses[name] = set([(block,n-1-i,ref)])
+                        inUses[name] = set([flow.ASTLocation(block,n-1-i,ref)])
 
         return inUses
 
@@ -261,15 +261,14 @@ class DataflowService(core.Service):
                     return # the variable is defined in our basic block
                 
                 if ins[data.block].has_key(name):
-                    for defBlock, defIndex in ins[data.block][name]:
+                    for defLoc in ins[data.block][name]:
                         # check that definition is outside of our initial block
-                        if not block.hasInside(defBlock):
+                        if not block.hasInside(defLoc.block):
                             if not usedDefs.has_key(name):
                                 usedDefs[name] = {}
-                            execution = (defBlock.executions[defIndex], defBlock, defIndex)
-                            if not usedDefs[name].has_key(execution):
-                                usedDefs[name][execution] = set()
-                            usedDefs[name][execution].add((node, data.block))
+                            if not usedDefs[name].has_key(defLoc):
+                                usedDefs[name][defLoc] = set()
+                            usedDefs[name][defLoc].add((node, data.block))
 
             elif isinstance(node, ast.Assignment):
                 name = node.target.getPrimaryBase().name.lower()
@@ -312,16 +311,14 @@ class DataflowService(core.Service):
                 for name in lvOuts[fromBlock].keys(): # for each live variable on the edge
                     if name in rdOuts[fromBlock].keys():
                         # for each reaching definition of the variable
-                        for defBlock, defIndex in rdOuts[fromBlock][name]:
-                            if block.hasInside(defBlock):
+                        for defLoc in rdOuts[fromBlock][name]:
+                            if block.hasInside(defLoc.block):
                                 if not defdUses.has_key(name):
                                     defdUses[name] = {}
-                                definition = (defBlock.executions[defIndex], defBlock, defIndex)
-                                if not defdUses[name].has_key(definition):
-                                    defdUses[name][definition] = set()
+                                if not defdUses[name].has_key(defLoc):
+                                    defdUses[name][defLoc] = set()
                                 # for each use of live variable
-                                for refBlock, refIndex, refNode in lvOuts[fromBlock][name]:
-                                    defdUses[name][definition].add((refBlock, refIndex, refNode))
+                                defdUses[name][defLoc].update(lvOuts[fromBlock][name])
 
         return defdUses
 
