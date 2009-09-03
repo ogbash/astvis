@@ -251,6 +251,7 @@ class DataflowService(core.Service):
             pass
         data = Data() # solve problem with closures
         data.block = None
+        data.index = None
         
         def matchReference(node):
             if isinstance(node, ast.Reference) and node.base==None \
@@ -268,7 +269,7 @@ class DataflowService(core.Service):
                                 usedDefs[name] = {}
                             if not usedDefs[name].has_key(defLoc):
                                 usedDefs[name][defLoc] = set()
-                            usedDefs[name][defLoc].add((node, data.block))
+                            usedDefs[name][defLoc].add(flow.ASTLocation(data.block, data.index, node))
 
             elif isinstance(node, ast.Assignment):
                 name = node.target.getPrimaryBase().name.lower()
@@ -280,9 +281,11 @@ class DataflowService(core.Service):
                 if not ins.has_key(block):
                     return
                 data.block = block
+                data.index = 0
                 defsInBlock.clear()
                 for execution in block.executions:
                     execution.itertree(matchReference)
+                    data.index += 1
 
         block.itertree(iterExecutions)
 

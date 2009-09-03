@@ -62,8 +62,10 @@ class UsedDefinitionsList(BaseWidget):
                 definition = defLoc.getStatement()
                 iDef = self.model.append(iName, (str(definition), \
                                                  (definition, defLoc)))
-                for reference in usedDefs[name][defLoc]:
-                    self.model.append(iDef, (str(reference), reference))
+                for refLoc in usedDefs[name][defLoc]:
+                    reference = refLoc.astObject
+                    self.model.append(iDef, (str(reference), \
+                                             (reference, refLoc)))
 
     def _selectionChanged(self, selection):
         _model, iRow = selection.get_selected()

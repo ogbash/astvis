@@ -427,8 +427,7 @@ class ControlFlowDiagram (diagram.Diagram):
         
         dfService = core.getService('DataflowService')
         defdUses = dfService.getDefinedUses(ocItem.block)
-        print defdUses
-        #self.project.root.openUsedDefinitionsList(self, ocItem.block, usedDefs)
+        self.project.root.openUsedDefinitionsList(self, ocItem.block, defdUses)
         
 class GeneralBlockItem(RectangleItem, BlockItem):
 
