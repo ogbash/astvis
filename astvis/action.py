@@ -307,10 +307,20 @@ def getMenu(gtkActionGroup, menuName):
     menu=actionGroup.manager.ui.get_widget("/%s"%menuName)
 
     # add actions that are not in UI description
-    menuActions = filter(lambda x: x!=None,
-                         map(lambda x: x.get_action(),
-                             menu.get_children()))
-    actionNames = map(lambda x: x.get_name(), menuActions)
+    def collectNames(menu):
+        names = set()
+        for child in menu.get_children():
+            action = child.get_action()
+            if action is not None:
+                names.add(action.get_name())
+            
+            # recursively
+            if isinstance(child, gtk.MenuItem) and child.get_submenu()!=None:
+                names.update(collectNames(child.get_submenu()))
+        return names    
+    actionNames = collectNames(menu)
+        
+    #actionNames = map(lambda x: x.get_name(), menuActions)
     menu = generateMenu(gtkActionGroup, menu, actionNames)
     return menu
 
