@@ -130,6 +130,9 @@ class DataflowService(core.Service):
         """Transform function for the 'live variables' algorithm.
         """
 
+        if isinstance(block, flow.EndBlock):
+            return self._backTransformWithEndBlock(outUses, block)
+
         astWalkerService = core.getService('ASTTreeWalker')
 
         inUses = dict(outUses)
@@ -149,6 +152,24 @@ class DataflowService(core.Service):
                         # replace the previous use
                         name = ref.name.lower()
                         inUses[name] = set([flow.ASTLocation(block,n-1-i,ref)])
+
+        return inUses
+
+    def _backTransformWithEndBlock(self, outUses, block):
+        inUses = dict(outUses)
+
+        code = block.model.code
+        if isinstance(code, ast.Subprogram):
+            # set out definitions
+            basicModel = code.model.basicModel
+            basicObj = basicModel.getObjectByASTObject(code)
+            for name in code.parameters:
+                var = basicObj.variables[name.lower()]
+                if var.intent=='in':
+                    continue
+                astObj = var.astObjects[0]
+                index = code.declarationBlock.statements.index(astObj)
+                inUses[name.lower()] = set([flow.ASTLocation(block,index,astObj)])
 
         return inUses
 

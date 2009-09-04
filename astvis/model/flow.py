@@ -452,7 +452,7 @@ class Location(object):
         return hash((self.block, self.index))
 
     def getStatement(self):
-        if isinstance(self.block, StartBlock):
+        if isinstance(self.block, (StartBlock, EndBlock)):
             return self.block.model.code.declarationBlock.statements[self.index]
         else:
             return self.block.executions[self.index]
