@@ -160,6 +160,17 @@ hild(0).getText();
 		handler.startElement("", "", type.name().toLowerCase(), attrs);
 		
 		getLocation().generateXML(handler);
+
+		attrs.clear();
+		attrs.addAttribute("","","count", "", ""+argumentNames.size());
+		handler.startElement("", "", "parameters", attrs);
+		for(String name: argumentNames) {
+			attrs.clear();
+			attrs.addAttribute("","","name", "", name);
+			handler.startElement("", "", "parameter", attrs);
+			handler.endElement("", "", "parameter");
+		}
+		handler.endElement("", "", "parameters");
 		
 		super.generateXML(handler);
 				

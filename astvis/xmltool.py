@@ -46,6 +46,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startProgramUnit(name, attrs)
         elif name in ("subroutine", "function"):
             self.startSubprogram(attrs)
+        elif name in ("parameter",):
+            self.startParameter(attrs)
         elif name in ("block",):
             self.startBlock(attrs)
         elif name in ("declaration",):
@@ -105,6 +107,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endProgramUnit()
         elif name in ("subroutine", "function"):
             self.endSubprogram()
+        elif name in ("parameter",):
+            self.endParameter()
         elif name in ("block",):
             self.endBlock()
         elif name in ("declaration",):
@@ -209,6 +213,12 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endSubprogram(self):
         del self.contexts[-1]
         
+    def startParameter(self, attrs):
+        self.contexts[-1].parameters.append(attrs['name'])
+
+    def endParameter(self):
+        pass
+    
     def startBlock(self, attrs):
         if len(self.statements)>0:
             block = Block(self.astModel, self.statements[-1])

@@ -23,6 +23,16 @@
 <begin tokenIndex="26" line="182" column="2"/>
 <end tokenIndex="7719" line="1473" column="32"/>
 </location>
+<parameters count="8">
+<parameter name="A"/>
+<parameter name="neighood"/>
+<parameter name="minaggrsize"/>
+<parameter name="maxaggrsize"/>
+<parameter name="alpha"/>
+<parameter name="Afine"/>
+<parameter name="M"/>
+<parameter name="plotting"/>
+</parameters>
 <use id="CoarseAllgathers"/>
 <use id="globals"/>
 <use id="Mesh_class"/>

@@ -266,6 +266,7 @@ class Subprogram(Code):
         Code.__init__(self, model)
         self.parent = parent
         self.name = '<unknown>'
+        self.parameters = []
 
     def getChildren(self):
         children = []
