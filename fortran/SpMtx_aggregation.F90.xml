@@ -47,6 +47,7 @@
 <begin tokenIndex="61" line="189" column="4"/>
 <end tokenIndex="72" line="189" column="35"/>
 </location>
+<attribute type="INTENT" intent="INOUT"/>
 <type>
 <name>SpMtx</name>
 </type>
@@ -61,6 +62,7 @@
 <begin tokenIndex="74" line="190" column="4"/>
 <end tokenIndex="81" line="190" column="34"/>
 </location>
+<attribute type="INTENT" intent="IN"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -75,6 +77,8 @@
 <begin tokenIndex="83" line="194" column="4"/>
 <end tokenIndex="94" line="194" column="58"/>
 </location>
+<attribute type="OPTIONAL"/>
+<attribute type="INTENT" intent="IN"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -92,6 +96,7 @@
 <begin tokenIndex="96" line="195" column="4"/>
 <end tokenIndex="108" line="195" column="37"/>
 </location>
+<attribute type="INTENT" intent="IN"/>
 <type>
 <name>REAL</name>
 <kind>
@@ -114,6 +119,8 @@
 <begin tokenIndex="110" line="196" column="4"/>
 <end tokenIndex="122" line="196" column="47"/>
 </location>
+<attribute type="OPTIONAL"/>
+<attribute type="INTENT" intent="INOUT"/>
 <type>
 <name>SpMtx</name>
 </type>
@@ -128,6 +135,7 @@
 <begin tokenIndex="124" line="198" column="4"/>
 <end tokenIndex="131" line="198" column="32"/>
 </location>
+<attribute type="OPTIONAL"/>
 <type>
 <name>Mesh</name>
 </type>
@@ -142,6 +150,7 @@
 <begin tokenIndex="133" line="199" column="4"/>
 <end tokenIndex="137" line="199" column="32"/>
 </location>
+<attribute type="OPTIONAL"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -156,6 +165,8 @@
 <begin tokenIndex="139" line="201" column="4"/>
 <end tokenIndex="148" line="201" column="49"/>
 </location>
+<attribute type="ALLOCATABLE"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -170,6 +181,8 @@
 <begin tokenIndex="150" line="202" column="4"/>
 <end tokenIndex="161" line="202" column="49"/>
 </location>
+<attribute type="POINTER"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -215,6 +228,8 @@
 <begin tokenIndex="171" line="206" column="4"/>
 <end tokenIndex="180" line="206" column="47"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="ALLOCATABLE"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -331,6 +346,8 @@
 <begin tokenIndex="234" line="210" column="4"/>
 <end tokenIndex="245" line="210" column="55"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -348,6 +365,8 @@
 <begin tokenIndex="247" line="211" column="4"/>
 <end tokenIndex="256" line="211" column="45"/>
 </location>
+<attribute type="POINTER"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -362,6 +381,8 @@
 <begin tokenIndex="258" line="212" column="4"/>
 <end tokenIndex="269" line="212" column="60"/>
 </location>
+<attribute type="ALLOCATABLE"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -431,6 +452,8 @@
 <begin tokenIndex="295" line="215" column="4"/>
 <end tokenIndex="306" line="215" column="58"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -448,6 +471,8 @@
 <begin tokenIndex="308" line="216" column="4"/>
 <end tokenIndex="319" line="216" column="49"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -462,6 +487,8 @@
 <begin tokenIndex="321" line="218" column="4"/>
 <end tokenIndex="337" line="218" column="60"/>
 </location>
+<attribute type="POINTER"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>REAL</name>
 <kind>
@@ -509,6 +536,8 @@
 <begin tokenIndex="350" line="220" column="4"/>
 <end tokenIndex="363" line="220" column="72"/>
 </location>
+<attribute type="POINTER"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -610,6 +639,8 @@
 <begin tokenIndex="398" line="228" column="4"/>
 <end tokenIndex="412" line="228" column="56"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>REAL</name>
 <kind>
@@ -701,6 +732,8 @@
 <begin tokenIndex="444" line="232" column="4"/>
 <end tokenIndex="455" line="232" column="55"/>
 </location>
+<attribute type="POINTER"/>
+<attribute type="DIMENSION"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -732,6 +765,8 @@
 <begin tokenIndex="463" line="234" column="4"/>
 <end tokenIndex="474" line="234" column="49"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>INTEGER</name>
 </type>
@@ -766,6 +801,8 @@
 <begin tokenIndex="484" line="236" column="4"/>
 <end tokenIndex="493" line="236" column="41"/>
 </location>
+<attribute type="DIMENSION"/>
+<attribute type="POINTER"/>
 <type>
 <name>INTEGER</name>
 </type>

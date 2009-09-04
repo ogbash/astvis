@@ -4,13 +4,17 @@
 package ee.olegus.fortran.ast;
 
 import java.util.List;
+import org.xml.sax.helpers.AttributesImpl;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import ee.olegus.fortran.XMLGenerator;
 
 /**
  * Variable attribute.
  * @author olegus
  *
  */
-public class Attribute {
+public class Attribute implements XMLGenerator {
 	public enum Type {
 		PARAMETER,
 		POINTER,
@@ -64,4 +68,14 @@ public class Attribute {
 	public void setIntent(IntentType intent) {
 		this.intent = intent;
 	}	
+
+	public void generateXML(ContentHandler handler) throws SAXException {
+		AttributesImpl attrs = new AttributesImpl();
+		attrs.addAttribute("", "", "type", "", this.type.toString());
+		if(this.type==Type.INTENT) {
+			attrs.addAttribute("", "", "intent", "", this.intent.toString());
+		}
+		handler.startElement("", "", "attribute", attrs);
+		handler.endElement("", "", "attribute");
+	}
 }

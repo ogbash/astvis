@@ -479,6 +479,7 @@ class TypeDeclaration(Declaration):
         Declaration.__init__(self, model)
         self.decltype = '<unknown>'
         self.type = None
+        self.attributes = []
         self.entities = []
 
     def __str__(self):
@@ -612,6 +613,12 @@ class Entity(ASTObject):
     def __str__(self):
         return "%s" % self.name
 
+class Attribute(ASTObject):
+    def __init__(self, model, parent = None):
+        ASTObject.__init__(self, model)
+        self.parent = parent
+        self.type = None
+        self.intent = None
 
 class Use(ASTObject):
 

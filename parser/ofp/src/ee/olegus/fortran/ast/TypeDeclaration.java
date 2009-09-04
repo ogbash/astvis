@@ -58,9 +58,15 @@ public class TypeDeclaration extends Declaration implements XMLGenerator {
 		handler.startElement("", "", "declaration", attrs);
 		
 		super.generateXML(handler);
+
+		// attibutes
+		for(Attribute attribute: attributes) {
+			attribute.generateXML(handler);
+		}
 		
 		typeSpecification.generateXML(handler);
 		
+		// entities
 		if(entities != null && entities.size()>0) {
 			attrs.clear();
 			attrs.addAttribute("", "", "count", "", ""+entities.size());

@@ -52,6 +52,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.startBlock(attrs)
         elif name in ("declaration",):
             self.startDeclaration(attrs)
+        elif name in ("attribute",):
+            self.startAttribute(attrs)
         elif name in ("typedef",):
             self.startTypedef(attrs)
         elif name in ("statement",):
@@ -113,6 +115,8 @@ class XMLLoader(xml.sax.handler.ContentHandler):
             self.endBlock()
         elif name in ("declaration",):
             self.endDeclaration()
+        elif name in ("attribute",):
+            self.endAttribute()
         elif name in ("typedef",):
             self.endTypedef()
         elif name in ("statement",):
@@ -246,6 +250,18 @@ class XMLLoader(xml.sax.handler.ContentHandler):
     def endDeclaration(self):
         del self.statements[-1]
 
+    def startAttribute(self, attrs):
+        decl = self.statements[-1]
+        attr = Attribute(self.astModel)
+        attr.parent = decl
+        attr.type = attrs['type'].lower()
+        if attrs.has_key('intent'):
+            attr.intent = attrs['intent'].lower()
+            
+        decl.attributes.append(attr)
+
+    def endAttribute(self):
+        pass
 
     def startTypedef(self, attrs):
         block = len( self.blocks)>0 and self.blocks[-1][0] or self.contexts[-1]
