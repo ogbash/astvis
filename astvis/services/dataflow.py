@@ -27,17 +27,10 @@ class DataflowService(core.Service):
             return self._reachingDefinitions[astScope]
 
         # else calculate
-        localEntities = [] 
-        
-        for decl in astScope.declarationBlock.statements:
-            localEntities.extend(decl.entities)
-
-        localNames = map(lambda e:e.name.lower(), localEntities)
         cfservice = core.getService('ControlflowService')
         flowModel = cfservice.getModel(astScope)
-
-        ins = {} # { block: {name: set((block,indexInBlock))}}
-        outs = {} # { block: {name: set((block,indexInBlock))]}}
+        ins = {} # { block: {name: set(flow.ASTLocation)}}
+        outs = {} # { block: {name: set(flow.ASTLocation)}}
 
         # some help functions
         def IN(block):
@@ -55,7 +48,7 @@ class DataflowService(core.Service):
         # start main loop which works until converging of IN/OUT states
         
         working = [] # blocks that have their IN redefined
-        working.append(flowModel.block.getFirstBasicBlock())
+        working.append(flowModel._startBlock)
 
         while working:
             block = working.pop()
@@ -86,6 +79,9 @@ class DataflowService(core.Service):
         @todo: for arrays - add the new, not replace the previous, definition
         """
 
+        if isinstance(block, flow.StartBlock):
+            return self._transformWithStartBlock(inDefs, block)
+        
         astWalkerService = core.getService('ASTTreeWalker')
 
         outDefs = dict(inDefs)
@@ -102,6 +98,22 @@ class DataflowService(core.Service):
                         # replace the previous definition
                         assignName = ref.name.lower()
                         outDefs[assignName] = set([flow.ASTLocation(block,i,ref)])
+
+        return outDefs
+
+    def _transformWithStartBlock(self, inDefs, block):
+        outDefs = dict(inDefs)
+
+        code = block.model.code
+        if isinstance(code, ast.Subprogram):
+            # set out definitions
+            basicModel = code.model.basicModel
+            basicObj = basicModel.getObjectByASTObject(code)
+            for name in code.parameters:
+                var = basicObj.variables[name.lower()]
+                astObj = var.astObjects[0]
+                index = code.declarationBlock.statements.index(astObj)
+                outDefs[name.lower()] = set([flow.ASTLocation(block,index,astObj)])
 
         return outDefs
 

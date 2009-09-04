@@ -452,7 +452,10 @@ class Location(object):
         return hash((self.block, self.index))
 
     def getStatement(self):
-        return self.block.executions[self.index]
+        if isinstance(self.block, StartBlock):
+            return self.block.model.code.declarationBlock.statements[self.index]
+        else:
+            return self.block.executions[self.index]
 
 class ASTLocation(Location):
 
