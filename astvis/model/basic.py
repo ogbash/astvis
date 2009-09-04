@@ -237,9 +237,13 @@ class Variable(BasicObject):
         BasicObject.__init__(self, model)
         self.parent = None
         self.name = None
+        self.intent = None
         
     def scanDeclaration(self, astDecl):
         self.typename = astDecl.type.name.lower()
+        for attr in astDecl.attributes:
+            if attr.type=='intent':
+                self.intent = attr.intent
         self.astObjects.append(astDecl)
 
     def __str__(self):

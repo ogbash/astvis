@@ -111,6 +111,8 @@ class DataflowService(core.Service):
             basicObj = basicModel.getObjectByASTObject(code)
             for name in code.parameters:
                 var = basicObj.variables[name.lower()]
+                if var.intent=='out':
+                    continue
                 astObj = var.astObjects[0]
                 index = code.declarationBlock.statements.index(astObj)
                 outDefs[name.lower()] = set([flow.ASTLocation(block,index,astObj)])
