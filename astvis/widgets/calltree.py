@@ -46,18 +46,27 @@ class RowFactory:
 factory = RowFactory()
 
 class CallTree(BaseWidget):
+    UI_DESCRIPTION='''
+    <popup name="calltree-popup">
+      <menuitem action="show-ast-object"/>
+    </popup>
+    '''
+    
     @classmethod
     def getActionGroup(cls):
         if not hasattr(cls, 'ACTION_GROUP'):
             cls.ACTION_GROUP = action.ActionGroup(action.manager,
                                                   'call-tree',
+                                                  contextAdapter=cls.getSelected,
                                                   contextClass=CallTree,
-                                                  categories=['show'])
+                                                  targetClasses=[ast.ASTObject],
+                                                  categories=['calltree', 'show'])
         return cls.ACTION_GROUP
 
 
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer')
+        BaseWidget.__init__(self, 'call_tree', 'call_tree_outer',
+                            menuName='calltree-popup')
         self.root = root
         self.view = self.widget
         self.hide()
@@ -198,4 +207,3 @@ class CallTree(BaseWidget):
             for iObject in iObjects:
                 self.model[iObject][3] = gtk.gdk.color_parse("black")
         
-
