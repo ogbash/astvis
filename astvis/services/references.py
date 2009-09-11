@@ -80,7 +80,7 @@ class ASTTreeWalker(core.Service):
         def add(child):
             if isinstance(child, ast.Statement) and child.type=='call':
                 references.append(child)
-            elif isinstance(child, ast.Reference) and child.base is None:
+            elif isinstance(child, ast.Reference):
                 references.append(child)
             elif isinstance(child, ast.Call):
                 references.append(child)

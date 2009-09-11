@@ -457,6 +457,13 @@ class Location(object):
         else:
             return self.block.executions[self.index]
 
+    def __str__(self):
+        return "flow.ASTLocation(in %s at %d)" % (self.block, self.index)
+
+    
+    def __repr__(self):
+        return self.__str__()+"<%0x>"%id(self)
+
 class ASTLocation(Location):
 
     def __init__(self, block, index, astObject):

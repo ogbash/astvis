@@ -571,6 +571,13 @@ class Reference(Expression):
             return None
         return False
 
+    def isFinalComponent(self):
+        return not isinstance(self.parent, Reference)
+
+    def isPartial(self):
+        selfPartial = self.sections!=None and len(self.sections)>0
+        return selfPartial or self.base and self.base.isPartial()
+
     def getPrimaryBase(self):
         if self.base == None:
             return self

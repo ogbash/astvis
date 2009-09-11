@@ -57,7 +57,7 @@ class UsedDefinitionsList(BaseWidget):
         names = list(usedDefs.keys())
         names.sort()
         for name in names:
-            iName = self.model.append(None, (name, (name, usedDefs[name])))
+            iName = self.model.append(None, ("%".join(name), (name, usedDefs[name])))
             for defLoc in usedDefs[name].keys():
                 definition = defLoc.getStatement()
                 iDef = self.model.append(iName, (str(definition), \

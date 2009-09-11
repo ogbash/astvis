@@ -2,6 +2,7 @@
 
 from astvis import action, core
 from astvis.model import ast, flow
+from astvis.model.dataflow import LiveVariableDict, ReachingDefinitionDict
 
 __all__=['DataflowService']
 
@@ -35,14 +36,14 @@ class DataflowService(core.Service):
         # some help functions
         def IN(block):
             if not ins.has_key(block):
-                ins[block] = {}
+                ins[block] = ReachingDefinitionDict()
             return ins[block]
 
         def OUT(block, createNew=True):
             if not outs.has_key(block):
                 if not createNew:
                     return None
-                outs[block] = {}
+                outs[block] = ReachingDefinitionDict()
             return outs[block]
 
         # start main loop which works until converging of IN/OUT states
@@ -67,7 +68,7 @@ class DataflowService(core.Service):
                         #  i.e. there may exist empty block
                         continue 
                     nextInDefs = IN(nextBlock)
-                    self._update(nextInDefs, outDefs)
+                    nextInDefs.update(outDefs)
                     working.append(nextBlock)
 
         self._reachingDefinitions[astScope] = (ins, outs)
@@ -84,7 +85,7 @@ class DataflowService(core.Service):
         
         astWalkerService = core.getService('ASTTreeWalker')
 
-        outDefs = dict(inDefs)
+        outDefs = ReachingDefinitionDict(inDefs)
         
         for i,execution in enumerate(block.executions):
             refs = astWalkerService.getReferencesFrom(execution)
@@ -92,17 +93,24 @@ class DataflowService(core.Service):
                 if isinstance(ref, ast.Statement) and ref.type=='call' \
                        or isinstance(ref, ast.Call):
                     pass # ignore calls
-                else:
-                    isA = ref.isAssignment()
+                elif isinstance(ref, ast.Reference) and ref.isFinalComponent():
+                    isA = ref.getPrimaryBase().isAssignment()
                     if isA is None or isA: # consider unknown as write
                         # replace the previous definition
-                        assignName = ref.name.lower()
-                        outDefs[assignName] = set([flow.ASTLocation(block,i,ref)])
+                        names = []
+                        workRef = ref
+                        while workRef!=None:
+                            names.append(workRef.name.lower())
+                            workRef = workRef.base
+                        names.reverse()
+                        assignName = tuple(names)
+                        loc = flow.ASTLocation(block,i,ref)
+                        outDefs[assignName] = set([loc])
 
         return outDefs
 
     def _transformWithStartBlock(self, inDefs, block):
-        outDefs = dict(inDefs)
+        outDefs = ReachingDefinitionDict(inDefs)
 
         code = block.model.code
         if isinstance(code, ast.Subprogram):
@@ -115,7 +123,7 @@ class DataflowService(core.Service):
                     continue
                 astObj = var.astObjects[0]
                 index = code.declarationBlock.statements.index(astObj)
-                outDefs[name.lower()] = set([flow.ASTLocation(block,index,astObj)])
+                outDefs[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
 
         return outDefs
 
@@ -126,6 +134,16 @@ class DataflowService(core.Service):
                 toData[name] = set()
             toData[name].update(fromData[name])
 
+    def _getFullName(self, ref):        
+        names = []
+        workRef = ref
+        while workRef!=None:
+            names.append(workRef.name.lower())
+            workRef = workRef.base
+        names.reverse()
+        name = tuple(names)
+        return name
+
     def _backTransform(self, outUses, block):
         """Transform function for the 'live variables' algorithm.
         """
@@ -135,7 +153,7 @@ class DataflowService(core.Service):
 
         astWalkerService = core.getService('ASTTreeWalker')
 
-        inUses = dict(outUses)
+        inUses = LiveVariableDict(outUses)
 
         executions = list(block.executions)
         n = len(executions)
@@ -146,17 +164,26 @@ class DataflowService(core.Service):
                 if isinstance(ref, ast.Statement) and ref.type=='call' \
                        or isinstance(ref, ast.Call):
                     pass # ignore calls
-                else:
+                elif isinstance(ref, ast.Reference) and ref.isFinalComponent():
                     isA = ref.isAssignment()
+                    name = self._getFullName(ref)
+                    
+                    # if assignment, remove all uses that match
+                    if isA is None or isA==True: # consider unknown as write
+                        if not ref.isPartial():
+                            inUses.remove(name)
+
+                    # if not assignment, add this use
                     if isA is None or isA==False: # consider unknown as read
                         # replace the previous use
-                        name = ref.name.lower()
-                        inUses[name] = set([flow.ASTLocation(block,n-1-i,ref)])
+                        loc = flow.ASTLocation(block,n-1-i,ref)
+                        inUses.add(name,loc)
+
 
         return inUses
 
     def _backTransformWithEndBlock(self, outUses, block):
-        inUses = dict(outUses)
+        inUses = LiveVariableDict(outUses)
 
         code = block.model.code
         if isinstance(code, ast.Subprogram):
@@ -169,7 +196,7 @@ class DataflowService(core.Service):
                     continue
                 astObj = var.astObjects[0]
                 index = code.declarationBlock.statements.index(astObj)
-                inUses[name.lower()] = set([flow.ASTLocation(block,index,astObj)])
+                inUses[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
 
         return inUses
 
@@ -203,17 +230,17 @@ class DataflowService(core.Service):
             if not ins.has_key(block):
                 if not createNew:
                     return None
-                ins[block] = {}
+                ins[block] = LiveVariableDict()
             return ins[block]
 
         def OUT(block):
             if not outs.has_key(block):
-                outs[block] = {}
+                outs[block] = LiveVariableDict()
             return outs[block]
 
         # start main loop which works until converging of IN/OUT states
         
-        working = [] # blocks that have their OUT redefined
+        working = [] # blocks that have their IN redefined
         working.append(flowModel._endBlock)
 
         while working:
@@ -224,11 +251,11 @@ class DataflowService(core.Service):
             changed = (inUses != oldInUses)
             if changed:
                 ins[block] = inUses
-                # OUT has changed since the last try
-                #  add following basic blocks to the working set as their INs change
+                # IN has changed since the last try
+                #  add following basic blocks to the working set as their OUTs change
                 for prevBlock in block.getPreviousBasicBlocks():
                     prevOutUses = OUT(prevBlock)
-                    self._update(prevOutUses, inUses)
+                    prevOutUses.update(inUses)
                     working.append(prevBlock)
 
         self._liveVariables[astScope] = (ins, outs)
@@ -260,7 +287,7 @@ class DataflowService(core.Service):
                 if isinstance(ref, ast.Statement) and ref.type=='call' \
                        or isinstance(ref, ast.Call):
                     called.add(ref.name.lower())
-                else:
+                elif ref.base==None:
                     isA = ref.isAssignment()
                     if isA is None:
                         unknown.add(ref.name.lower())
@@ -346,17 +373,16 @@ class DataflowService(core.Service):
         #  reaching definitions and live variables
         for edge in blockGraph.outEdges[block]:
             for fromBlock, toBlock in blockGraph.edges[edge]: # for each edge
-                for name in lvOuts[fromBlock].keys(): # for each live variable on the edge
-                    if name in rdOuts[fromBlock].keys():
-                        # for each reaching definition of the variable
-                        for defLoc in rdOuts[fromBlock][name]:
-                            if block.hasInside(defLoc.block):
-                                if not defdUses.has_key(name):
-                                    defdUses[name] = {}
-                                if not defdUses[name].has_key(defLoc):
-                                    defdUses[name][defLoc] = set()
-                                # for each use of live variable
-                                defdUses[name][defLoc].update(lvOuts[fromBlock][name])
+                pairs = rdOuts[fromBlock].intersection(lvOuts[fromBlock])
+
+                for defLoc,refLoc in pairs:
+                    if block.hasInside(defLoc.block):
+                        name = self._getFullName(defLoc.astObject)
+                        if not defdUses.has_key(name):
+                            defdUses[name] = {}
+                        if not defdUses[name].has_key(defLoc):
+                            defdUses[name][defLoc] = set()
+                        defdUses[name][defLoc].add(refLoc)
 
         return defdUses
 
