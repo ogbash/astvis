@@ -200,6 +200,8 @@ class Scope(BasicObject):
                 variable = Variable(self.model)
                 variable.name = entity.name.lower()
                 variable.parent = self
+                if astDecl.type!=None:
+                    variable.astObject = entity
                 self.variables[variable.name] = variable
                 if LOG.isEnabledFor(FINER):
                     LOG.log(FINER, "Add %s to %s", variable, self)

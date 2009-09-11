@@ -121,8 +121,8 @@ class DataflowService(core.Service):
                 var = basicObj.variables[name.lower()]
                 if var.intent=='out':
                     continue
-                astObj = var.astObjects[0]
-                index = code.declarationBlock.statements.index(astObj)
+                astObj = var.astObject
+                index = code.declarationBlock.statements.index(astObj.parent)
                 outDefs[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
 
         return outDefs
@@ -194,8 +194,8 @@ class DataflowService(core.Service):
                 var = basicObj.variables[name.lower()]
                 if var.intent=='in':
                     continue
-                astObj = var.astObjects[0]
-                index = code.declarationBlock.statements.index(astObj)
+                astObj = var.astObject
+                index = code.declarationBlock.statements.index(astObj.parent)
                 inUses[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
 
         return inUses
@@ -308,48 +308,30 @@ class DataflowService(core.Service):
 
         usedDefs = {} # use (e.g. Reference) -> set(Definitions)
 
-        defsInBlock = set()
-        class Data:
-            pass
-        data = Data() # solve problem with closures
-        data.block = None
-        data.index = None
-        
-        def matchReference(node):
-            if isinstance(node, ast.Reference) and node.base==None \
-                   and not node.isAssignment():
-                name = node.name.lower()
+        code = block.model.code
+        rdIns, rdOuts = self.getReachingDefinitions(code)
+        lvIns, lvOuts = self.getLiveVariables(code)
 
-                if name in defsInBlock:
-                    return # the variable is defined in our basic block
-                
-                if ins[data.block].has_key(name):
-                    for defLoc in ins[data.block][name]:
-                        # check that definition is outside of our initial block
-                        if not block.hasInside(defLoc.block):
-                            if not usedDefs.has_key(name):
-                                usedDefs[name] = {}
-                            if not usedDefs[name].has_key(defLoc):
-                                usedDefs[name][defLoc] = set()
-                            usedDefs[name][defLoc].add(flow.ASTLocation(data.block, data.index, node))
+        # create block graph to get edges leaving the block
+        mainBlock = block.model.block
+        blockGraph = flow.BlockGraph(set([mainBlock]), block.model.getConnections())
+        if block.parentBlock != None:
+            blockGraph.unfold(block.parentBlock)
 
-            elif isinstance(node, ast.Assignment):
-                name = node.target.getPrimaryBase().name.lower()
-                defsInBlock.add(name)
-                
-                
-        def iterExecutions(block):
-            if isinstance(block, flow.BasicBlock):
-                if not ins.has_key(block):
-                    return
-                data.block = block
-                data.index = 0
-                defsInBlock.clear()
-                for execution in block.executions:
-                    execution.itertree(matchReference)
-                    data.index += 1
+        # for each edge leaving the block match
+        #  reaching definitions and live variables
+        for edge in blockGraph.outEdges[block]:
+            for fromBlock, toBlock in blockGraph.edges[edge]: # for each edge
+                pairs = rdIns[fromBlock].intersection(lvIns[fromBlock])
 
-        block.itertree(iterExecutions)
+                for defLoc,refLoc in pairs:
+                    if block.hasInside(refLoc.block):
+                        name = self._getFullName(defLoc.astObject)
+                        if not usedDefs.has_key(name):
+                            usedDefs[name] = {}
+                        if not usedDefs[name].has_key(defLoc):
+                            usedDefs[name][defLoc] = set()
+                        usedDefs[name][defLoc].add(refLoc)
 
         return usedDefs
 
