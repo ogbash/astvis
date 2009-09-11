@@ -27,6 +27,7 @@ class UsedDefinitionsList(BaseWidget):
 
     def __init__(self, root):
         super(UsedDefinitionsList, self).__init__('usedef_list',
+                                                  'usedef_list_outer',
                                                   menuName='usedef-popup')
 
         self.root = root

@@ -136,11 +136,15 @@ class DataflowService(core.Service):
 
     def _getFullName(self, ref):        
         names = []
-        workRef = ref
-        while workRef!=None:
-            names.append(workRef.name.lower())
-            workRef = workRef.base
-        names.reverse()
+        if isinstance(ref, ast.Reference):
+            workRef = ref
+            while workRef!=None:
+                names.append(workRef.name.lower())
+                workRef = workRef.base
+            names.reverse()
+        elif isinstance(ref, ast.Entity):
+            names = [ref.name.lower()]
+            
         name = tuple(names)
         return name
 
