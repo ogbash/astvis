@@ -7,7 +7,10 @@ _icon_factory.add_default()
 icon_dir = 'data/icons'
 _files = [('pointer', 'pointer24.png'),
           ('flow', 'flow24.png'),
-          ('use', 'use24.png')]
+          ('use', 'use24.png'),
+          ('split-vertical','split-vertical.png'),
+          ('split-horizontal','split-horizontal.png')
+          ]
 
 for iconId, filename in _files:
     set = gtk.IconSet()

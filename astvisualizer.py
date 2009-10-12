@@ -325,14 +325,16 @@ class MainWindow(object):
         diagram.setupView(view)
         self.addView(diagram, view, gtk.Label(diagram.name), window=window)
 
-    @Action('frame-horizontal',"Split H",
-            sensitivePredicate=lambda t,o: o.focusedFrame!=None)
+    @Action('frame-horizontal',"Split V",
+            sensitivePredicate=lambda t,o: o.focusedFrame!=None,
+            icon='split-vertical')
     def _frameHorizontal(self, target, context):
         if self.focusedFrame:
             self.focusedFrame.split(gtk.HPaned())
 
-    @Action('frame-vertical',"Split V",
-            sensitivePredicate=lambda t,o: o.focusedFrame!=None)
+    @Action('frame-vertical',"Split H",
+            sensitivePredicate=lambda t,o: o.focusedFrame!=None,
+            icon='split-horizontal')
     def _frameVertical(self, target, context):
         if self.focusedFrame:
             self.focusedFrame.split(gtk.VPaned())
