@@ -33,12 +33,9 @@ import astvis.stock
 from astvis import gaphasx, event, xmlmap, thread, core, widgets
 from astvis.common import *
 from astvis.project import Project
-#from astvis.services.project import ProjectService
-#from astvis.services.code import CodeService
-#from astvis.services.ofp import OFPService
 from astvis import widgets, diagram
 from astvis.misc import console
-from astvis.model import ast
+from astvis.model import ast, basic
 from astvis.action import Action
 from astvis import action
 from astvis.misc.list import ObservableList
@@ -280,7 +277,14 @@ class MainWindow(object):
         if self._astTree!=None:
             self._astTree.selectObject(astObj)
             self._astTree.updateHistory()
-    
+
+    @Action('show-ast-object-by-basic', 'Show in AST', targetClass=basic.BasicObject)
+    def openASTObjectByBasic(self, basicObj, context):
+        astObj = basicObj.astObject
+        if self._astTree!=None:
+            self._astTree.selectObject(astObj)
+            self._astTree.updateHistory()
+
     @Action('show-calls', 'Show calls', contextClass=widgets.AstTree)
     def openCallTree(self, target, context):
         "create call tree"
@@ -354,7 +358,6 @@ class MainWindow(object):
         page = self.getCurrentPage()
         if isinstance(page, gtk.ScrolledWindow):
             page = page.get_children()[0].get_children()[0]
-        print page
         if isinstance(page, gaphas.view.GtkView):
             diagrams = filter(lambda x: x[1]==page, self.views.items())
             return diagrams and diagrams[0][0] or None

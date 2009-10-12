@@ -53,7 +53,10 @@ class BaseWidget(object):
         self._updateHistoryButtons()
 
     def getSelected(self):
-        model, iRow = self.widget.get_selection().get_selected()
+        return self._getSelected(self.widget.get_selection())
+
+    def _getSelected(self, selection):
+        model, iRow = selection.get_selected()
         if iRow==None:
             return None
         if isinstance(model, gtkx.PythonTreeModel):
@@ -73,8 +76,7 @@ class BaseWidget(object):
             return True
             
     def __selectionChanged(self, selection):
-        model, iRow = selection.get_selected()
-        parent, childName, obj = _extractObjectInfo(model, iRow)
+        obj = self._getSelected(selection)
         self.getActionGroup().updateActions(self.gtkActionGroup, obj)
 
     def _focusIn(self, widget, ev):
@@ -119,15 +121,3 @@ class BaseWidget(object):
     def setState(self, state):
         raise NotImplementedError()
 
-def _extractObjectInfo(model, iRow):
-    childName = None
-    obj = None
-    parent = None
-    if iRow!=None:
-        if isinstance(model, gtkx.PythonTreeModel):
-            obj = model.getObject(iRow)
-            childName = model.getChildName(iRow)
-            parent = model.getParent(iRow)
-        else:
-            obj = model[iRow][1]
-    return parent, childName, obj

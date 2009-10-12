@@ -80,6 +80,9 @@ class ActionGroup(object):
         self.actions[action.name] = action
 
     def updateAction(self, gtkaction, target, widget=None):
+        if LOG.isEnabledFor(FINEST):
+            LOG.log(FINEST, "updateAction() for %s", gtkaction.get_name())
+        
         actionName = gtkaction.get_name()
         action = self.actions[actionName]
         gtkgroup = gtkaction.props.action_group
@@ -405,7 +408,11 @@ class ContextFilter(ActionFilter):
 
     def enabled(self, actionGroup, action, target, context):
         if action.contextClass!=None:
-            return isinstance(context, action.contextClass)
+            result = isinstance(context, action.contextClass)
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "context filter enabled(): isinstance(%s,%s) -> %s",
+                        context, action.contextClass, result)
+            return result
         return True
 
 class TargetFilter(ActionFilter):
@@ -422,7 +429,11 @@ class TargetFilter(ActionFilter):
 
     def enabled(self, actionGroup, action, target, context):
         if action.targetClass!=None:
-            return isinstance(target, action.targetClass)
+            result = isinstance(target, action.targetClass)
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "target filter enabled(): isinstance(%s,%s) -> %s",
+                        target, action.targetClass, result)
+            return result
         return True
 
 class CategoryFilter(ActionFilter):
@@ -455,5 +466,8 @@ class PredicateFilter(ActionFilter):
 
     def enabled(self, actionGroup, action, target, context):
         if action.sensitivePredicate!=None:
-            return action.sensitivePredicate(target, context)
+            result = action.sensitivePredicate(target, context)
+            if LOG.isEnabledFor(FINEST):
+                LOG.log(FINEST, "predicate filter enabled(): %s", result)
+            return result
         return True

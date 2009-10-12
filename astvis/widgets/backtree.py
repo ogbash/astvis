@@ -4,7 +4,7 @@ import logging
 LOG = logging.getLogger("backtree")
 from astvis.common import FINE, FINER, FINEST
 
-from astvis.model import basic
+from astvis.model import basic, ast
 from astvis import core, action
 from astvis.widgets.base import BaseWidget
 
@@ -46,17 +46,26 @@ class RowFactory:
 factory = RowFactory()
 
 class BackCallTree(BaseWidget):
+    UI_DESCRIPTION='''
+    <popup name="backtree-popup">
+      <menuitem action="show-ast-object-by-basic"/>
+    </popup>
+    '''
+
     @classmethod
     def getActionGroup(cls):
         if not hasattr(cls, 'ACTION_GROUP'):
             cls.ACTION_GROUP = action.ActionGroup(action.manager,
                                                   'back-tree',
+                                                  contextAdapter=cls.getSelected,
                                                   contextClass=BackCallTree,
+                                                  targetClasses=[basic.BasicObject],
                                                   categories=['show'])
         return cls.ACTION_GROUP
 
     def __init__(self, root, astTree=None):
-        BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer')
+        BaseWidget.__init__(self, 'back_call_tree', outerWidgetName='back_call_tree_outer',
+                            menuName='backtree-popup')
 
         self.root = root
         self.view = self.widget
@@ -80,7 +89,7 @@ class BackCallTree(BaseWidget):
         self.refsList = ReferencesList(self, self.wTree)
         self.view.get_selection().connect('changed', self.__selectionChanged)
                 
-    def __selectionChanged(self, selection): 
+    def __selectionChanged(self, selection):
         model, iRow = selection.get_selected()
         
         if iRow!=None:
@@ -103,6 +112,12 @@ class BackCallTree(BaseWidget):
         self._clearModel()
         self._object = obj
         self._addObject(obj, None, None, set())
+
+    def _getSelected(self, selection):
+        model, iRow = selection.get_selected()
+        if iRow==None:
+            return None
+        return model[iRow][1][0]
 
     def _addObject(self, obj, refs, iParent, shown):
         
