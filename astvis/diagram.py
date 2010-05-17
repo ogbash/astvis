@@ -65,7 +65,7 @@ class Diagram(object):
     
     def remove(self, obj):
         if self._items.has_key(obj):
-            LOG.debug("Removing %s from diagram", obj)
+            LOG.debug("Removing %s (%s) from diagram", obj, self._items[obj])
             self._removeItem(self._items[obj])
             del self._items[obj]
             event.manager.notifyObservers(obj, REMOVED_FROM_DIAGRAM, (self,))    

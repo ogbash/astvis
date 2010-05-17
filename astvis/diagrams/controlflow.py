@@ -8,7 +8,7 @@ from astvis.common import FINE, FINER, FINEST
 from astvis.common import *
 from astvis import diagram, action, core
 from astvis.model import ast, flow
-from astvis.gaphasx import RectangleItem, DiamondItem, MorphBoundaryPort, EllipseItem
+from astvis.gaphasx import RectangleItem, DiamondItem, EllipseItem
 from astvis import event
 from astvis.event import REMOVED_FROM_DIAGRAM
 from astvis.taggraph import TagGraph
@@ -18,7 +18,8 @@ import pickle
 import cairo
 import gaphas
 import gaphas.tool
-from gaphas.connector import PointPort, VariablePoint
+from gaphas.connector import PointPort, Position
+from gaphas.aspect import Connector, ConnectionSink
 
 class ItemFactory(diagram.ItemFactory):
     def __init__(self, diagram):
@@ -252,9 +253,10 @@ class ControlFlowDiagram (diagram.Diagram):
         LOG.debug('connect %s', items)
         handles = connectorItem.handles()[-1], connectorItem.handles()[0] # tail --> head
 
-        self._connectTool.connect_handle(connectorItem, handles[0], items[0], items[0].port)
-        self._connectTool.connect_handle(connectorItem, handles[1], items[1], items[1].port)
-
+        for i in range(2):
+            connector = Connector(connectorItem, handles[i])
+            sink = ConnectionSink(items[i], items[i].port)
+            connector.connect(sink)
 
     def selectBlocksByObject(self, astObj):
         selected = self.flowModel.findBlocksByObject(astObj, self._items.keys())
@@ -437,8 +439,6 @@ class GeneralBlockItem(RectangleItem, BlockItem):
     def __init__(self, block, diagram, text):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block, diagram)
-
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
     def draw(self, context):
@@ -457,8 +457,6 @@ class ConditionBlockItem(DiamondItem, BlockItem):
     def __init__(self, block, diagram, text):
         DiamondItem.__init__(self, text)
         BlockItem.__init__(self, block, diagram)
-
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
     def draw(self, context):
@@ -472,7 +470,6 @@ class DoItem(EllipseItem, BlockItem):
         EllipseItem.__init__(self, text)
         BlockItem.__init__(self, block, diagram)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
 class EntryExitItem(RectangleItem, BlockItem):
@@ -480,8 +477,6 @@ class EntryExitItem(RectangleItem, BlockItem):
     def __init__(self, block, diagram, text):
         RectangleItem.__init__(self, text)
         BlockItem.__init__(self, block, diagram)
-
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
         self.port.connectable = False
 
     def draw(self, context):
@@ -536,8 +531,8 @@ class CloseItem(gaphas.item.Item):
 
 class OpenCloseBlockTool(gaphas.tool.Tool):
 
-    def on_button_press(self, context, event):
-        ocItem = context.view.hovered_item
+    def on_button_press(self, event):
+        ocItem = self.view.hovered_item
         if isinstance(ocItem, OpenItem):
             diagram = ocItem.canvas.diagram
             matrix = ocItem.item.matrix
@@ -567,13 +562,13 @@ class OpenCloseBlockTool(gaphas.tool.Tool):
             diagram.remove(block)
 
 class ContextMenuTool(gaphas.tool.Tool):
-    def on_button_press(self, context, event):
+    def on_button_press(self, event):
 
-        diagram = context.view.canvas.diagram
+        diagram = self.view.canvas.diagram
 
         if event.button==3:
             diagram.getActionGroup().updateActions(diagram.gtkActionGroup,
-                                                   context.view.hovered_item)
+                                                   self.view.hovered_item)
             diagram.contextMenu.popup(None, None, None, event.button, event.time)
             return True
 

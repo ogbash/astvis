@@ -1,0 +1,3 @@
+[submodule "libs/gaphas"]
+	path = libs/gaphas
+	url = http://github.com/amolenaar/gaphas.git

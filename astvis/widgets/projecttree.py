@@ -135,7 +135,7 @@ class ProjectTree(BaseWidget):
     def _openConceptTree(self, concepts):
         if self.root._conceptTree==None:
             self.root._conceptTree = ConceptTree(self.root, concepts)
-            self.root.addView(concepts, self.root._conceptTree.outerWidget, "concepts")
+            self.root.addView(concepts, self.root._conceptTree.outerWidget, gtk.Label("Concepts"))
 
     def _handleTagTypeDialog(self, tagType):
         dialog = TagTypeDialog(tagType)

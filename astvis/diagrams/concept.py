@@ -10,7 +10,7 @@ from astvis.model import concept
 from astvis.gaphasx import RoundedRectangleItem, RectangleItem, MorphBoundaryPort
 from astvis.transfer import internalize
 from gaphas.item import Line
-from gaphas.connector import PointPort, LinePort, Handle, VariablePoint
+from gaphas.connector import PointPort, LinePort, Handle, Position
 
 import gtk
 import pickle
@@ -84,7 +84,7 @@ class ActivityItem(RoundedRectangleItem):
         RoundedRectangleItem.__init__(self, obj.name)
         self.object = obj
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
+        self.port = MorphBoundaryPort(Position((0.,0.)), self)
         self._ports.append(self.port)
 
     def draw(self, context):
@@ -95,7 +95,7 @@ class DataItem(RectangleItem):
     def __init__(self, label):
         RectangleItem.__init__(self, label)
 
-        self.port = MorphBoundaryPort(VariablePoint((0.,0.)), self)
+        self.port = MorphBoundaryPort(Position((0.,0.)), self)
         self._ports.append(self.port)
 
 class FlowLine(Line):

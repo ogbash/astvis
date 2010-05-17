@@ -15,6 +15,7 @@ from astvis import core
 from astvis import gtkx
 
 import gaphas
+from gaphas.aspect import Connector, ConnectionSink
 import gtk
 import pickle
 import cairo
@@ -71,21 +72,15 @@ class CallDiagram(diagram.Diagram):
         self._name = name
         event.manager.subscribeClass(self._notify, ast.ASTObject)        
                 
-    def _connectItems(self, items, connector):
+    def _connectItems(self, items, connectorItem):
         LOG.debug('connect %s', items)
-        handles = connector.handles()[-1], connector.handles()[0] # tail --> head
+        handles = connectorItem.handles()[-1], connectorItem.handles()[0] # tail --> head
 
-        for i in xrange(2):
-            constraint = MorphConstraint(
-                gaphas.canvas.CanvasProjection(handles[i], connector),
-                items[i],
-                gaphas.canvas.CanvasProjection(items[1-i].center, items[1-i]))
-            handles[i].connection_data = constraint
-            handles[i].connected_to = items[i]
-            handles[i].disconnect = DisconnectHandle(self._canvas, items, handles[i])
-            
-            self._canvas.solver.add_constraint(constraint)
-        
+        for i in range(2):
+            connector = Connector(connectorItem, handles[i])
+            sink = ConnectionSink(items[i], items[i].port)
+            connector.connect(sink)
+                
     def _notify(self, obj, event, args, dargs):
         """Notified when objects are added to or removed from diagram.
 

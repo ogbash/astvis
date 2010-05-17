@@ -10,6 +10,7 @@ from gaphas.matrix import Matrix
 from gaphas.constraint import LineConstraint
 from gaphas.item import NW, NE,SW, SE
 from gaphas.canvas import CanvasProjection
+from gaphas.connector import Position
 
 EPSILON = 1e-6
 
@@ -80,7 +81,7 @@ class NamedItem(gaphas.item.Item):
                                     strength=gaphas.connector.VERY_STRONG)
         handle.visible = False
         self._handles.append(handle)
-        self.center = handle        
+        self.center = handle.pos
 
     def _calculate_text_width(self, context):
         cr = context.cairo
@@ -96,6 +97,9 @@ class NamedItem(gaphas.item.Item):
 
 
 class MorphItem:
+
+    def __init__(self):
+        self.port = MorphBoundaryPort(Position((0.,0.)), self)
 
     def intersect(self, alpha):
         "Implement in subclass"
@@ -147,7 +151,8 @@ class EllipseItem(NamedItem, MorphItem):
     "Ellipse item with the name inside."
 
     def __init__(self, name):
-        super(EllipseItem, self).__init__(name)
+        NamedItem.__init__(self, name)
+        MorphItem.__init__(self)
         self.name = name
         self.w = 1; self.h = 1
         self.color = (0,0,0,1)
@@ -186,7 +191,8 @@ class RectangleItem(NamedItem,MorphItem):
     "Rectangle item with the name inside."
 
     def __init__(self, name):
-        super(RectangleItem, self).__init__(name)
+        NamedItem.__init__(self, name)
+        MorphItem.__init__(self)
 
     def draw(self, context):
         super(RectangleItem, self).draw(context)
@@ -220,7 +226,8 @@ class DiamondItem(NamedItem,MorphItem):
     PADY = 3.
 
     def __init__(self, name):
-        super(DiamondItem, self).__init__(name)
+        NamedItem.__init__(self, name)
+        MorphItem.__init__(self)
 
     def draw(self, context):
         super(DiamondItem, self).draw(context)
@@ -282,9 +289,9 @@ class MorphConstraint(gaphas.constraint.Constraint):
         elif line!=None and origPoint in (line._handles[0].pos, line._handles[-1].pos):
             canvas = line.canvas
             if origPoint==line._handles[0].pos:
-                self.oppositePoint = canvas.project(line, line._handles[1])
+                self.oppositePoint = canvas.project(line, line._handles[1].pos)
             elif origPoint==line._handles[-1].pos:
-                self.oppositePoint = canvas.project(line, line._handles[-2])
+                self.oppositePoint = canvas.project(line, line._handles[-2].pos)
         else:
             self.oppositePoint = None        
 
