@@ -2,4 +2,6 @@
 *.pyc
 *~
 docs
+/debug.out
+/parser/ofp/FortranCPR.jar
 
