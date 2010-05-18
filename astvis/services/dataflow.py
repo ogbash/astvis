@@ -2,77 +2,13 @@
 
 from astvis import action, core
 from astvis.model import ast, flow
-from astvis.model.dataflow import LiveVariableDict, ReachingDefinitionDict
+from pynalyze.dataflow import LiveVariableDict, ReachingDefinitionDict
+import pynalyze.dataflow as df
 
 __all__=['DataflowService']
 
-class DataflowService(core.Service):
+class ReachingDefinitions(df.ReachingDefinitions):
 
-    def __init__(self):
-        core.Service.__init__(self)
-
-        self._reachingDefinitions = {} # astScope -> (ins, outs)
-        self._liveVariables = {} # astScope -> (ins, outs)
-
-    @action.Action('ast-reaching-definitions',"Reaching defs",targetClass=ast.ASTObject)
-    def getReachingDefinitions(self, astNode, context=None):
-        """For each basic block calculates (variable) definitions that reach this code location.
-        
-        @return: (ins, outs) - definitions on enter/leave of each basic block
-        @rtype: (d, d) where d = {block: {name: set((block, indexInBlock))}}
-        """
-        
-        astScope = astNode.model.getScope(astNode, False)
-        # check for cached version
-        if self._reachingDefinitions.has_key(astScope):
-            return self._reachingDefinitions[astScope]
-
-        # else calculate
-        cfservice = core.getService('ControlflowService')
-        flowModel = cfservice.getModel(astScope)
-        ins = {} # { block: {name: set(flow.ASTLocation)}}
-        outs = {} # { block: {name: set(flow.ASTLocation)}}
-
-        # some help functions
-        def IN(block):
-            if not ins.has_key(block):
-                ins[block] = ReachingDefinitionDict()
-            return ins[block]
-
-        def OUT(block, createNew=True):
-            if not outs.has_key(block):
-                if not createNew:
-                    return None
-                outs[block] = ReachingDefinitionDict()
-            return outs[block]
-
-        # start main loop which works until converging of IN/OUT states
-        
-        working = [] # blocks that have their IN redefined
-        working.append(flowModel._startBlock)
-
-        while working:
-            block = working.pop()
-            inDefs = IN(block)
-            oldOutDefs = OUT(block, False)
-            outDefs = self._transform(inDefs, block)
-            changed = (outDefs != oldOutDefs)
-            if changed:
-                outs[block] = outDefs
-                # OUT has changed since the last try
-                #  add following basic blocks to the working set as their INs change
-                for nextBlock in block.getNextBasicBlocks():
-                    if nextBlock==None:
-                        # @todo: fix parser (handle "read" statement)
-                        # this is only necessary, because fortran parser is not complete
-                        #  i.e. there may exist empty block
-                        continue 
-                    nextInDefs = IN(nextBlock)
-                    nextInDefs.update(outDefs)
-                    working.append(nextBlock)
-
-        self._reachingDefinitions[astScope] = (ins, outs)
-        return ins, outs
 
     def _transform(self, inDefs, block):
         """Transform function for the 'reaching definitions' algorithm.
@@ -127,12 +63,34 @@ class DataflowService(core.Service):
 
         return outDefs
 
-    def _update(self, toData, fromData):
-        "Update IN definitions/OUT uses from OUT definitions/IN uses."
-        for name in fromData.keys():
-            if not toData.has_key(name):
-                toData[name] = set()
-            toData[name].update(fromData[name])
+class DataflowService(core.Service):
+
+    def __init__(self):
+        core.Service.__init__(self)
+
+        self._reachingDefinitions = {} # astScope -> (ins, outs)
+        self._liveVariables = {} # astScope -> (ins, outs)
+
+    @action.Action('ast-reaching-definitions',"Reaching defs",targetClass=ast.ASTObject)
+    def getReachingDefinitions(self, astNode, context=None):
+        """For each basic block calculates (variable) definitions that reach this code location.
+        
+        @return: (ins, outs) - definitions on enter/leave of each basic block
+        @rtype: (d, d) where d = {block: {name: set((block, indexInBlock))}}
+        """
+        
+        astScope = astNode.model.getScope(astNode, False)
+        # check for cached version
+        if self._reachingDefinitions.has_key(astScope):
+            return self._reachingDefinitions[astScope]
+
+        # else calculate
+        cfservice = core.getService('ControlflowService')
+        flowModel = cfservice.getModel(astScope)
+
+        rd = ReachingDefinitions(flowModel)
+        self._reachingDefinitions[astScope] = (rd.ins, rd.outs)
+        return rd.ins, rd.outs
 
     def _getFullName(self, ref):        
         names = []
