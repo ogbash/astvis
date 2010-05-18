@@ -12,7 +12,7 @@ from astvis.common import FINE, FINER, FINEST
 class BasicModel(object):
     def __init__(self, astModel):
         self.astModel = astModel
-        astModel.basicModel = self
+        astModel._basicModel = self # be more careful? only one basic model per ast model is allowed
         self.globalObjects = {} #  name (of top level program unit or subroutine) -> obj
         self.objectsMap = {} # ast object -> object
 

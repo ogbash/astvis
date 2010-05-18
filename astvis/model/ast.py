@@ -13,11 +13,18 @@ class ASTModel(object):
 
     @see: L{basic.BasicModel}
     """
+
+    def _getBasicModel(self):
+        if self._basicModel == None:
+            import basic
+            self._basicModel = basic.BasicModel(self)
+        return self._basicModel
+    basicModel=property(_getBasicModel)
     
     def __init__(self):
         self.project = None
         self.files = []
-        self.basicModel = None
+        self._basicModel = None
         
     def itertree(self, callback):
         for f in self.files:
