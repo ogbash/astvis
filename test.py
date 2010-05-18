@@ -1,18 +1,18 @@
 #! /usr/bin/env python
 
+import sys
+
 def setLogging():
     "Set logging like from conf file like in application."
-    import logging
+    import logging,utils.log
     from astvis.common import FINE, FINER, FINEST
-    if __name__=="__main__":
-        logging.addLevelName(FINE, "FINE")
-        logging.addLevelName(FINER, "FINER")
-        logging.addLevelName(FINEST, "FINEST")    
-        #logging.basicConfig(level=FINEST)
-        import logging.config
-        logging.config.fileConfig("logging.conf")
+    logging.addLevelName(FINE, "FINE")
+    logging.addLevelName(FINER, "FINER")
+    logging.addLevelName(FINEST, "FINEST")    
+    #logging.basicConfig(level=FINEST)
+    import logging.config
+    logging.config.fileConfig("logging.conf")
 
-import sys
 
 if len(sys.argv)>=2 and '-h' in sys.argv[1:]:
     sys.stderr.write("Usage: %s <test name>, where the name is module, class or method path.\n" % sys.argv[0])
