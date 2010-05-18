@@ -6,7 +6,7 @@ from tests import general
 class ASTTestCase(general.TestCase):
     "Base class for tests require AST."
 
-    FILENAME="fortran/SpMtx_aggregation.F90.f90.xml"
+    FILENAME="fortran/SpMtx_aggregation.F90.xml"
 
     def setUp(self):
         super(ASTTestCase, self).setUp()

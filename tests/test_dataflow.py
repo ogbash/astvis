@@ -1,9 +1,9 @@
 
-import tests.ast
+from tests.ast import ASTTestCase
 from astvis import core
 from astvis.model import flow
 
-class FibonacciTestCase(tests.ast.ASTTestCase):
+class FibonacciTestCase(ASTTestCase):
     "Test case that tests dataflow on fibonacci algorithm."
 
     FILENAME="fortran/fib.f90.xml"
@@ -47,7 +47,7 @@ class FibonacciTestCase(tests.ast.ASTTestCase):
         print outs
 
 
-class SpMtxAggregate(tests.ast.ASTTestCase):
+class SpMtxAggregate(ASTTestCase):
     "Test case that tests dataflow on SpMtx_aggregate algorithm."
 
     FILENAME="fortran/SpMtx_aggregation.F90.xml"
