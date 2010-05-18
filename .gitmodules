@@ -1,6 +1,6 @@
 [submodule "libs/gaphas"]
 	path = libs/gaphas
-	url = http://github.com/amolenaar/gaphas.git
+	url = http://github.com/ogbash/gaphas.git
 [submodule "libs/pynalyze"]
 	path = libs/pynalyze
 	url = git://github.com/ogbash/pynalyze.git
