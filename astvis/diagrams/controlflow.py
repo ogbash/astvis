@@ -185,6 +185,16 @@ class ControlFlowDiagram (diagram.Diagram):
         item=self.view.hovered_item
         return item
 
+    def setModel(self, model, point=(0,0)):
+        self.flowModel = model
+        self.astObjects = self.flowModel.collectASTObjects()
+        LOG.debug("Number of AST objects in code is %d",
+                  len(self.astObjects[self.flowModel.block]))
+
+        connections = self.flowModel.getConnections()
+        self._hgraph = flow.BlockGraph(set([self.flowModel.block]), connections)
+        self.processBlockGraphChanges(point)
+
     def _dragDataRecv(self, widget, context, x, y, data, info, timestamp):
         if self.flowModel != None:
             return
@@ -200,14 +210,7 @@ class ControlFlowDiagram (diagram.Diagram):
                 # add item
                 obj = self.project.astModel.getObjectByPath(path)
                 cfservice = core.getService('ControlflowService')
-                self.flowModel = cfservice.getModel(obj)
-                self.astObjects = self.flowModel.collectASTObjects()
-                LOG.debug("Number of AST objects in code is %d",
-                          len(self.astObjects[self.flowModel.block]))
-                
-                connections = self.flowModel.getConnections()
-                self._hgraph = flow.BlockGraph(set([self.flowModel.block]), connections)
-                self.processBlockGraphChanges((cx,cy))
+                self.setModel(cfservice.getModel(obj), (cx,cy))
 
                 context.drop_finish(True, timestamp)
             else:
