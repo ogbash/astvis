@@ -127,6 +127,9 @@ class ControlFlowModel(cf.ControlFlowModel):
 
         cf.ControlFlowModel.__init__(self, astObj,list(astObj.statementBlock.statements))
 
+        # add declarations to the start block
+        self._startBlock.executions.extend(self.code.declarationBlock.statements)
+
     CLASS_MAP = {ast.IfStatement: IfBlock,
                  ast.IfConstruct: IfConstructBlock,
                  ast.DoStatement: DoBlock}
@@ -160,39 +163,3 @@ class BlockGraph(HierarchicalGraph):
 
     def _getChildren(self, block):
         return block.subBlocks
-
-class Location(object):
-    def __init__(self, block, index):
-        self.block = block
-        self.index = index
-
-    def __eq__(self, obj):
-        return self.block==obj.block and self.index==obj.index
-
-    def __hash__(self):
-        return hash((self.block, self.index))
-
-    def getStatement(self):
-        if isinstance(self.block, (StartBlock, EndBlock)):
-            return self.block.model.code.declarationBlock.statements[self.index]
-        else:
-            return self.block.executions[self.index]
-
-    def __str__(self):
-        return "flow.ASTLocation(in %s at %d)" % (self.block, self.index)
-
-    
-    def __repr__(self):
-        return self.__str__()+"<%0x>"%id(self)
-
-class ASTLocation(Location):
-
-    def __init__(self, block, index, astObject):
-        super(ASTLocation, self).__init__(block, index)
-        self.astObject = astObject
-
-    def __eq__(self, obj):
-        return super(ASTLocation, self).__eq__(obj) and self.astObject==obj.astObject
-
-    def __hash__(self):
-        return hash((super(ASTLocation,self).__hash__(), self.astObject))

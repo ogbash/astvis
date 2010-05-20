@@ -2,51 +2,38 @@
 
 from astvis import action, core
 from astvis.model import ast, flow
-from pynalyze.dataflow import LiveVariableDict, ReachingDefinitionDict
-import pynalyze.dataflow as df
+from pynalyze import dataflow as df, controlflow as cf
 
 __all__=['DataflowService']
 
 class ReachingDefinitions(df.ReachingDefinitions):
 
-
-    def _transform(self, inDefs, block):
-        """Transform function for the 'reaching definitions' algorithm.
-
-        @todo: for arrays - add the new, not replace the previous, definition
-        """
-
-        if isinstance(block, flow.StartBlock):
-            return self._transformWithStartBlock(inDefs, block)
-        
+    def _getDefinitions(self, execution):
+        "Return names that are assigned values with ast object as value."
         astWalkerService = core.getService('ASTTreeWalker')
 
-        outDefs = ReachingDefinitionDict(inDefs)
-        
-        for i,execution in enumerate(block.executions):
-            refs = astWalkerService.getReferencesFrom(execution)
-            for ref in refs:
-                if isinstance(ref, ast.Statement) and ref.type=='call' \
-                       or isinstance(ref, ast.Call):
-                    pass # ignore calls
-                elif isinstance(ref, ast.Reference) and ref.isFinalComponent():
-                    isA = ref.getPrimaryBase().isAssignment()
-                    if isA is None or isA: # consider unknown as write
-                        # replace the previous definition
-                        names = []
-                        workRef = ref
-                        while workRef!=None:
-                            names.append(workRef.name.lower())
-                            workRef = workRef.base
-                        names.reverse()
-                        assignName = tuple(names)
-                        loc = flow.ASTLocation(block,i,ref)
-                        outDefs[assignName] = set([loc])
+        defs = {}
+        refs = astWalkerService.getReferencesFrom(execution)
+        for ref in refs:
+            if isinstance(ref, ast.Statement) and ref.type=='call' \
+                   or isinstance(ref, ast.Call):
+                pass # ignore calls
+            elif isinstance(ref, ast.Reference) and ref.isFinalComponent():
+                isA = ref.getPrimaryBase().isAssignment()
+                if isA is None or isA: # consider unknown as write
+                    # replace the previous definition
+                    names = []
+                    workRef = ref
+                    while workRef!=None:
+                        names.append(workRef.name.lower())
+                        workRef = workRef.base
+                    names.reverse()
+                    assignName = tuple(names)
+                    defs[assignName]=ref
+        return defs
 
-        return outDefs
-
-    def _transformWithStartBlock(self, inDefs, block):
-        outDefs = ReachingDefinitionDict(inDefs)
+    def transformWithStartBlock(self, inDefs, block):
+        outDefs = df.ReachingDefinitionDict(inDefs)
 
         code = block.model.code
         if isinstance(code, ast.Subprogram):
@@ -58,8 +45,8 @@ class ReachingDefinitions(df.ReachingDefinitions):
                 if var.intent=='out':
                     continue
                 astObj = var.astObject
-                index = code.declarationBlock.statements.index(astObj.parent)
-                outDefs[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
+                index = block.executions.index(astObj.parent)
+                outDefs[(name.lower(),)] = set([cf.ASTLocation(block,index,astObj)])
 
         return outDefs
 
@@ -115,7 +102,7 @@ class DataflowService(core.Service):
 
         astWalkerService = core.getService('ASTTreeWalker')
 
-        inUses = LiveVariableDict(outUses)
+        inUses = df.LiveVariableDict(outUses)
 
         executions = list(block.executions)
         n = len(executions)
@@ -138,14 +125,14 @@ class DataflowService(core.Service):
                     # if not assignment, add this use
                     if isA is None or isA==False: # consider unknown as read
                         # replace the previous use
-                        loc = flow.ASTLocation(block,n-1-i,ref)
+                        loc = cf.ASTLocation(block,n-1-i,ref)
                         inUses.add(name,loc)
 
 
         return inUses
 
     def _backTransformWithEndBlock(self, outUses, block):
-        inUses = LiveVariableDict(outUses)
+        inUses = df.LiveVariableDict(outUses)
 
         code = block.model.code
         if isinstance(code, ast.Subprogram):
@@ -158,7 +145,7 @@ class DataflowService(core.Service):
                     continue
                 astObj = var.astObject
                 index = code.declarationBlock.statements.index(astObj.parent)
-                inUses[(name.lower(),)] = set([flow.ASTLocation(block,index,astObj)])
+                inUses[(name.lower(),)] = set([cf.ASTLocation(block,index,astObj)])
 
         return inUses
 
@@ -192,12 +179,12 @@ class DataflowService(core.Service):
             if not ins.has_key(block):
                 if not createNew:
                     return None
-                ins[block] = LiveVariableDict()
+                ins[block] = df.LiveVariableDict()
             return ins[block]
 
         def OUT(block):
             if not outs.has_key(block):
-                outs[block] = LiveVariableDict()
+                outs[block] = df.LiveVariableDict()
             return outs[block]
 
         # start main loop which works until converging of IN/OUT states
